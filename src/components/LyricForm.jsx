@@ -38,6 +38,16 @@ export default function LyricForm({ onSubmit, initialValues = {}, submitLabel = 
         autoFocus
       />
 
+      {content && (
+        <button
+          type="button"
+          onClick={() => setContent('')}
+          className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
+        >
+          Clear
+        </button>
+      )}
+
       {!showOptional ? (
         <button
           type="button"
