@@ -1,27 +1,30 @@
 import { useState, useRef, useEffect } from 'react'
 import { themes } from '../lib/themes'
-import { getPublicProfileUrl } from '../lib/utils'
-import VisibilityToggle from './VisibilityToggle'
+import { generateShareToken, getShareableUrl } from '../lib/utils'
+import { supabase } from '../lib/supabase-wrapper'
 
 export default function ShareModal({ lyric, username, isPublic, onVisibilityChange, onClose }) {
   const [copied, setCopied] = useState(false)
   const [imageGenerated, setImageGenerated] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [loading, setLoading] = useState(true)
   const canvasRef = useRef(null)
 
-  const profileUrl = getPublicProfileUrl(username)
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
   const copyLink = async () => {
+    if (!shareUrl) return
+
     try {
       // Try modern clipboard API first
-      await navigator.clipboard.writeText(profileUrl)
+      await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       // Fallback for mobile Safari - use text selection
       try {
         const input = document.createElement('input')
-        input.value = profileUrl
+        input.value = shareUrl
         input.style.position = 'fixed'
         input.style.opacity = '0'
         document.body.appendChild(input)
@@ -121,7 +124,7 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
 
   const shareImage = async () => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || !shareUrl) return
 
     // Convert canvas to blob
     canvas.toBlob(async (blob) => {
@@ -136,7 +139,7 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
               files: [file],
               title: 'earwyrm',
               text: "A lyric that's been on my mind — from earwyrm",
-              url: profileUrl,
+              url: shareUrl,
             })
             return
           }
@@ -145,7 +148,7 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
           await navigator.share({
             title: 'earwyrm',
             text: "A lyric that's been on my mind — from earwyrm",
-            url: profileUrl,
+            url: shareUrl,
           })
           return
         } catch (err) {
@@ -169,6 +172,42 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
     generateImage()
   }, [lyric])
 
+  useEffect(() => {
+    async function ensureShareToken() {
+      try {
+        // Check if lyric already has a share token
+        if (lyric.share_token) {
+          setShareUrl(getShareableUrl(lyric.share_token))
+          setLoading(false)
+          return
+        }
+
+        // Generate a new token
+        const token = generateShareToken()
+
+        // Update the lyric in the database
+        const { error } = await supabase
+          .from('lyrics')
+          .update({ share_token: token })
+          .eq('id', lyric.id)
+
+        if (error) {
+          console.error('Error updating share token:', error)
+          setShareUrl('') // Fallback to no share URL
+        } else {
+          setShareUrl(getShareableUrl(token))
+        }
+      } catch (err) {
+        console.error('Error ensuring share token:', err)
+        setShareUrl('')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    ensureShareToken()
+  }, [lyric])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
         <div className="bg-cream w-full max-w-md flex flex-col max-h-[90vh]">
@@ -187,31 +226,33 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
             {/* Share Link */}
             <div>
               <h3 className="text-sm font-medium text-charcoal mb-2">Share link</h3>
-              {!isPublic ? (
+              {loading ? (
                 <div className="text-sm text-charcoal-light">
-                  <p className="mb-3">This lyric is private. Make it visible before sharing?</p>
-                  <VisibilityToggle
-                    isPublic={isPublic}
-                    onChange={onVisibilityChange}
-                  />
+                  Generating shareable link...
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={profileUrl}
-                    readOnly
-                    className="flex-1 px-3 py-2 text-sm bg-cream-dark border border-charcoal/20
-                             text-charcoal"
-                  />
-                  <button
-                    onClick={copyLink}
-                    className="px-4 py-2 text-sm border border-charcoal/30
-                             hover:border-charcoal/60 transition-colors"
-                  >
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 px-3 py-2 text-sm bg-cream-dark border border-charcoal/20
+                               text-charcoal"
+                    />
+                    <button
+                      onClick={copyLink}
+                      disabled={!shareUrl}
+                      className="px-4 py-2 text-sm border border-charcoal/30
+                               hover:border-charcoal/60 transition-colors disabled:opacity-50"
+                    >
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-charcoal-light/60 mt-2">
+                    Anyone with this link can view this lyric
+                  </p>
+                </>
               )}
             </div>
 

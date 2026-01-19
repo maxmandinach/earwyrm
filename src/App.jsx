@@ -11,6 +11,7 @@ import WeeklyDigest from './pages/WeeklyDigestMock'
 import DigestTest from './pages/DigestTest'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import SharedLyric from './pages/SharedLyric'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -113,6 +114,7 @@ export default function App() {
         <Route path="terms" element={<Terms />} />
       </Route>
       {/* Public routes - no layout, accessible to all */}
+      <Route path="/s/:token" element={<SharedLyric />} />
       <Route path="/@:username" element={<PublicProfile />} />
       <Route path="/@:username/history" element={<PublicProfile showHistory={true} />} />
     </Routes>

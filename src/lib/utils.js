@@ -52,3 +52,23 @@ export function getPublicProfileUrl(username) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
   return `${baseUrl}/@${username}`
 }
+
+/**
+ * Generate a random share token
+ */
+export function generateShareToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let token = ''
+  for (let i = 0; i < 12; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return token
+}
+
+/**
+ * Generate a shareable URL for a lyric
+ */
+export function getShareableUrl(token) {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${baseUrl}/s/${token}`
+}
