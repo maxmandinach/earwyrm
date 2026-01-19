@@ -134,16 +134,17 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: 'Earwyrm Lyric',
-              text: 'Check out this lyric',
+              title: 'earwyrm',
+              text: "A lyric that's been on my mind — from earwyrm",
+              url: profileUrl,
             })
             return
           }
 
           // Fallback: share just the URL if files aren't supported
           await navigator.share({
-            title: 'Earwyrm Lyric',
-            text: 'Check out this lyric',
+            title: 'earwyrm',
+            text: "A lyric that's been on my mind — from earwyrm",
             url: profileUrl,
           })
           return
