@@ -27,10 +27,14 @@ export function CollectionProvider({ children }) {
 
       if (error) {
         console.error('Error fetching collections:', error)
+        setCollections([])
+        setLoading(false)
+        return
       }
 
       // If user has no collections, create default "Favorites" collection
       if (!data || data.length === 0) {
+        console.log('No collections found, creating Favorites...')
         try {
           const { data: newCollection, error: createError } = await supabase
             .from('collections')
@@ -43,20 +47,25 @@ export function CollectionProvider({ children }) {
             .select()
             .single()
 
-          if (!createError && newCollection) {
+          if (createError) {
+            console.error('Error creating Favorites collection:', createError)
+            setCollections([])
+          } else if (newCollection) {
+            console.log('Favorites collection created:', newCollection)
             setCollections([newCollection])
           } else {
             setCollections([])
           }
         } catch (createErr) {
-          console.error('Error creating default collection:', createErr)
+          console.error('Exception creating default collection:', createErr)
           setCollections([])
         }
       } else {
         setCollections(data)
       }
     } catch (err) {
-      console.error('Error fetching collections:', err)
+      console.error('Exception fetching collections:', err)
+      setCollections([])
     } finally {
       setLoading(false)
     }
