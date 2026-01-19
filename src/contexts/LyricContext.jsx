@@ -7,6 +7,7 @@ const LyricContext = createContext({})
 export function LyricProvider({ children }) {
   const { user } = useAuth()
   const [currentLyric, setCurrentLyric] = useState(null)
+  const [currentNote, setCurrentNote] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const fetchCurrentLyric = useCallback(async () => {
@@ -128,8 +129,72 @@ export function LyricProvider({ children }) {
     return setLyric({ content, songTitle, artistName, tags: tags || [], theme: theme || currentLyric?.theme || 'default' })
   }
 
+  async function fetchNoteForLyric(lyricId) {
+    if (!user) return null
+
+    const { data, error } = await supabase
+      .from('lyric_notes')
+      .select('*')
+      .eq('lyric_id', lyricId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching note:', error)
+      return null
+    }
+
+    return data
+  }
+
+  async function saveNote(lyricId, content) {
+    if (!user) throw new Error('Must be logged in to save notes')
+    if (!content || !content.trim()) {
+      // If content is empty, delete the note instead
+      return deleteNote(lyricId)
+    }
+
+    // Upsert (insert or update)
+    const { data, error } = await supabase
+      .from('lyric_notes')
+      .upsert({
+        lyric_id: lyricId,
+        user_id: user.id,
+        content: content.trim(),
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Update current note if this is the current lyric
+    if (currentLyric?.id === lyricId) {
+      setCurrentNote(data)
+    }
+
+    return data
+  }
+
+  async function deleteNote(lyricId) {
+    if (!user) throw new Error('Must be logged in to delete notes')
+
+    const { error } = await supabase
+      .from('lyric_notes')
+      .delete()
+      .eq('lyric_id', lyricId)
+      .eq('user_id', user.id)
+
+    if (error) throw error
+
+    // Clear current note if this is the current lyric
+    if (currentLyric?.id === lyricId) {
+      setCurrentNote(null)
+    }
+  }
+
   const value = {
     currentLyric,
+    currentNote,
     loading,
     setLyric,
     updateLyric,
@@ -137,6 +202,9 @@ export function LyricProvider({ children }) {
     setVisibility,
     replaceLyric,
     refreshLyric: fetchCurrentLyric,
+    fetchNoteForLyric,
+    saveNote,
+    deleteNote,
   }
 
   return <LyricContext.Provider value={value}>{children}</LyricContext.Provider>
