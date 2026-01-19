@@ -222,6 +222,13 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
           </div>
 
           <div className="flex-1 overflow-auto p-6">
+            <div className="flex items-start gap-2 mb-4 pb-4 border-b border-charcoal/10">
+              <span className="text-charcoal-light/60 text-sm">ℹ️</span>
+              <p className="text-xs text-charcoal-light/60">
+                Anyone with the link can view this lyric
+              </p>
+            </div>
+
             <div className="space-y-4">
             {/* Share Link */}
             <div>
@@ -231,28 +238,23 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
                   Generating shareable link...
                 </div>
               ) : (
-                <>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={shareUrl}
-                      readOnly
-                      className="flex-1 px-3 py-2 text-sm bg-cream-dark border border-charcoal/20
-                               text-charcoal"
-                    />
-                    <button
-                      onClick={copyLink}
-                      disabled={!shareUrl}
-                      className="px-4 py-2 text-sm border border-charcoal/30
-                               hover:border-charcoal/60 transition-colors disabled:opacity-50"
-                    >
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-charcoal-light/60 mt-2">
-                    Anyone with this link can view this lyric
-                  </p>
-                </>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    className="flex-1 px-3 py-2 text-sm bg-cream-dark border border-charcoal/20
+                             text-charcoal"
+                  />
+                  <button
+                    onClick={copyLink}
+                    disabled={!shareUrl}
+                    className="px-4 py-2 text-sm border border-charcoal/30
+                             hover:border-charcoal/60 transition-colors disabled:opacity-50"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               )}
             </div>
 
