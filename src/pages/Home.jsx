@@ -7,6 +7,7 @@ import EditLyricModal from '../components/EditLyricModal'
 import ShareModal from '../components/ShareModal'
 import VisibilityToggle from '../components/VisibilityToggle'
 import { getRandomPrompt } from '../lib/utils'
+import { supabase } from '../lib/supabase-wrapper'
 
 function EmptyState({ onSetLyric }) {
   const [prompt] = useState(() => getRandomPrompt())
@@ -42,9 +43,37 @@ function EmptyState({ onSetLyric }) {
 }
 
 function LyricView({ lyric, onUpdate, onVisibilityChange }) {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [allUserTags, setAllUserTags] = useState([])
+
+  // Fetch all unique tags from user's lyrics for autocomplete
+  useEffect(() => {
+    async function fetchUserTags() {
+      if (!user) return
+
+      try {
+        const { data, error } = await supabase
+          .from('lyrics')
+          .select('tags')
+          .eq('user_id', user.id)
+
+        if (error) throw error
+
+        // Extract all tags and get unique values
+        const allTags = data
+          .flatMap(lyric => lyric.tags || [])
+          .filter((tag, index, self) => self.indexOf(tag) === index)
+
+        setAllUserTags(allTags)
+      } catch (err) {
+        console.error('Error fetching user tags:', err)
+      }
+    }
+
+    fetchUserTags()
+  }, [user?.id])
 
   const handleUpdate = async (data) => {
     await onUpdate(data)
@@ -105,6 +134,7 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
           lyric={lyric}
           onSave={handleUpdate}
           onClose={() => setShowEditModal(false)}
+          allUserTags={allUserTags}
         />
       )}
 
