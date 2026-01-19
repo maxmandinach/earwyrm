@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { themeList } from '../lib/themes'
+import TagInput from './TagInput'
 
 function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
   const previewStyle = {
@@ -33,10 +34,11 @@ function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
   )
 }
 
-export default function EditLyricModal({ lyric, onSave, onClose }) {
+export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [] }) {
   const [content, setContent] = useState(lyric.content)
   const [songTitle, setSongTitle] = useState(lyric.song_title || '')
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
+  const [tags, setTags] = useState(lyric.tags || [])
   const [showOptional, setShowOptional] = useState(
     !!(lyric.song_title || lyric.artist_name)
   )
@@ -61,6 +63,7 @@ export default function EditLyricModal({ lyric, onSave, onClose }) {
         content: content.trim(),
         song_title: songTitle.trim() || null,
         artist_name: artistName.trim() || null,
+        tags: tags,
         theme: selectedTheme,
       })
       onClose()
@@ -145,6 +148,19 @@ export default function EditLyricModal({ lyric, onSave, onClose }) {
                 />
               </div>
             )}
+          </div>
+
+          {/* Tags Section */}
+          <div className="mt-8 pt-8 border-t border-charcoal/10 w-full max-w-md mx-auto">
+            <h3 className="text-sm font-medium text-charcoal mb-3">Tags</h3>
+            <TagInput
+              value={tags}
+              onChange={setTags}
+              suggestions={allUserTags}
+            />
+            <p className="text-xs text-charcoal-light/60 mt-2">
+              Add labels like "Cosmic", "Melancholy", or "90s"
+            </p>
           </div>
 
           {/* Theme Selector */}

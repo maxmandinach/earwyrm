@@ -48,7 +48,7 @@ export function LyricProvider({ children }) {
     fetchCurrentLyric()
   }, [fetchCurrentLyric])
 
-  async function setLyric({ content, songTitle, artistName, theme = 'default' }) {
+  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'default' }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
 
     try {
@@ -73,6 +73,7 @@ export function LyricProvider({ children }) {
           content,
           song_title: songTitle || null,
           artist_name: artistName || null,
+          tags: tags || [],
           theme,
           is_current: true,
           is_public: false,
@@ -123,8 +124,8 @@ export function LyricProvider({ children }) {
     return updateLyric({ is_public: isPublic })
   }
 
-  async function replaceLyric({ content, songTitle, artistName, theme }) {
-    return setLyric({ content, songTitle, artistName, theme: theme || currentLyric?.theme || 'default' })
+  async function replaceLyric({ content, songTitle, artistName, tags, theme }) {
+    return setLyric({ content, songTitle, artistName, tags: tags || [], theme: theme || currentLyric?.theme || 'default' })
   }
 
   const value = {

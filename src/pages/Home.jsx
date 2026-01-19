@@ -125,11 +125,12 @@ export default function Home() {
   const { currentLyric, loading, setLyric, replaceLyric, setTheme, setVisibility } = useLyric()
 
   const handleUpdate = async (data) => {
-    // Update lyric content (and song/artist metadata)
+    // Update lyric content (and song/artist metadata, tags)
     await replaceLyric({
       content: data.content,
       song_title: data.song_title,
       artist_name: data.artist_name,
+      tags: data.tags,
     })
 
     // Update theme if changed
