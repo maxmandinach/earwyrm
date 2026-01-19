@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { themeList } from '../lib/themes'
 import TagInput from './TagInput'
+import CollectionPicker from './CollectionPicker'
 
 function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
   const previewStyle = {
@@ -177,6 +178,12 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
                 />
               ))}
             </div>
+          </div>
+
+          {/* Collections Section */}
+          <div className="mt-8 pt-8 border-t border-charcoal/10 w-full max-w-md mx-auto">
+            <h3 className="text-sm font-medium text-charcoal mb-3">Collections</h3>
+            <CollectionPicker lyricId={lyric.id} />
           </div>
 
           {/* Submit Button */}

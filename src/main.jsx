@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { LyricProvider } from './contexts/LyricContext'
+import { CollectionProvider } from './contexts/CollectionContext'
 import App from './App'
 import './index.css'
 
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <AuthProvider>
         <LyricProvider>
-          <App />
+          <CollectionProvider>
+            <App />
+          </CollectionProvider>
         </LyricProvider>
       </AuthProvider>
     </BrowserRouter>
