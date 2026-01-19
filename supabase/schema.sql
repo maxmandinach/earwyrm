@@ -23,6 +23,7 @@ CREATE TABLE lyrics (
   theme TEXT DEFAULT 'default',
   is_current BOOLEAN DEFAULT true,
   is_public BOOLEAN DEFAULT false,
+  share_token TEXT UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   replaced_at TIMESTAMPTZ
 );
@@ -31,6 +32,7 @@ CREATE TABLE lyrics (
 CREATE INDEX idx_lyrics_user_id ON lyrics(user_id);
 CREATE INDEX idx_lyrics_is_current ON lyrics(is_current);
 CREATE INDEX idx_lyrics_is_public ON lyrics(is_public);
+CREATE INDEX idx_lyrics_share_token ON lyrics(share_token);
 CREATE INDEX idx_profiles_username ON profiles(username);
 
 -- Row Level Security (RLS)
