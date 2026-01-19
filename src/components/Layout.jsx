@@ -49,6 +49,18 @@ export default function Layout() {
       <main className="flex-1 flex flex-col">
         <Outlet />
       </main>
+
+      <footer className="px-4 py-6 border-t border-charcoal/10">
+        <div className="flex items-center justify-center gap-4 text-xs text-charcoal-light/60">
+          <Link to="/privacy" className="hover:text-charcoal transition-colors">
+            Privacy
+          </Link>
+          <span>·</span>
+          <Link to="/terms" className="hover:text-charcoal transition-colors">
+            Terms
+          </Link>
+        </div>
+      </footer>
     </div>
   )
 }

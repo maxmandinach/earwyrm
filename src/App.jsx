@@ -9,6 +9,8 @@ import Settings from './pages/Settings'
 import PublicProfile from './pages/PublicProfile'
 import WeeklyDigest from './pages/WeeklyDigestMock'
 import DigestTest from './pages/DigestTest'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -107,6 +109,8 @@ export default function App() {
             </AuthRoute>
           }
         />
+        <Route path="privacy" element={<Privacy />} />
+        <Route path="terms" element={<Terms />} />
       </Route>
       {/* Public routes - no layout, accessible to all */}
       <Route path="/@:username" element={<PublicProfile />} />
