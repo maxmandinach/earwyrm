@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { themeList } from '../lib/themes'
 import TagInput from './TagInput'
 import CollectionPicker from './CollectionPicker'
+import { useLyric } from '../contexts/LyricContext'
 
 function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
   const previewStyle = {
@@ -36,16 +37,36 @@ function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
 }
 
 export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [] }) {
+  const { fetchNoteForLyric, saveNote } = useLyric()
   const [content, setContent] = useState(lyric.content)
   const [songTitle, setSongTitle] = useState(lyric.song_title || '')
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
   const [tags, setTags] = useState(lyric.tags || [])
+  const [noteContent, setNoteContent] = useState('')
+  const [noteLoading, setNoteLoading] = useState(true)
   const [showOptional, setShowOptional] = useState(
     !!(lyric.song_title || lyric.artist_name)
   )
   const [selectedTheme, setSelectedTheme] = useState(lyric.theme)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Load note when modal opens
+  useEffect(() => {
+    async function loadNote() {
+      setNoteLoading(true)
+      try {
+        const note = await fetchNoteForLyric(lyric.id)
+        setNoteContent(note?.content || '')
+      } catch (err) {
+        console.error('Error loading note:', err)
+      } finally {
+        setNoteLoading(false)
+      }
+    }
+
+    loadNote()
+  }, [lyric.id])
 
   const handleClear = () => {
     setContent('')
@@ -60,6 +81,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
     setIsLoading(true)
     setError(null)
     try {
+      // Save lyric data
       await onSave({
         content: content.trim(),
         song_title: songTitle.trim() || null,
@@ -67,6 +89,15 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
         tags: tags,
         theme: selectedTheme,
       })
+
+      // Save note separately
+      if (noteContent.trim()) {
+        await saveNote(lyric.id, noteContent)
+      } else {
+        // If note is empty, delete it (handled in saveNote)
+        await saveNote(lyric.id, '')
+      }
+
       onClose()
     } catch (err) {
       console.error('Error updating lyric:', err)
@@ -184,6 +215,38 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
           <div className="mt-8 pt-8 border-t border-charcoal/10 w-full max-w-md mx-auto">
             <h3 className="text-sm font-medium text-charcoal mb-3">Collections</h3>
             <CollectionPicker lyricId={lyric.id} />
+          </div>
+
+          {/* Private Note Section */}
+          <div className="mt-8 pt-8 border-t border-charcoal/10 w-full max-w-md mx-auto">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-charcoal">Private note</h3>
+              <span className="text-xs text-charcoal-light/60">Only visible to you</span>
+            </div>
+            {noteLoading ? (
+              <p className="text-sm text-charcoal-light">Loading note...</p>
+            ) : (
+              <>
+                <textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  maxLength={500}
+                  placeholder="Why does this lyric resonate with you?"
+                  rows={3}
+                  className="w-full px-4 py-3 text-sm bg-transparent border border-charcoal/20
+                             focus:border-charcoal/40 focus:outline-none resize-none
+                             placeholder:text-charcoal-light/50 text-charcoal"
+                />
+                <div className="flex justify-between mt-2">
+                  <p className="text-xs text-charcoal-light/50">
+                    Keep personal reflections, memories, or context
+                  </p>
+                  <span className="text-xs text-charcoal-light/50">
+                    {noteContent.length}/500
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Submit Button */}
