@@ -53,12 +53,16 @@ function CollectionCard({ collection, lyricCount }) {
 
 export default function Collections() {
   const { user } = useAuth()
-  const { collections, loading, createCollection } = useCollection()
+  const { collections, loading, createCollection, getAllUserTags } = useCollection()
   const [lyricCounts, setLyricCounts] = useState({})
   const [loadingCounts, setLoadingCounts] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [newCollectionDescription, setNewCollectionDescription] = useState('')
+  const [newCollectionColor, setNewCollectionColor] = useState('charcoal')
+  const [isSmart, setIsSmart] = useState(false)
+  const [smartTag, setSmartTag] = useState('')
+  const [allTags, setAllTags] = useState([])
   const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
@@ -99,19 +103,33 @@ export default function Collections() {
     fetchLyricCounts()
   }, [collections, user?.id])
 
+  useEffect(() => {
+    async function fetchTags() {
+      const tags = await getAllUserTags()
+      setAllTags(tags)
+    }
+    fetchTags()
+  }, [getAllUserTags])
+
   async function handleCreateCollection(e) {
     e.preventDefault()
     if (!newCollectionName.trim()) return
+    if (isSmart && !smartTag.trim()) return
 
     setIsCreating(true)
     try {
       await createCollection({
         name: newCollectionName.trim(),
         description: newCollectionDescription.trim(),
-        color: 'charcoal',
+        color: newCollectionColor,
+        isSmart: isSmart,
+        smartTag: isSmart ? smartTag.trim() : null,
       })
       setNewCollectionName('')
       setNewCollectionDescription('')
+      setNewCollectionColor('charcoal')
+      setIsSmart(false)
+      setSmartTag('')
       setShowCreateForm(false)
     } catch (err) {
       console.error('Error creating collection:', err)
@@ -150,7 +168,7 @@ export default function Collections() {
       {showCreateForm && (
         <form onSubmit={handleCreateCollection} className="mb-8 p-6 border border-charcoal/20 bg-charcoal/5">
           <h3 className="text-sm font-medium text-charcoal mb-4">Create new collection</h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <input
               type="text"
               value={newCollectionName}
@@ -170,9 +188,67 @@ export default function Collections() {
                          focus:border-charcoal/40 focus:outline-none resize-none
                          placeholder:text-charcoal-light/50 text-charcoal"
             />
+
+            {/* Color picker */}
+            <div>
+              <label className="text-xs text-charcoal-light/70 mb-2 block">Color</label>
+              <div className="flex gap-2">
+                {Object.entries(collectionColors).map(([colorName, colorClass]) => (
+                  <button
+                    key={colorName}
+                    type="button"
+                    onClick={() => setNewCollectionColor(colorName)}
+                    className={`w-8 h-8 rounded-full ${colorClass} transition-all ${
+                      newCollectionColor === colorName
+                        ? 'ring-2 ring-charcoal ring-offset-2 ring-offset-cream'
+                        : 'hover:ring-1 hover:ring-charcoal/30'
+                    }`}
+                    title={colorName}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Smart collection toggle */}
+            <div className="pt-3 border-t border-charcoal/10">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSmart}
+                  onChange={(e) => setIsSmart(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-charcoal">Smart collection (auto-populate from tag)</span>
+              </label>
+            </div>
+
+            {/* Tag selector for smart collections */}
+            {isSmart && (
+              <div>
+                <label className="text-xs text-charcoal-light/70 mb-2 block">Tag to filter by</label>
+                {allTags.length > 0 ? (
+                  <select
+                    value={smartTag}
+                    onChange={(e) => setSmartTag(e.target.value)}
+                    className="w-full px-4 py-2 text-sm bg-cream border border-charcoal/20
+                               focus:border-charcoal/40 focus:outline-none text-charcoal"
+                  >
+                    <option value="">Select a tag...</option>
+                    {allTags.map((tag) => (
+                      <option key={tag} value={tag}>#{tag}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-xs text-charcoal-light/60 italic">
+                    No tags found. Add tags to your lyrics first.
+                  </p>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={!newCollectionName.trim() || isCreating}
+              disabled={!newCollectionName.trim() || (isSmart && !smartTag.trim()) || isCreating}
               className="px-4 py-2 text-sm text-charcoal border border-charcoal/30 hover:border-charcoal/60
                          disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
