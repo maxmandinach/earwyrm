@@ -41,6 +41,20 @@ export default function LyricCard({ lyric, showTimestamp = true, className = '' 
         </p>
       )}
 
+      {lyric.tags && lyric.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {lyric.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="text-xs opacity-60"
+              style={secondaryStyle}
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       {showTimestamp && lyric.created_at && (
         <p className="text-xs mt-4 opacity-60" style={secondaryStyle}>
           {formatRelativeTime(lyric.created_at)}
