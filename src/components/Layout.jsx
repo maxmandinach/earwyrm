@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -5,6 +6,27 @@ export default function Layout() {
   const { user, signOut } = useAuth()
   const location = useLocation()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMenuOpen])
+
+  // Close menu when navigating
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
@@ -17,32 +39,47 @@ export default function Layout() {
         </Link>
 
         {user && !isAuthPage && (
-          <nav className="flex items-center gap-4">
-            <Link
-              to="/history"
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
-            >
-              Collection
-            </Link>
-            <Link
-              to="/digest"
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
-            >
-              Digest
-            </Link>
-            <Link
-              to="/settings"
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
-            >
-              Settings
-            </Link>
+          <div className="relative" ref={menuRef}>
             <button
-              onClick={signOut}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
+              aria-label="Menu"
             >
-              Sign out
+              Menu
             </button>
-          </nav>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-cream border border-charcoal/20 shadow-lg z-50">
+                <nav className="py-2">
+                  <Link
+                    to="/history"
+                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    My collection
+                  </Link>
+                  <Link
+                    to="/digest"
+                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    Weekly digest
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    Settings
+                  </Link>
+                  <div className="my-1 border-t border-charcoal/10" />
+                  <button
+                    onClick={signOut}
+                    className="w-full text-left px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </nav>
+              </div>
+            )}
+          </div>
         )}
       </header>
 
