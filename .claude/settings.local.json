@@ -4,7 +4,8 @@
       "Bash(npm run build:*)",
       "Bash(timeout 5 npm run dev:*)",
       "Bash(git commit:*)",
-      "Bash(open https://github.com/maxmandinach/earwyrm/settings/hooks)"
+      "Bash(open https://github.com/maxmandinach/earwyrm/settings/hooks)",
+      "Bash(git add:*)"
     ]
   }
 }
