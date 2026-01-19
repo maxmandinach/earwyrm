@@ -23,7 +23,6 @@ export function CollectionProvider({ children }) {
         .from('collections')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
 
       if (error) {
         console.error('Error fetching collections:', error)
@@ -61,7 +60,11 @@ export function CollectionProvider({ children }) {
           setCollections([])
         }
       } else {
-        setCollections(data)
+        // Sort by created_at (oldest first)
+        const sorted = [...data].sort((a, b) =>
+          new Date(a.created_at) - new Date(b.created_at)
+        )
+        setCollections(sorted)
       }
     } catch (err) {
       console.error('Exception fetching collections:', err)
