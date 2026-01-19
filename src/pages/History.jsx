@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase-wrapper'
 import LyricCard from '../components/LyricCard'
+import NoteDisplay from '../components/NoteDisplay'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../lib/utils'
 import { themes } from '../lib/themes'
@@ -200,7 +201,7 @@ function TimePeriodHeader({ title }) {
   )
 }
 
-function TimelineEntry({ lyric, isLocked = false, section = 'default' }) {
+function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
   const theme = themes[lyric.theme] || themes.default
 
   const cardStyle = {
@@ -258,7 +259,23 @@ function TimelineEntry({ lyric, isLocked = false, section = 'default' }) {
                 {lyric.artist_name && <span>{lyric.artist_name}</span>}
               </p>
             )}
+
+            {/* Tags - if present */}
+            {lyric.tags && lyric.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {lyric.tags.map((tag, index) => (
+                  <span key={index} className="text-xs opacity-60" style={secondaryStyle}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Note - displayed subtly outside the card */}
+          {note && !isLocked && (
+            <NoteDisplay content={note.content} />
+          )}
         </div>
       </div>
     </div>
@@ -375,6 +392,7 @@ function InlineTeaser({ lockedCount, season }) {
 export default function History() {
   const { user } = useAuth()
   const [lyrics, setLyrics] = useState([])
+  const [notes, setNotes] = useState({}) // Map of lyricId -> note
   const [loading, setLoading] = useState(true)
   const [useMockData, setUseMockData] = useState(true) // Start with mock data enabled
   const [realDataExists, setRealDataExists] = useState(false)
@@ -396,19 +414,38 @@ export default function History() {
           return
         }
 
+        // Fetch lyrics
         const { data, error } = await supabase
           .from('lyrics')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
 
         if (error) {
           console.error('Error fetching history:', error)
           setLyrics([])
         } else {
           const realLyrics = data || []
+          // Sort client-side since our wrapper doesn't support .order()
+          realLyrics.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           setRealDataExists(realLyrics.length > 0)
           setLyrics(realLyrics)
+
+          // Fetch notes for these lyrics
+          if (realLyrics.length > 0) {
+            const { data: notesData } = await supabase
+              .from('lyric_notes')
+              .select('*')
+              .eq('user_id', user.id)
+
+            if (notesData) {
+              // Create a map of lyric_id -> note
+              const notesMap = {}
+              notesData.forEach(note => {
+                notesMap[note.lyric_id] = note
+              })
+              setNotes(notesMap)
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching history:', err)
@@ -526,7 +563,7 @@ export default function History() {
                 <TimePeriodHeader title="this week" />
                 <div className="space-y-2 mb-6">
                   {groupedLyrics.thisWeek.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} section="default" />
+                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
                 </div>
               </>
@@ -538,7 +575,7 @@ export default function History() {
                 <TimePeriodHeader title="last week" />
                 <div className="space-y-2 mb-6">
                   {groupedLyrics.lastWeek.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} section="default" />
+                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
                 </div>
               </>
@@ -550,7 +587,7 @@ export default function History() {
                 <TimePeriodHeader title="this month" />
                 <div className="space-y-2 mb-6">
                   {groupedLyrics.thisMonth.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} section="default" />
+                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
                 </div>
               </>
@@ -562,7 +599,7 @@ export default function History() {
                 <TimePeriodHeader title="earlier" />
                 <div className="space-y-2 mb-6">
                   {groupedLyrics.earlier.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} section="default" />
+                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
                 </div>
 
@@ -585,7 +622,7 @@ export default function History() {
                 {/* Ghost timeline entries - just 2 as teaser to create desire */}
                 <div className="space-y-2 relative mb-6">
                   {ghostCards.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} isLocked={true} section="seasonal" />
+                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} isLocked={true} section="seasonal" />
                   ))}
                 </div>
 
