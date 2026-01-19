@@ -1,0 +1,360 @@
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase-wrapper'
+import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
+import { useNavigate } from 'react-router-dom'
+
+export default function Settings() {
+  const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  const [username, setUsername] = useState(profile?.username || '')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  const [usernameError, setUsernameError] = useState('')
+  const [usernameSuccess, setUsernameSuccess] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false)
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const [urlCopied, setUrlCopied] = useState(false)
+
+  const publicUrl = getPublicProfileUrl(profile?.username)
+
+  const handleUpdateUsername = async (e) => {
+    e.preventDefault()
+    setUsernameError('')
+    setUsernameSuccess(false)
+
+    if (!isValidUsername(username)) {
+      setUsernameError('Username must be 3-20 characters, letters, numbers, and underscores only')
+      return
+    }
+
+    if (username === profile?.username) {
+      setUsernameError('This is already your username')
+      return
+    }
+
+    setIsUpdatingUsername(true)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: username.toLowerCase() })
+        .eq('id', user.id)
+
+      if (error) {
+        if (error.message?.includes('duplicate') || error.code === '23505') {
+          setUsernameError('Username is already taken')
+        } else {
+          throw error
+        }
+      } else {
+        setUsernameSuccess(true)
+        // Refresh the page to update profile context
+        setTimeout(() => window.location.reload(), 1000)
+      }
+    } catch (err) {
+      console.error('Error updating username:', err)
+      setUsernameError('Failed to update username')
+    } finally {
+      setIsUpdatingUsername(false)
+    }
+  }
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess(false)
+
+    if (!currentPassword) {
+      setPasswordError('Current password is required')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match')
+      return
+    }
+
+    setIsUpdatingPassword(true)
+
+    try {
+      // Verify current password first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword
+      })
+
+      if (signInError) {
+        setPasswordError('Current password is incorrect')
+        setIsUpdatingPassword(false)
+        return
+      }
+
+      // Update to new password
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (error) throw error
+
+      setPasswordSuccess(true)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      console.error('Error updating password:', err)
+      setPasswordError(err.message || 'Failed to update password')
+    } finally {
+      setIsUpdatingPassword(false)
+    }
+  }
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl)
+      setUrlCopied(true)
+      setTimeout(() => setUrlCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true)
+
+    try {
+      // Delete user account (cascades to profile and lyrics via foreign keys)
+      const { error } = await supabase.auth.admin.deleteUser(user.id)
+
+      if (error) throw error
+
+      // Sign out and redirect
+      await signOut()
+      navigate('/signup')
+    } catch (err) {
+      console.error('Error deleting account:', err)
+      alert('Failed to delete account. Please contact support.')
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <div className="flex-1 overflow-auto">
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <h1 className="text-2xl font-light text-charcoal tracking-tight mb-8">Settings</h1>
+
+        <div className="space-y-8">
+          {/* Username */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-lg font-medium text-charcoal mb-4">Username</h2>
+
+            <form onSubmit={handleUpdateUsername} className="space-y-3">
+              <div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                           text-charcoal focus:outline-none focus:border-charcoal/40"
+                  placeholder="username"
+                />
+                <p className="mt-2 text-xs text-charcoal-light/60">
+                  3-20 characters, letters, numbers, and underscores only
+                </p>
+              </div>
+
+              {usernameError && (
+                <p className="text-sm text-red-600">{usernameError}</p>
+              )}
+
+              {usernameSuccess && (
+                <p className="text-sm text-green-600">Username updated! Refreshing...</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isUpdatingUsername || !username}
+                className="px-6 py-2 text-sm font-medium text-charcoal
+                         border border-charcoal/30 hover:border-charcoal/60
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-colors"
+              >
+                {isUpdatingUsername ? 'Updating...' : 'Update username'}
+              </button>
+            </form>
+          </section>
+
+          {/* Public Profile URL */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-lg font-medium text-charcoal mb-4">Public Profile</h2>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={publicUrl}
+                readOnly
+                className="flex-1 px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                         text-charcoal"
+              />
+              <button
+                onClick={handleCopyUrl}
+                className="px-6 py-2 text-sm border border-charcoal/30
+                         hover:border-charcoal/60 transition-colors"
+              >
+                {urlCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-charcoal-light/60">
+              Share this link to show your public lyric
+            </p>
+          </section>
+
+          {/* Email */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-lg font-medium text-charcoal mb-4">Email</h2>
+
+            <input
+              type="email"
+              value={user?.email || ''}
+              readOnly
+              className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                       text-charcoal-light cursor-not-allowed"
+            />
+            <p className="mt-2 text-xs text-charcoal-light/60">
+              Email cannot be changed at this time
+            </p>
+          </section>
+
+          {/* Password */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-lg font-medium text-charcoal mb-4">Change Password</h2>
+
+            <form onSubmit={handleUpdatePassword} className="space-y-3">
+              <div>
+                <label className="block text-sm text-charcoal-light mb-2">
+                  Current password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                           text-charcoal focus:outline-none focus:border-charcoal/40"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-charcoal-light mb-2">
+                  New password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                           text-charcoal focus:outline-none focus:border-charcoal/40"
+                  placeholder="At least 6 characters"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-charcoal-light mb-2">
+                  Confirm new password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
+                           text-charcoal focus:outline-none focus:border-charcoal/40"
+                  placeholder="Re-enter password"
+                />
+              </div>
+
+              {passwordError && (
+                <p className="text-sm text-red-600">{passwordError}</p>
+              )}
+
+              {passwordSuccess && (
+                <p className="text-sm text-green-600">Password updated successfully!</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
+                className="px-6 py-2 text-sm font-medium text-charcoal
+                         border border-charcoal/30 hover:border-charcoal/60
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-colors"
+              >
+                {isUpdatingPassword ? 'Updating...' : 'Update password'}
+              </button>
+            </form>
+          </section>
+
+          {/* Delete Account */}
+          <section className="pb-8">
+            <h2 className="text-lg font-medium text-charcoal mb-4">Delete Account</h2>
+
+            {!showDeleteConfirm ? (
+              <>
+                <p className="text-sm text-charcoal-light mb-4">
+                  Permanently delete your account and all your lyrics. This cannot be undone.
+                </p>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-6 py-2 text-sm font-medium text-red-600
+                           border border-red-600/30 hover:border-red-600/60
+                           transition-colors"
+                >
+                  Delete account
+                </button>
+              </>
+            ) : (
+              <div className="bg-red-50 border border-red-200 p-6">
+                <p className="text-sm text-red-800 font-medium mb-4">
+                  Are you absolutely sure? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                    className="px-6 py-2 text-sm font-medium text-cream bg-red-600
+                             hover:bg-red-700 disabled:opacity-50
+                             transition-colors"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes, delete my account'}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="px-6 py-2 text-sm text-charcoal-light hover:text-charcoal
+                             border border-charcoal/20 hover:border-charcoal/40
+                             disabled:opacity-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
