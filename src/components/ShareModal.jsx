@@ -119,55 +119,43 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
     setImageGenerated(true)
   }
 
-  const downloadImage = async () => {
+  const shareImage = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // For mobile Safari, open image in new tab so user can long-press to save
-    if (isMobile && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-      const dataUrl = canvas.toDataURL('image/png')
-      const newWindow = window.open()
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1">
-              <style>
-                body { margin: 0; padding: 20px; background: #f5f5f5; }
-                img { width: 100%; height: auto; display: block; }
-                p { font-family: system-ui; text-align: center; color: #666; margin-top: 20px; }
-              </style>
-            </head>
-            <body>
-              <img src="${dataUrl}" alt="Earwyrm Lyric">
-              <p>Long press the image to save to Photos</p>
-            </body>
-          </html>
-        `)
-        newWindow.document.close()
-      }
-      return
-    }
-
     // Convert canvas to blob
     canvas.toBlob(async (blob) => {
-      // Try Web Share API first (works on mobile with HTTPS)
-      if (navigator.share && navigator.canShare) {
+      // Try Web Share API (works on mobile with HTTPS)
+      if (navigator.share) {
         try {
           const file = new File([blob], 'earwyrm-lyric.png', { type: 'image/png' })
-          if (navigator.canShare({ files: [file] })) {
+
+          // Check if we can share files
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
               title: 'Earwyrm Lyric',
+              text: 'Check out this lyric',
             })
             return
           }
+
+          // Fallback: share just the URL if files aren't supported
+          await navigator.share({
+            title: 'Earwyrm Lyric',
+            text: 'Check out this lyric',
+            url: profileUrl,
+          })
+          return
         } catch (err) {
-          console.log('Share API failed:', err)
+          // User cancelled or share failed
+          if (err.name !== 'AbortError') {
+            console.log('Share failed:', err)
+          }
         }
       }
 
-      // Fallback to download
+      // Fallback to download for desktop
       const link = document.createElement('a')
       link.download = 'earwyrm-lyric.png'
       link.href = URL.createObjectURL(blob)
@@ -229,7 +217,10 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
           {/* Share Image */}
           <div>
             <h3 className="text-sm font-medium text-charcoal mb-2">Share image</h3>
-            <div className="bg-cream-dark p-2">
+            <div
+              className="bg-cream-dark p-2 cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={shareImage}
+            >
               <canvas
                 ref={canvasRef}
                 className="w-full aspect-square"
@@ -237,7 +228,7 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
               />
             </div>
             <button
-              onClick={downloadImage}
+              onClick={shareImage}
               className="mt-3 w-full py-2 text-sm border border-charcoal/30
                        hover:border-charcoal/60 transition-colors"
             >
