@@ -41,7 +41,11 @@ export default function LyricForm({ onSubmit, initialValues = {}, submitLabel = 
       {content && (
         <button
           type="button"
-          onClick={() => setContent('')}
+          onClick={() => {
+            setContent('')
+            setSongTitle('')
+            setArtistName('')
+          }}
           className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
         >
           Clear

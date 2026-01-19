@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import LyricForm from './LyricForm'
-import { themes, themeList } from '../lib/themes'
+import { themeList } from '../lib/themes'
 
 function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
   const previewStyle = {
@@ -35,18 +34,33 @@ function ThemePreview({ theme, lyricContent, isSelected, onClick }) {
 }
 
 export default function EditLyricModal({ lyric, onSave, onClose }) {
+  const [content, setContent] = useState(lyric.content)
+  const [songTitle, setSongTitle] = useState(lyric.song_title || '')
+  const [artistName, setArtistName] = useState(lyric.artist_name || '')
+  const [showOptional, setShowOptional] = useState(
+    !!(lyric.song_title || lyric.artist_name)
+  )
   const [selectedTheme, setSelectedTheme] = useState(lyric.theme)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const handleSubmit = async (data) => {
+  const handleClear = () => {
+    setContent('')
+    setSongTitle('')
+    setArtistName('')
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!content.trim()) return
+
     setIsLoading(true)
     setError(null)
     try {
       await onSave({
-        content: data.content,
-        song_title: data.songTitle,
-        artist_name: data.artistName,
+        content: content.trim(),
+        song_title: songTitle.trim() || null,
+        artist_name: artistName.trim() || null,
         theme: selectedTheme,
       })
       onClose()
@@ -71,19 +85,67 @@ export default function EditLyricModal({ lyric, onSave, onClose }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          {/* Lyric Form */}
-          <LyricForm
-            onSubmit={handleSubmit}
-            initialValues={{
-              content: lyric.content,
-              songTitle: lyric.song_title || '',
-              artistName: lyric.artist_name || '',
-            }}
-            submitLabel="Update lyric"
-            isLoading={isLoading}
-            error={error}
-          />
+        <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 flex flex-col">
+          {error && (
+            <div className="mb-4 p-3 text-sm text-red-800 bg-red-50 border border-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* Lyric Input */}
+          <div className="w-full max-w-md mx-auto">
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Paste or type a lyric"
+              rows={4}
+              className="w-full px-4 py-3 text-lg bg-transparent border border-charcoal/20
+                         focus:border-charcoal/40 focus:outline-none resize-none
+                         placeholder:text-charcoal-light/50 text-charcoal"
+              autoFocus
+            />
+
+            {content && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
+              >
+                Clear
+              </button>
+            )}
+
+            {!showOptional ? (
+              <button
+                type="button"
+                onClick={() => setShowOptional(true)}
+                className="mt-3 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+              >
+                + Add song & artist
+              </button>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <input
+                  type="text"
+                  value={songTitle}
+                  onChange={(e) => setSongTitle(e.target.value)}
+                  placeholder="Song title (optional)"
+                  className="w-full px-4 py-2 text-sm bg-transparent border border-charcoal/20
+                             focus:border-charcoal/40 focus:outline-none
+                             placeholder:text-charcoal-light/50 text-charcoal"
+                />
+                <input
+                  type="text"
+                  value={artistName}
+                  onChange={(e) => setArtistName(e.target.value)}
+                  placeholder="Artist (optional)"
+                  className="w-full px-4 py-2 text-sm bg-transparent border border-charcoal/20
+                             focus:border-charcoal/40 focus:outline-none
+                             placeholder:text-charcoal-light/50 text-charcoal"
+                />
+              </div>
+            )}
+          </div>
 
           {/* Theme Selector */}
           <div className="mt-8 pt-8 border-t border-charcoal/10">
@@ -93,14 +155,28 @@ export default function EditLyricModal({ lyric, onSave, onClose }) {
                 <ThemePreview
                   key={theme.id}
                   theme={theme}
-                  lyricContent={lyric.content}
+                  lyricContent={content || lyric.content}
                   isSelected={selectedTheme === theme.id}
                   onClick={() => setSelectedTheme(theme.id)}
                 />
               ))}
             </div>
           </div>
-        </div>
+
+          {/* Submit Button */}
+          <div className="mt-8 pt-6 border-t border-charcoal/10">
+            <button
+              type="submit"
+              disabled={!content.trim() || isLoading}
+              className="w-full max-w-md mx-auto py-3 text-sm font-medium text-charcoal
+                         border border-charcoal/30 hover:border-charcoal/60
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-colors"
+            >
+              {isLoading ? 'Saving...' : 'Update lyric'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
