@@ -6,6 +6,7 @@ export default function LyricCard({ lyric, showTimestamp = true, className = '' 
 
   const cardStyle = {
     backgroundColor: theme.backgroundColor,
+    backgroundImage: theme.backgroundGradient || 'none',
     color: theme.textColor,
     fontFamily: theme.fontFamily,
     fontSize: theme.fontSize,
@@ -14,11 +15,13 @@ export default function LyricCard({ lyric, showTimestamp = true, className = '' 
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
+    textShadow: theme.textShadow || 'none',
   }
 
   const secondaryStyle = {
     color: theme.secondaryColor,
     fontFamily: theme.fontFamily,
+    textShadow: theme.textShadow || 'none',
   }
 
   return (
