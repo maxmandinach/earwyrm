@@ -126,7 +126,6 @@ function LyricView({ lyric, onReplace, onThemeChange, onVisibilityChange }) {
           <VisibilityToggle
             isPublic={lyric.is_public}
             onChange={onVisibilityChange}
-            showHelper={true}
           />
 
           <button
