@@ -28,7 +28,33 @@ export function CollectionProvider({ children }) {
       if (error) {
         console.error('Error fetching collections:', error)
       }
-      setCollections(data || [])
+
+      // If user has no collections, create default "Favorites" collection
+      if (!data || data.length === 0) {
+        try {
+          const { data: newCollection, error: createError } = await supabase
+            .from('collections')
+            .insert({
+              user_id: user.id,
+              name: 'Favorites',
+              description: 'Your favorite lyrics',
+              color: 'coral',
+            })
+            .select()
+            .single()
+
+          if (!createError && newCollection) {
+            setCollections([newCollection])
+          } else {
+            setCollections([])
+          }
+        } catch (createErr) {
+          console.error('Error creating default collection:', createErr)
+          setCollections([])
+        }
+      } else {
+        setCollections(data)
+      }
     } catch (err) {
       console.error('Error fetching collections:', err)
     } finally {
