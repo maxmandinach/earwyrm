@@ -12,6 +12,8 @@ import DigestTest from './pages/DigestTest'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import SharedLyric from './pages/SharedLyric'
+import Collections from './pages/Collections'
+import CollectionDetail from './pages/CollectionDetail'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -67,6 +69,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <History />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="collections"
+          element={
+            <ProtectedRoute>
+              <Collections />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="collections/:id"
+          element={
+            <ProtectedRoute>
+              <CollectionDetail />
             </ProtectedRoute>
           }
         />
