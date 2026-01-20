@@ -186,31 +186,26 @@ function generateMockLyrics() {
 
 function TimePeriodHeader({ title }) {
   return (
-    <div className="relative flex items-center gap-6 mb-8 mt-12 first:mt-0">
-      {/* Timeline marker - elegant and prominent */}
-      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-charcoal/50 relative z-10 ring-[5px] ring-cream shadow-md" />
-
-      {/* Period title - elegant typography */}
-      <h2 className="text-xs font-semibold text-charcoal tracking-widest uppercase">
+    <div className="mb-12 mt-16 first:mt-0">
+      {/* Calm chapter marker */}
+      <h2 className="text-xs font-normal text-charcoal/40 tracking-wider lowercase">
         {title}
       </h2>
-
-      {/* Decorative line with fade */}
-      <div className="flex-1 h-px bg-gradient-to-r from-charcoal/30 via-charcoal/15 to-transparent" />
     </div>
   )
 }
 
 function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
   const theme = themes[lyric.theme] || themes.default
+  const [expanded, setExpanded] = useState(false)
 
   const cardStyle = {
     backgroundColor: theme.backgroundColor,
     color: theme.textColor,
     fontFamily: theme.fontFamily,
-    fontSize: '0.875rem',
+    fontSize: '0.9375rem',
     fontWeight: theme.fontWeight,
-    lineHeight: '1.5',
+    lineHeight: '1.7',
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
@@ -221,71 +216,84 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
     fontFamily: theme.fontFamily,
   }
 
+  // Split lyric into lines for preview
+  const lines = lyric.content.split('\n')
+  const shouldTruncate = lines.length > 3
+  const displayLines = expanded || !shouldTruncate ? lines : lines.slice(0, 3)
+
   return (
-    <div className="relative flex gap-6 group py-5 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      {/* Timeline connector */}
-      <div className="flex-shrink-0 w-4 flex flex-col items-center">
-        {/* Dot - elegant with pulse on hover */}
-        <div className={`w-3 h-3 rounded-full transition-all duration-300 shadow-sm ${
+    <div className="mb-8 animate-in fade-in-0 slide-in-from-bottom-2 duration-700 fill-mode-backwards"
+         style={{ animationDelay: '50ms' }}>
+      {/* Memory card - soft paper-like */}
+      <div className={`relative ${isLocked ? 'opacity-50' : ''}`}>
+        <div className={`max-w-2xl ${
           isLocked
-            ? 'bg-charcoal/15'
-            : 'bg-charcoal/40 group-hover:bg-charcoal/70 group-hover:scale-150 group-hover:shadow-md'
-        }`} />
-      </div>
-
-      {/* Timestamp - positioned along timeline, larger and bolder */}
-      <div className="flex-shrink-0 w-24 pt-0.5">
-        <p className={`text-sm font-medium tabular-nums transition-colors duration-300 ${
-          isLocked
-            ? 'text-charcoal-light/40'
-            : 'text-charcoal-light/60 group-hover:text-charcoal'
+            ? 'filter grayscale'
+            : ''
         }`}>
-          {formatTimestampForSection(lyric.created_at, section)}
-        </p>
-      </div>
-
-      {/* Lyric card - elevated with shadows */}
-      <div className="flex-1 min-w-0">
-        <div className={isLocked ? 'blur-sm opacity-40 pointer-events-none select-none grayscale' : ''}>
-          <div className={`w-full p-5 rounded-sm transition-all duration-300 ${
-            isLocked
-              ? 'shadow-sm'
-              : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5'
-          }`} style={cardStyle}>
-            <blockquote className="mb-2">
-              {lyric.content}
-            </blockquote>
-
-            {(lyric.song_title || lyric.artist_name) && (
-              <p className="text-xs mt-1.5" style={secondaryStyle}>
-                {lyric.song_title && <span>{lyric.song_title}</span>}
-                {lyric.song_title && lyric.artist_name && <span> — </span>}
-                {lyric.artist_name && <span>{lyric.artist_name}</span>}
-              </p>
-            )}
-
-            {/* Tags - styled with subtle backgrounds */}
-            {lyric.tags && lyric.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {lyric.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="text-xs px-2 py-0.5 rounded-full bg-black/5 backdrop-blur-sm"
-                    style={{
-                      color: theme.secondaryColor,
-                      fontFamily: theme.fontFamily
-                    }}
-                  >
-                    #{tag}
-                  </span>
+          <div
+            className={`p-8 rounded-sm transition-all duration-500 ${
+              isLocked
+                ? 'shadow-sm bg-charcoal/5'
+                : 'shadow-md hover:shadow-xl bg-white'
+            }`}
+            style={isLocked ? {} : cardStyle}
+          >
+            {/* Lyric content - preview or full */}
+            <div className={isLocked ? 'blur-sm' : ''}>
+              <blockquote className="mb-4">
+                {displayLines.map((line, i) => (
+                  <p key={i} className="mb-2 last:mb-0">
+                    {line}
+                  </p>
                 ))}
+              </blockquote>
+
+              {/* Expand/collapse for long lyrics */}
+              {shouldTruncate && !isLocked && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors mt-2"
+                >
+                  {expanded ? 'show less' : 'show more...'}
+                </button>
+              )}
+            </div>
+
+            {/* Quiet metadata footer */}
+            <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between">
+              <div className="text-xs text-charcoal/30">
+                {formatTimestampForSection(lyric.created_at, section)}
+                {(lyric.song_title || lyric.artist_name) && (
+                  <span className="ml-3">
+                    {lyric.song_title && <span>{lyric.song_title}</span>}
+                    {lyric.song_title && lyric.artist_name && <span> · </span>}
+                    {lyric.artist_name && <span>{lyric.artist_name}</span>}
+                  </span>
+                )}
               </div>
-            )}
+
+              {/* Quiet tags */}
+              {lyric.tags && lyric.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {lyric.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="text-xs text-charcoal/25"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Note - displayed subtly outside the card */}
+          {/* Note - marginalia style */}
           {note && !isLocked && (
-            <NoteDisplay content={note.content} />
+            <div className="mt-4">
+              <NoteDisplay content={note.content} />
+            </div>
           )}
         </div>
       </div>
@@ -295,44 +303,46 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
 
 function PaywallBoundary({ lockedCount }) {
   return (
-    <div className="relative my-20 animate-in fade-in-50 slide-in-from-bottom-8 duration-700">
-      {/* Visual barrier - thick horizontal line with gradient */}
-      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-transparent via-charcoal/40 to-transparent shadow-sm" />
+    <div className="my-16 max-w-2xl">
+      {/* Memory gate - feels like a natural part of the timeline */}
+      <div className="p-12 bg-white/50 backdrop-blur-sm rounded-sm shadow-md border border-charcoal/10">
+        <div className="text-center space-y-6">
+          {/* Gentle introduction */}
+          <div className="space-y-2">
+            <p className="text-sm text-charcoal/50 lowercase tracking-wide">
+              older memories
+            </p>
+            <h3 className="text-xl font-light text-charcoal leading-relaxed">
+              There's more here
+            </h3>
+          </div>
 
-      {/* Paywall message - elevated and dramatic */}
-      <div className="relative mx-auto max-w-2xl">
-        <div className="bg-charcoal text-cream px-10 py-12 shadow-2xl relative overflow-hidden">
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-charcoal via-charcoal to-charcoal/95 opacity-50" />
-          {/* Corner accents */}
-          <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-cream/20" />
-          <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-cream/20" />
-          <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-cream/20" />
-          <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-cream/20" />
+          {/* Memory-oriented copy */}
+          <div className="space-y-3 max-w-md mx-auto">
+            <p className="text-sm text-charcoal/60 leading-relaxed">
+              You've been carrying these thoughts longer than you realized.
+            </p>
+            <p className="text-xs text-charcoal/40">
+              {lockedCount} {lockedCount === 1 ? 'lyric' : 'lyrics'} preserved beyond 30 days
+            </p>
+          </div>
 
-          <div className="text-center relative z-10">
-            <div className="w-16 h-px bg-cream/30 mx-auto mb-6" />
-            <p className="text-xl font-light leading-relaxed mb-2">
-              Your journey continues with Premium
-            </p>
-            <p className="text-sm text-cream/70 mb-2 max-w-md mx-auto">
-              {lockedCount} {lockedCount === 1 ? 'lyric' : 'lyrics'} preserved beyond 30 days. Your memories shouldn't disappear.
-            </p>
-            <p className="text-xs text-cream/50 mb-8">
-              Unlock your full history forever
-            </p>
+          {/* Clear but gentle CTA */}
+          <div className="pt-4">
             <a
               href="#"
-              className="inline-block px-6 py-3 border-2 border-cream text-cream font-medium
-                       hover:bg-cream hover:text-charcoal transition-all"
+              className="inline-block px-8 py-3 text-sm text-charcoal border border-charcoal/30
+                       hover:border-charcoal/60 hover:bg-charcoal/5 transition-all rounded-sm"
               onClick={(e) => {
                 e.preventDefault()
-                // TODO: Link to upgrade/pricing page when built
                 console.log('Upgrade clicked')
               }}
             >
-              Upgrade to Premium
+              Keep your full history
             </a>
+            <p className="text-xs text-charcoal/30 mt-3">
+              Unlock everything, forever
+            </p>
           </div>
         </div>
       </div>
@@ -492,15 +502,20 @@ export default function History() {
 
   if (lyrics.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <p className="text-lg text-charcoal-light text-center max-w-md mb-8">
-          Your history will appear here as you collect lyrics over time.
-        </p>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+        <div className="text-center space-y-4 max-w-md">
+          <p className="text-sm text-charcoal/40 leading-relaxed">
+            Your moments will gather here
+          </p>
+          <p className="text-xs text-charcoal/25">
+            Each lyric that moves through your mind leaves a trace
+          </p>
+        </div>
         <Link
           to="/"
-          className="text-sm text-charcoal hover:text-charcoal/60 transition-colors"
+          className="mt-12 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors lowercase"
         >
-          ← Back to current lyric
+          ← now
         </Link>
       </div>
     )
@@ -526,55 +541,52 @@ export default function History() {
   const groupedLyrics = groupLyricsByPeriod(visibleLyrics)
 
   return (
-    <div className="flex-1 w-full flex flex-col overflow-hidden bg-gradient-to-b from-cream via-cream to-cream/95">
+    <div className="flex-1 w-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FDFDFB' }}>
       {/* Sticky upgrade reminder - appears after scrolling past paywall */}
       {!isPaidUser && lockedLyrics.length > 0 && (
         <StickyUpgradeReminder lockedCount={lockedLyrics.length} visible={showStickyReminder} />
       )}
 
-      {/* Header */}
-      <div className="max-w-3xl mx-auto px-4 pt-12 pb-8 flex-shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-light text-charcoal tracking-tight">Your History</h1>
+      {/* Quiet header */}
+      <div className="max-w-3xl mx-auto px-6 pt-16 pb-12 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
+            memory lane
+          </h1>
           <Link
             to="/"
-            className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
+            className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors lowercase"
           >
-            Current
+            now
           </Link>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-charcoal-light/60">
-            {visibleLyrics.length} {visibleLyrics.length === 1 ? 'lyric' : 'lyrics'} collected
+          <p className="text-xs text-charcoal/30">
+            {visibleLyrics.length} {visibleLyrics.length === 1 ? 'moment' : 'moments'}
           </p>
-          <button
-            onClick={() => setUseMockData(!useMockData)}
-            className="text-xs px-3 py-2 border border-charcoal/30 hover:border-charcoal/60
-                       transition-colors text-charcoal-light rounded"
-            title="Toggle mock data for testing"
-          >
-            {useMockData ? '✕ Mock' : '+ Mock'}
-          </button>
+          {isDev && (
+            <button
+              onClick={() => setUseMockData(!useMockData)}
+              className="text-xs px-3 py-1.5 border border-charcoal/20 hover:border-charcoal/40
+                         transition-colors text-charcoal/30 rounded-sm"
+              title="Toggle mock data for testing"
+            >
+              {useMockData ? '✕ mock' : '+ mock'}
+            </button>
+          )}
         </div>
-        {useMockData && (
-          <p className="text-xs text-charcoal-light/40 mt-2">Showing mock data for testing</p>
-        )}
       </div>
 
       {/* Timeline - scrollable container */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 pb-8">
-        {/* Vertical timeline line - elegant fade effect */}
-        <div className="relative">
-          <div className="absolute left-[7px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-charcoal/40 via-charcoal/20 to-transparent rounded-full shadow-sm"
-               style={{ marginLeft: '0' }} />
-
-          <div className="relative pl-0">
+        <div className="max-w-3xl mx-auto px-6 pb-16">
+          {/* No timeline line - just gentle progression */}
+          <div className="relative">
             {/* This Week */}
             {groupedLyrics.thisWeek.length > 0 && (
               <>
                 <TimePeriodHeader title="this week" />
-                <div className="space-y-2 mb-6">
+                <div className="space-y-0">
                   {groupedLyrics.thisWeek.map((lyric) => (
                     <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
@@ -586,7 +598,7 @@ export default function History() {
             {groupedLyrics.lastWeek.length > 0 && (
               <>
                 <TimePeriodHeader title="last week" />
-                <div className="space-y-2 mb-6">
+                <div className="space-y-0">
                   {groupedLyrics.lastWeek.map((lyric) => (
                     <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
@@ -598,7 +610,7 @@ export default function History() {
             {groupedLyrics.thisMonth.length > 0 && (
               <>
                 <TimePeriodHeader title="this month" />
-                <div className="space-y-2 mb-6">
+                <div className="space-y-0">
                   {groupedLyrics.thisMonth.map((lyric) => (
                     <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
@@ -610,37 +622,36 @@ export default function History() {
             {groupedLyrics.earlier.length > 0 && (
               <>
                 <TimePeriodHeader title="earlier" />
-                <div className="space-y-2 mb-6">
+                <div className="space-y-0">
                   {groupedLyrics.earlier.map((lyric) => (
                     <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} section="default" />
                   ))}
                 </div>
-
-                {/* Inline teaser if there's locked content - creates curiosity */}
-                {!isPaidUser && lockedLyrics.length > 0 && (
-                  <InlineTeaser
-                    lockedCount={lockedLyrics.length}
-                    season={getSeason(lockedLyrics[0].created_at)}
-                  />
-                )}
               </>
             )}
 
-            {/* Locked content section - SHOW VALUE FIRST, THEN ASK */}
-            {ghostCards.length > 0 && (
-              <div className="relative mt-6">
-                {/* First: Show what they're missing - locked period header */}
-                <TimePeriodHeader title={getSeason(ghostCards[0].created_at)} />
+            {/* Locked content section - paywall as natural boundary */}
+            {lockedLyrics.length > 0 && (
+              <div className="relative mt-20">
+                {/* Paywall appears inline */}
+                <PaywallBoundary lockedCount={lockedLyrics.length} />
 
-                {/* Ghost timeline entries - just 2 as teaser to create desire */}
-                <div className="space-y-2 relative mb-6">
+                {/* Faded previews below - hint at presence */}
+                <div className="mt-12 space-y-8 opacity-30 pointer-events-none">
+                  <TimePeriodHeader title={getSeason(lockedLyrics[0].created_at)} />
                   {ghostCards.map((lyric) => (
                     <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} isLocked={true} section="seasonal" />
                   ))}
-                </div>
 
-                {/* Then: Make the ask - paywall boundary */}
-                <PaywallBoundary lockedCount={lockedLyrics.length} />
+                  {/* Subtle indicator of more */}
+                  {lockedLyrics.length > 2 && (
+                    <div className="text-center py-8">
+                      <p className="text-xs text-charcoal/20">
+                        + {lockedLyrics.length - 2} more memories
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
