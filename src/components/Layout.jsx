@@ -67,13 +67,13 @@ export default function Layout() {
                     to="/history"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    My collection
+                    My History
                   </Link>
                   <Link
                     to="/collections"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    Collections
+                    My Collections
                   </Link>
                   <Link
                     to="/digest"

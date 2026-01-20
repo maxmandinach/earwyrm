@@ -14,49 +14,103 @@ const collectionColors = {
   ocean: 'bg-[#4A90E2]',
 }
 
-function CollectionCard({ collection, lyricCount }) {
+function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
   const colorClass = collectionColors[collection.color] || collectionColors.charcoal
+  const [showMenu, setShowMenu] = useState(false)
+
+  const handleEdit = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowMenu(false)
+    onEdit(collection)
+  }
+
+  const handleDelete = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowMenu(false)
+    if (confirm(`Delete "${collection.name}"? This cannot be undone.`)) {
+      onDelete(collection.id)
+    }
+  }
 
   return (
-    <Link
-      to={`/collections/${collection.id}`}
-      className="block p-6 border border-charcoal/10 hover:border-charcoal/30
-                 transition-all hover:shadow-sm group"
-    >
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-1.5`} />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-medium text-charcoal group-hover:opacity-70 transition-opacity">
-            {collection.name}
-          </h3>
-          {collection.description && (
-            <p className="text-sm text-charcoal-light/70 mt-1 line-clamp-2">
-              {collection.description}
-            </p>
+    <div className="relative">
+      <Link
+        to={`/collections/${collection.id}`}
+        className="block p-6 border border-charcoal/10 hover:border-charcoal/30
+                   transition-all hover:shadow-sm group"
+      >
+        <div className="flex items-start gap-3 mb-3">
+          <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-1.5`} />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-medium text-charcoal group-hover:opacity-70 transition-opacity">
+              {collection.name}
+            </h3>
+            {collection.description && (
+              <p className="text-sm text-charcoal-light/70 mt-1 line-clamp-2">
+                {collection.description}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setShowMenu(!showMenu)
+            }}
+            className="text-charcoal-light/40 hover:text-charcoal transition-colors p-1"
+          >
+            ⋯
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-charcoal/10">
+          <span className="text-xs text-charcoal-light/60">
+            {lyricCount} {lyricCount === 1 ? 'lyric' : 'lyrics'}
+          </span>
+          {collection.is_smart && (
+            <span className="text-xs text-charcoal-light/50 italic">
+              #{collection.smart_tag}
+            </span>
           )}
         </div>
-      </div>
+      </Link>
 
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-charcoal/10">
-        <span className="text-xs text-charcoal-light/60">
-          {lyricCount} {lyricCount === 1 ? 'lyric' : 'lyrics'}
-        </span>
-        {collection.is_smart && (
-          <span className="text-xs text-charcoal-light/50 italic">
-            #{collection.smart_tag}
-          </span>
-        )}
-      </div>
-    </Link>
+      {/* Dropdown menu */}
+      {showMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setShowMenu(false)}
+          />
+          <div className="absolute right-6 top-6 z-20 bg-cream border border-charcoal/20 shadow-lg min-w-[120px]">
+            <button
+              onClick={handleEdit}
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
 export default function Collections() {
   const { user } = useAuth()
-  const { collections, loading, createCollection, getAllUserTags } = useCollection()
+  const { collections, loading, createCollection, updateCollection, deleteCollection, getAllUserTags } = useCollection()
   const [lyricCounts, setLyricCounts] = useState({})
   const [loadingCounts, setLoadingCounts] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [editingCollection, setEditingCollection] = useState(null)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [newCollectionDescription, setNewCollectionDescription] = useState('')
   const [newCollectionColor, setNewCollectionColor] = useState('charcoal')
@@ -118,6 +172,25 @@ export default function Collections() {
     fetchTags()
   }, [getAllUserTags])
 
+  function handleEdit(collection) {
+    setEditingCollection(collection)
+    setNewCollectionName(collection.name)
+    setNewCollectionDescription(collection.description || '')
+    setNewCollectionColor(collection.color || 'charcoal')
+    setIsSmart(collection.is_smart || false)
+    setSmartTag(collection.smart_tag || '')
+    setShowCreateForm(true)
+  }
+
+  async function handleDelete(collectionId) {
+    try {
+      await deleteCollection(collectionId)
+    } catch (err) {
+      console.error('Error deleting collection:', err)
+      alert('Failed to delete collection. Please try again.')
+    }
+  }
+
   async function handleCreateCollection(e) {
     e.preventDefault()
     if (!newCollectionName.trim()) return
@@ -125,13 +198,26 @@ export default function Collections() {
 
     setIsCreating(true)
     try {
-      await createCollection({
-        name: newCollectionName.trim(),
-        description: newCollectionDescription.trim(),
-        color: newCollectionColor,
-        isSmart: isSmart,
-        smartTag: isSmart ? smartTag.trim() : null,
-      })
+      if (editingCollection) {
+        // Update existing collection
+        await updateCollection(editingCollection.id, {
+          name: newCollectionName.trim(),
+          description: newCollectionDescription.trim(),
+          color: newCollectionColor,
+          is_smart: isSmart,
+          smart_tag: isSmart ? smartTag.trim() : null,
+        })
+        setEditingCollection(null)
+      } else {
+        // Create new collection
+        await createCollection({
+          name: newCollectionName.trim(),
+          description: newCollectionDescription.trim(),
+          color: newCollectionColor,
+          isSmart: isSmart,
+          smartTag: isSmart ? smartTag.trim() : null,
+        })
+      }
       setNewCollectionName('')
       setNewCollectionDescription('')
       setNewCollectionColor('charcoal')
@@ -139,10 +225,21 @@ export default function Collections() {
       setSmartTag('')
       setShowCreateForm(false)
     } catch (err) {
-      console.error('Error creating collection:', err)
+      console.error('Error saving collection:', err)
+      alert('Failed to save collection. Please try again.')
     } finally {
       setIsCreating(false)
     }
+  }
+
+  function handleCancelForm() {
+    setShowCreateForm(false)
+    setEditingCollection(null)
+    setNewCollectionName('')
+    setNewCollectionDescription('')
+    setNewCollectionColor('charcoal')
+    setIsSmart(false)
+    setSmartTag('')
   }
 
   if (loading || loadingCounts) {
@@ -156,25 +253,27 @@ export default function Collections() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-medium text-charcoal mb-2">Collections</h1>
-          <p className="text-sm text-charcoal-light/70">
-            Organize your lyrics by theme, mood, or any way you like
-          </p>
+      <div className="mb-8">
+        <div className="flex justify-between items-start mb-2">
+          <h1 className="text-2xl font-medium text-charcoal">Collections</h1>
+          <button
+            onClick={() => showCreateForm ? handleCancelForm() : setShowCreateForm(true)}
+            className="text-xs text-charcoal-light hover:text-charcoal transition-colors"
+          >
+            {showCreateForm ? '✕ Cancel' : '+ New'}
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-4 py-2 text-sm text-charcoal border border-charcoal/30 hover:border-charcoal/60 transition-colors"
-        >
-          {showCreateForm ? 'Cancel' : '+ New collection'}
-        </button>
+        <p className="text-sm text-charcoal-light/70">
+          Organize your lyrics by theme, mood, or any way you like
+        </p>
       </div>
 
-      {/* Create collection form */}
+      {/* Create/Edit collection form */}
       {showCreateForm && (
         <form onSubmit={handleCreateCollection} className="mb-8 p-6 border border-charcoal/20 bg-charcoal/5">
-          <h3 className="text-sm font-medium text-charcoal mb-4">Create new collection</h3>
+          <h3 className="text-sm font-medium text-charcoal mb-4">
+            {editingCollection ? 'Edit collection' : 'Create new collection'}
+          </h3>
           <div className="space-y-4">
             <input
               type="text"
@@ -259,7 +358,7 @@ export default function Collections() {
               className="px-4 py-2 text-sm text-charcoal border border-charcoal/30 hover:border-charcoal/60
                          disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {isCreating ? 'Creating...' : 'Create collection'}
+              {isCreating ? 'Saving...' : (editingCollection ? 'Update collection' : 'Create collection')}
             </button>
           </div>
         </form>
@@ -282,6 +381,8 @@ export default function Collections() {
               key={collection.id}
               collection={collection}
               lyricCount={lyricCounts[collection.id] || 0}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           ))}
         </div>
