@@ -187,16 +187,16 @@ function generateMockLyrics() {
 function TimePeriodHeader({ title }) {
   return (
     <div className="relative flex items-center gap-6 mb-8 mt-12 first:mt-0">
-      {/* Timeline marker - larger, more prominent */}
-      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-charcoal/40 relative z-10 ring-4 ring-cream" />
+      {/* Timeline marker - elegant and prominent */}
+      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-charcoal/50 relative z-10 ring-[5px] ring-cream shadow-md" />
 
-      {/* Period title - larger and bolder */}
-      <h2 className="text-base font-semibold text-charcoal tracking-wide">
+      {/* Period title - elegant typography */}
+      <h2 className="text-xs font-semibold text-charcoal tracking-widest uppercase">
         {title}
       </h2>
 
-      {/* Decorative line */}
-      <div className="flex-1 h-px bg-charcoal/20" />
+      {/* Decorative line with fade */}
+      <div className="flex-1 h-px bg-gradient-to-r from-charcoal/30 via-charcoal/15 to-transparent" />
     </div>
   )
 }
@@ -222,32 +222,36 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
   }
 
   return (
-    <div className="relative flex gap-6 group py-5">
+    <div className="relative flex gap-6 group py-5 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
       {/* Timeline connector */}
       <div className="flex-shrink-0 w-4 flex flex-col items-center">
-        {/* Dot - larger and more prominent */}
-        <div className={`w-3 h-3 rounded-full transition-all ${
+        {/* Dot - elegant with pulse on hover */}
+        <div className={`w-3 h-3 rounded-full transition-all duration-300 shadow-sm ${
           isLocked
             ? 'bg-charcoal/15'
-            : 'bg-charcoal/40 group-hover:bg-charcoal/60 group-hover:scale-125'
+            : 'bg-charcoal/40 group-hover:bg-charcoal/70 group-hover:scale-150 group-hover:shadow-md'
         }`} />
       </div>
 
       {/* Timestamp - positioned along timeline, larger and bolder */}
       <div className="flex-shrink-0 w-24 pt-0.5">
-        <p className={`text-sm font-medium tabular-nums transition-colors ${
+        <p className={`text-sm font-medium tabular-nums transition-colors duration-300 ${
           isLocked
             ? 'text-charcoal-light/40'
-            : 'text-charcoal-light/70 group-hover:text-charcoal'
+            : 'text-charcoal-light/60 group-hover:text-charcoal'
         }`}>
           {formatTimestampForSection(lyric.created_at, section)}
         </p>
       </div>
 
-      {/* Lyric card - compact inline version */}
+      {/* Lyric card - elevated with shadows */}
       <div className="flex-1 min-w-0">
-        <div className={isLocked ? 'blur-md opacity-30 pointer-events-none select-none' : ''}>
-          <div className="w-full p-4" style={cardStyle}>
+        <div className={isLocked ? 'blur-sm opacity-40 pointer-events-none select-none grayscale' : ''}>
+          <div className={`w-full p-5 rounded-sm transition-all duration-300 ${
+            isLocked
+              ? 'shadow-sm'
+              : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5'
+          }`} style={cardStyle}>
             <blockquote className="mb-2">
               {lyric.content}
             </blockquote>
@@ -260,11 +264,18 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
               </p>
             )}
 
-            {/* Tags - if present */}
+            {/* Tags - styled with subtle backgrounds */}
             {lyric.tags && lyric.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-3">
                 {lyric.tags.map((tag, index) => (
-                  <span key={index} className="text-xs opacity-60" style={secondaryStyle}>
+                  <span
+                    key={index}
+                    className="text-xs px-2 py-0.5 rounded-full bg-black/5 backdrop-blur-sm"
+                    style={{
+                      color: theme.secondaryColor,
+                      fontFamily: theme.fontFamily
+                    }}
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -284,13 +295,15 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
 
 function PaywallBoundary({ lockedCount }) {
   return (
-    <div className="relative my-16">
+    <div className="relative my-20 animate-in fade-in-50 slide-in-from-bottom-8 duration-700">
       {/* Visual barrier - thick horizontal line with gradient */}
-      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-transparent via-charcoal/30 to-transparent" />
+      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-transparent via-charcoal/40 to-transparent shadow-sm" />
 
-      {/* Paywall message - distinct box that breaks from timeline */}
+      {/* Paywall message - elevated and dramatic */}
       <div className="relative mx-auto max-w-2xl">
-        <div className="bg-charcoal text-cream px-8 py-10 shadow-2xl relative">
+        <div className="bg-charcoal text-cream px-10 py-12 shadow-2xl relative overflow-hidden">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-charcoal via-charcoal to-charcoal/95 opacity-50" />
           {/* Corner accents */}
           <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-cream/20" />
           <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-cream/20" />
@@ -513,7 +526,7 @@ export default function History() {
   const groupedLyrics = groupLyricsByPeriod(visibleLyrics)
 
   return (
-    <div className="flex-1 w-full flex flex-col overflow-hidden">
+    <div className="flex-1 w-full flex flex-col overflow-hidden bg-gradient-to-b from-cream via-cream to-cream/95">
       {/* Sticky upgrade reminder - appears after scrolling past paywall */}
       {!isPaidUser && lockedLyrics.length > 0 && (
         <StickyUpgradeReminder lockedCount={lockedLyrics.length} visible={showStickyReminder} />
@@ -551,9 +564,9 @@ export default function History() {
       {/* Timeline - scrollable container */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 pb-8">
-        {/* Vertical timeline line - prominent and thick */}
+        {/* Vertical timeline line - elegant fade effect */}
         <div className="relative">
-          <div className="absolute left-[6px] top-0 bottom-0 w-1 bg-gradient-to-b from-charcoal/30 via-charcoal/20 to-charcoal/10 rounded-full"
+          <div className="absolute left-[7px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-charcoal/40 via-charcoal/20 to-transparent rounded-full shadow-sm"
                style={{ marginLeft: '0' }} />
 
           <div className="relative pl-0">
