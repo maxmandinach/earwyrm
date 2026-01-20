@@ -77,14 +77,21 @@ export default function Collections() {
 
       for (const collection of collections) {
         if (collection.is_smart) {
-          // Smart collection: count lyrics with the tag
+          // Smart collection: fetch all user lyrics and filter client-side
           const { data, error } = await supabase
             .from('lyrics')
-            .select('id')
+            .select('id, tags')
             .eq('user_id', user.id)
-            .contains('tags', [collection.smart_tag])
 
-          counts[collection.id] = error ? 0 : (data?.length || 0)
+          if (error) {
+            counts[collection.id] = 0
+          } else {
+            // Filter client-side for lyrics containing the smart tag
+            const filtered = data?.filter(lyric =>
+              lyric.tags && lyric.tags.includes(collection.smart_tag)
+            ) || []
+            counts[collection.id] = filtered.length
+          }
         } else {
           // Manual collection: count from junction table
           const { data, error } = await supabase

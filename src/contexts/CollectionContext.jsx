@@ -182,16 +182,21 @@ export function CollectionProvider({ children }) {
     }
 
     if (collection.is_smart) {
-      // Smart collection: filter by tag
+      // Smart collection: fetch all user lyrics and filter client-side
       const { data, error } = await supabase
         .from('lyrics')
         .select('*')
         .eq('user_id', user.id)
-        .contains('tags', [collection.smart_tag])
-        .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data
+
+      // Filter client-side for lyrics containing the smart tag
+      const filtered = data?.filter(lyric =>
+        lyric.tags && lyric.tags.includes(collection.smart_tag)
+      ) || []
+
+      // Sort by created_at descending (newest first)
+      return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     } else {
       // Manual collection: join through junction table
       const { data, error } = await supabase
