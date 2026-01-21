@@ -88,7 +88,7 @@ function generateMockLyrics() {
   const now = new Date()
 
   return [
-    // Recent lyrics (last 30 days) - VISIBLE
+    // Recent lyrics (last month)
     {
       id: 'mock-1',
       content: 'And I know that you mean so well, but I am not a vessel for your good intent',
@@ -140,7 +140,7 @@ function generateMockLyrics() {
       is_public: false,
     },
 
-    // Old lyrics (31-90 days ago) - LOCKED/GHOST
+    // Older lyrics (1-3 months ago)
     {
       id: 'mock-6',
       content: 'What do you think I\'d see if I could walk away from me?',
@@ -195,7 +195,7 @@ function TimePeriodHeader({ title }) {
   )
 }
 
-function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
+function TimelineEntry({ lyric, note, section = 'default' }) {
   const theme = themes[lyric.theme] || themes.default
   const [expanded, setExpanded] = useState(false)
 
@@ -225,22 +225,14 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
     <div className="mb-8 animate-in fade-in-0 slide-in-from-bottom-2 duration-700 fill-mode-backwards"
          style={{ animationDelay: '50ms' }}>
       {/* Memory card - soft paper-like */}
-      <div className={`relative ${isLocked ? 'opacity-50' : ''}`}>
-        <div className={`max-w-2xl ${
-          isLocked
-            ? 'filter grayscale'
-            : ''
-        }`}>
+      <div className="relative">
+        <div className="max-w-2xl">
           <div
-            className={`p-8 rounded-sm transition-all duration-500 ${
-              isLocked
-                ? 'shadow-sm bg-charcoal/5'
-                : 'shadow-md hover:shadow-xl bg-white'
-            }`}
-            style={isLocked ? {} : cardStyle}
+            className="p-8 rounded-sm transition-all duration-500 shadow-md hover:shadow-xl bg-white"
+            style={cardStyle}
           >
             {/* Lyric content - preview or full */}
-            <div className={isLocked ? 'blur-sm' : ''}>
+            <div>
               <blockquote className="mb-4">
                 {displayLines.map((line, i) => (
                   <p key={i} className="mb-2 last:mb-0">
@@ -250,7 +242,7 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
               </blockquote>
 
               {/* Expand/collapse for long lyrics */}
-              {shouldTruncate && !isLocked && (
+              {shouldTruncate && (
                 <button
                   onClick={() => setExpanded(!expanded)}
                   className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors mt-2"
@@ -290,7 +282,7 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
           </div>
 
           {/* Note - marginalia style */}
-          {note && !isLocked && (
+          {note && (
             <div className="mt-4">
               <NoteDisplay content={note.content} />
             </div>
@@ -301,115 +293,8 @@ function TimelineEntry({ lyric, note, isLocked = false, section = 'default' }) {
   )
 }
 
-function PaywallBoundary({ lockedCount }) {
-  return (
-    <div className="my-16 max-w-2xl">
-      {/* Memory gate - feels like a natural part of the timeline */}
-      <div className="p-12 bg-white/50 backdrop-blur-sm rounded-sm shadow-md border border-charcoal/10">
-        <div className="text-center space-y-6">
-          {/* Gentle introduction */}
-          <div className="space-y-2">
-            <p className="text-sm text-charcoal/50 lowercase tracking-wide">
-              older memories
-            </p>
-            <h3 className="text-xl font-light text-charcoal leading-relaxed">
-              There's more here
-            </h3>
-          </div>
 
-          {/* Memory-oriented copy */}
-          <div className="space-y-3 max-w-md mx-auto">
-            <p className="text-sm text-charcoal/60 leading-relaxed">
-              You've been carrying these thoughts longer than you realized.
-            </p>
-            <p className="text-xs text-charcoal/40">
-              {lockedCount} {lockedCount === 1 ? 'lyric' : 'lyrics'} preserved beyond 30 days
-            </p>
-          </div>
 
-          {/* Clear but gentle CTA */}
-          <div className="pt-4">
-            <a
-              href="#"
-              className="inline-block px-8 py-3 text-sm text-charcoal border border-charcoal/30
-                       hover:border-charcoal/60 hover:bg-charcoal/5 transition-all rounded-sm"
-              onClick={(e) => {
-                e.preventDefault()
-                console.log('Upgrade clicked')
-              }}
-            >
-              Keep your full history
-            </a>
-            <p className="text-xs text-charcoal/30 mt-3">
-              Unlock everything, forever
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StickyUpgradeReminder({ lockedCount, visible }) {
-  if (!visible) return null
-
-  return (
-    <div className="sticky top-0 z-20 bg-charcoal text-cream border-b border-cream/20
-                    animate-in slide-in-from-top duration-300">
-      <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <svg className="w-4 h-4 text-cream/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <p className="text-sm text-cream/90">
-            <span className="font-medium">{lockedCount} more {lockedCount === 1 ? 'lyric' : 'lyrics'}</span> from your past
-          </p>
-        </div>
-        <a
-          href="#"
-          className="text-sm text-cream font-medium hover:text-cream/80 transition-colors whitespace-nowrap"
-          onClick={(e) => {
-            e.preventDefault()
-            console.log('Upgrade clicked from sticky banner')
-          }}
-        >
-          Unlock →
-        </a>
-      </div>
-    </div>
-  )
-}
-
-function InlineTeaser({ lockedCount, season }) {
-  return (
-    <div className="relative flex gap-6 py-5 my-8">
-      <div className="flex-shrink-0 w-4 flex flex-col items-center">
-        <div className="w-3 h-3 rounded-full bg-charcoal/20" />
-      </div>
-      <div className="flex-shrink-0 w-24" />
-      <div className="flex-1 min-w-0">
-        <div className="border-2 border-dashed border-charcoal/20 bg-charcoal/5 px-6 py-8 text-center">
-          <p className="text-sm text-charcoal/60 mb-2">
-            You also collected lyrics in <span className="font-medium">{season}</span>
-          </p>
-          <p className="text-xs text-charcoal/40 mb-4">
-            {lockedCount} {lockedCount === 1 ? 'lyric' : 'lyrics'} waiting beyond 30 days
-          </p>
-          <a
-            href="#"
-            className="inline-block text-xs text-charcoal underline hover:no-underline"
-            onClick={(e) => {
-              e.preventDefault()
-              console.log('Upgrade clicked from inline teaser')
-            }}
-          >
-            See what you're missing
-          </a>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 
 export default function History() {
@@ -419,10 +304,6 @@ export default function History() {
   const [loading, setLoading] = useState(true)
   const [useMockData, setUseMockData] = useState(true) // Start with mock data enabled
   const [realDataExists, setRealDataExists] = useState(false)
-  const [showStickyReminder, setShowStickyReminder] = useState(false)
-
-  // For now, assume all users are free users (no payment integration yet)
-  const isPaidUser = false
 
   useEffect(() => {
     async function fetchHistory() {
@@ -481,16 +362,6 @@ export default function History() {
     fetchHistory()
   }, [user, useMockData])
 
-  // Scroll detection for sticky reminder
-  useEffect(() => {
-    const handleScroll = () => {
-      // Show sticky reminder after scrolling 800px (roughly past paywall)
-      setShowStickyReminder(window.scrollY > 800)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   if (loading) {
     return (
@@ -521,32 +392,11 @@ export default function History() {
     )
   }
 
-  // Calculate 30-day cutoff
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-  // Separate visible and locked lyrics
-  const visibleLyrics = isPaidUser
-    ? lyrics
-    : lyrics.filter(lyric => new Date(lyric.created_at) >= thirtyDaysAgo)
-
-  const lockedLyrics = isPaidUser
-    ? []
-    : lyrics.filter(lyric => new Date(lyric.created_at) < thirtyDaysAgo)
-
-  // Take first 2 locked lyrics as teaser - just enough to create desire
-  const ghostCards = lockedLyrics.slice(0, 2)
-
-  // Group visible lyrics by time period
-  const groupedLyrics = groupLyricsByPeriod(visibleLyrics)
+  // Group all lyrics by time period
+  const groupedLyrics = groupLyricsByPeriod(lyrics)
 
   return (
     <div className="flex-1 w-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FDFDFB' }}>
-      {/* Sticky upgrade reminder - appears after scrolling past paywall */}
-      {!isPaidUser && lockedLyrics.length > 0 && (
-        <StickyUpgradeReminder lockedCount={lockedLyrics.length} visible={showStickyReminder} />
-      )}
-
       {/* Quiet header */}
       <div className="max-w-3xl mx-auto px-6 pt-16 pb-12 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
@@ -562,7 +412,7 @@ export default function History() {
         </div>
         <div className="flex items-center justify-between">
           <p className="text-xs text-charcoal/30">
-            {visibleLyrics.length} {visibleLyrics.length === 1 ? 'moment' : 'moments'}
+            {lyrics.length} {lyrics.length === 1 ? 'moment' : 'moments'}
           </p>
           {isDev && (
             <button
@@ -618,7 +468,7 @@ export default function History() {
               </>
             )}
 
-            {/* Earlier (within 30 days but older) */}
+            {/* Earlier */}
             {groupedLyrics.earlier.length > 0 && (
               <>
                 <TimePeriodHeader title="earlier" />
@@ -628,31 +478,6 @@ export default function History() {
                   ))}
                 </div>
               </>
-            )}
-
-            {/* Locked content section - paywall as natural boundary */}
-            {lockedLyrics.length > 0 && (
-              <div className="relative mt-20">
-                {/* Paywall appears inline */}
-                <PaywallBoundary lockedCount={lockedLyrics.length} />
-
-                {/* Faded previews below - hint at presence */}
-                <div className="mt-12 space-y-8 opacity-30 pointer-events-none">
-                  <TimePeriodHeader title={getSeason(lockedLyrics[0].created_at)} />
-                  {ghostCards.map((lyric) => (
-                    <TimelineEntry key={lyric.id} lyric={lyric} note={notes[lyric.id]} isLocked={true} section="seasonal" />
-                  ))}
-
-                  {/* Subtle indicator of more */}
-                  {lockedLyrics.length > 2 && (
-                    <div className="text-center py-8">
-                      <p className="text-xs text-charcoal/20">
-                        + {lockedLyrics.length - 2} more memories
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
             )}
           </div>
         </div>

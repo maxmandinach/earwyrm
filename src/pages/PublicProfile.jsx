@@ -109,44 +109,41 @@ export default function PublicProfile({ showHistory = false }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-cream">
-      {/* Header */}
-      <header className="px-4 py-4 flex justify-between items-center">
+      {/* Minimal header - logo only */}
+      <header className="px-4 py-4">
         <Link
           to={user ? "/home" : "/"}
           className="text-charcoal font-medium tracking-tight hover:opacity-70 transition-opacity"
         >
           earwyrm
         </Link>
-
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-charcoal-light">@{username}</span>
-
-          {user && (
-            <button
-              onClick={() => navigate('/home')}
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
-            >
-              Your page
-            </button>
-          )}
-        </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - artifact-first */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 pb-24">
         {isPrivate ? (
           <div className="text-center max-w-md">
             <p className="text-lg text-charcoal mb-2">This lyric is private</p>
             <p className="text-sm text-charcoal-light">
-              @{username} hasn't made their current lyric visible yet
+              This user hasn't made their current lyric visible yet
             </p>
           </div>
         ) : lyric ? (
-          <LyricCard lyric={lyric} showTimestamp={true} />
+          <div className="w-full max-w-2xl">
+            <LyricCard lyric={lyric} showTimestamp={true} />
+
+            {/* Subtle attribution below the lyric */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-charcoal/30">
+                shared by{' '}
+                <span className="text-charcoal/40">@{username}</span>
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="text-center max-w-md">
             <p className="text-charcoal-light">
-              @{username} hasn't shared a lyric yet
+              No lyric shared yet
             </p>
           </div>
         )}

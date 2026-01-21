@@ -76,12 +76,6 @@ export default function Layout() {
                     My Collections
                   </Link>
                   <Link
-                    to="/digest"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                  >
-                    Weekly digest
-                  </Link>
-                  <Link
                     to="/settings"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
