@@ -7,8 +7,6 @@ import Signup from './pages/Signup'
 import History from './pages/History'
 import Settings from './pages/Settings'
 import PublicProfile from './pages/PublicProfile'
-import WeeklyDigest from './pages/WeeklyDigestMock'
-import DigestTest from './pages/DigestTest'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import SharedLyric from './pages/SharedLyric'
@@ -97,22 +95,6 @@ export default function App() {
           }
         />
         <Route
-          path="digest"
-          element={
-            <ProtectedRoute>
-              <WeeklyDigest />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="digest-test"
-          element={
-            <ProtectedRoute>
-              <DigestTest />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="login"
           element={
             <AuthRoute>
@@ -134,7 +116,6 @@ export default function App() {
       {/* Public routes - no layout, accessible to all */}
       <Route path="/s/:token" element={<SharedLyric />} />
       <Route path="/@:username" element={<PublicProfile />} />
-      <Route path="/@:username/history" element={<PublicProfile showHistory={true} />} />
     </Routes>
   )
 }
