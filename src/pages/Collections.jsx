@@ -87,15 +87,15 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
           <div className="absolute right-6 top-6 z-20 bg-cream border border-charcoal/20 shadow-lg min-w-[120px]">
             <button
               onClick={handleEdit}
-              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors lowercase"
             >
-              Edit
+              edit
             </button>
             <button
               onClick={handleDelete}
-              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors lowercase"
             >
-              Delete
+              delete
             </button>
           </div>
         </>
@@ -255,7 +255,7 @@ export default function Collections() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-2xl font-medium text-charcoal">Collections</h1>
+          <h1 className="text-2xl font-light text-charcoal lowercase">collections</h1>
           <button
             onClick={() => showCreateForm ? handleCancelForm() : setShowCreateForm(true)}
             className="text-xs text-charcoal-light hover:text-charcoal transition-colors"
@@ -271,8 +271,8 @@ export default function Collections() {
       {/* Create/Edit collection form */}
       {showCreateForm && (
         <form onSubmit={handleCreateCollection} className="mb-8 p-6 border border-charcoal/20 bg-charcoal/5">
-          <h3 className="text-sm font-medium text-charcoal mb-4">
-            {editingCollection ? 'Edit collection' : 'Create new collection'}
+          <h3 className="text-sm font-light text-charcoal mb-4 lowercase">
+            {editingCollection ? 'edit collection' : 'create new collection'}
           </h3>
           <div className="space-y-4">
             <input
@@ -358,7 +358,7 @@ export default function Collections() {
               className="px-4 py-2 text-sm text-charcoal border border-charcoal/30 hover:border-charcoal/60
                          disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {isCreating ? 'Saving...' : (editingCollection ? 'Update collection' : 'Create collection')}
+              {isCreating ? 'saving...' : (editingCollection ? 'update collection' : 'create collection')}
             </button>
           </div>
         </form>

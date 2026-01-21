@@ -67,19 +67,19 @@ export default function Layout() {
                     to="/history"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    My History
+                    memory lane
                   </Link>
                   <Link
                     to="/collections"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    My Collections
+                    collections
                   </Link>
                   <Link
                     to="/settings"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    Settings
+                    settings
                   </Link>
                   <div className="my-1 border-t border-charcoal/10" />
                   <button
