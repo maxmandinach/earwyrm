@@ -85,7 +85,7 @@ function LyricEntry({ lyric, note, onRemove, showRemove }) {
             onClick={() => onRemove(lyric.id)}
             className="text-xs text-charcoal-light/40 hover:text-charcoal transition-colors opacity-0 group-hover:opacity-100"
           >
-            Remove
+            remove
           </button>
         )}
       </div>
@@ -264,7 +264,7 @@ export default function CollectionDetail() {
           <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-2`} />
           <div className="flex-1">
             <div className="flex justify-between items-start mb-2">
-              <h1 className="text-2xl font-medium text-charcoal">
+              <h1 className="text-2xl font-light text-charcoal lowercase">
                 {collection.name}
               </h1>
               {!collection.is_smart && (
@@ -272,7 +272,7 @@ export default function CollectionDetail() {
                   onClick={handleOpenAddLyrics}
                   className="text-xs text-charcoal-light hover:text-charcoal transition-colors"
                 >
-                  + Add lyrics
+                  + add lyrics
                 </button>
               )}
             </div>
@@ -325,7 +325,7 @@ export default function CollectionDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
           <div className="bg-cream w-full max-w-2xl flex flex-col max-h-[80vh]">
             <div className="p-6 border-b border-charcoal/10 flex justify-between items-center">
-              <h2 className="text-lg font-medium text-charcoal">Add lyrics to collection</h2>
+              <h2 className="text-lg font-light text-charcoal lowercase">add lyrics to collection</h2>
               <button
                 onClick={() => {
                   setShowAddLyrics(false)
@@ -398,7 +398,7 @@ export default function CollectionDetail() {
                 className="w-full py-3 text-sm font-medium text-charcoal border border-charcoal/30 hover:border-charcoal/60
                            disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Add {selectedLyrics.length > 0 && `${selectedLyrics.length} `}
+                add {selectedLyrics.length > 0 && `${selectedLyrics.length} `}
                 {selectedLyrics.length === 1 ? 'lyric' : 'lyrics'}
               </button>
             </div>

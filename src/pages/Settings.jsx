@@ -155,12 +155,12 @@ export default function Settings() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <h1 className="text-2xl font-light text-charcoal tracking-tight mb-8">Settings</h1>
+        <h1 className="text-2xl font-light text-charcoal tracking-tight mb-8 lowercase">settings</h1>
 
         <div className="space-y-8">
           {/* Username */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-medium text-charcoal mb-4">Username</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">username</h2>
 
             <form onSubmit={handleUpdateUsername} className="space-y-3">
               <div>
@@ -193,14 +193,14 @@ export default function Settings() {
                          disabled:opacity-50 disabled:cursor-not-allowed
                          transition-colors"
               >
-                {isUpdatingUsername ? 'Updating...' : 'Update username'}
+                {isUpdatingUsername ? 'updating...' : 'update username'}
               </button>
             </form>
           </section>
 
           {/* Public Profile URL */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-medium text-charcoal mb-4">Public Profile</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">public profile</h2>
 
             <div className="flex gap-2">
               <input
@@ -215,7 +215,7 @@ export default function Settings() {
                 className="px-6 py-2 text-sm border border-charcoal/30
                          hover:border-charcoal/60 transition-colors"
               >
-                {urlCopied ? 'Copied!' : 'Copy'}
+                {urlCopied ? 'copied!' : 'copy'}
               </button>
             </div>
             <p className="mt-2 text-xs text-charcoal-light/60">
@@ -225,7 +225,7 @@ export default function Settings() {
 
           {/* Email */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-medium text-charcoal mb-4">Email</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">email</h2>
 
             <input
               type="email"
@@ -241,7 +241,7 @@ export default function Settings() {
 
           {/* Password */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-medium text-charcoal mb-4">Change Password</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">change password</h2>
 
             <form onSubmit={handleUpdatePassword} className="space-y-3">
               <div>
@@ -302,14 +302,14 @@ export default function Settings() {
                          disabled:opacity-50 disabled:cursor-not-allowed
                          transition-colors"
               >
-                {isUpdatingPassword ? 'Updating...' : 'Update password'}
+                {isUpdatingPassword ? 'updating...' : 'update password'}
               </button>
             </form>
           </section>
 
           {/* Delete Account */}
           <section className="pb-8">
-            <h2 className="text-lg font-medium text-charcoal mb-4">Delete Account</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">delete account</h2>
 
             {!showDeleteConfirm ? (
               <>
@@ -322,7 +322,7 @@ export default function Settings() {
                            border border-red-600/30 hover:border-red-600/60
                            transition-colors"
                 >
-                  Delete account
+                  delete account
                 </button>
               </>
             ) : (
@@ -338,7 +338,7 @@ export default function Settings() {
                              hover:bg-red-700 disabled:opacity-50
                              transition-colors"
                   >
-                    {isDeleting ? 'Deleting...' : 'Yes, delete my account'}
+                    {isDeleting ? 'deleting...' : 'yes, delete my account'}
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
@@ -347,7 +347,7 @@ export default function Settings() {
                              border border-charcoal/20 hover:border-charcoal/40
                              disabled:opacity-50 transition-colors"
                   >
-                    Cancel
+                    cancel
                   </button>
                 </div>
               </div>

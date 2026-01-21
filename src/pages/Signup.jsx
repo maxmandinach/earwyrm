@@ -63,7 +63,7 @@ export default function Signup() {
   if (success) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <h1 className="text-2xl font-medium text-charcoal mb-8">Account created!</h1>
+        <h1 className="text-2xl font-light text-charcoal mb-8 lowercase">account created!</h1>
 
         <div className="w-full max-w-sm">
           <div className="mb-6 p-4 text-sm text-green-800 bg-green-50 border border-green-200">
@@ -82,9 +82,9 @@ export default function Signup() {
           <Link
             to="/login"
             className="block w-full py-3 text-sm font-medium text-center text-charcoal
-                       border border-charcoal/30 hover:border-charcoal/60 transition-colors"
+                       border border-charcoal/30 hover:border-charcoal/60 transition-colors lowercase"
           >
-            Go to Login
+            go to login
           </Link>
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function Signup() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-      <h1 className="text-2xl font-medium text-charcoal mb-8">Create an account</h1>
+      <h1 className="text-2xl font-light text-charcoal mb-8 lowercase">create an account</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm">
         {error && (
@@ -125,7 +125,7 @@ export default function Signup() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="email"
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
@@ -138,7 +138,7 @@ export default function Signup() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="password"
                 required
                 minLength={6}
                 className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
@@ -150,7 +150,7 @@ export default function Signup() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
               >
-                {showPassword ? 'Hide' : 'Show'}
+                {showPassword ? 'hide' : 'show'}
               </button>
             </div>
             <p className="mt-1 text-xs text-charcoal-light">
@@ -163,7 +163,7 @@ export default function Signup() {
               type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password"
+              placeholder="confirm password"
               required
               minLength={6}
               className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
@@ -175,7 +175,7 @@ export default function Signup() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
             >
-              {showConfirmPassword ? 'Hide' : 'Show'}
+              {showConfirmPassword ? 'hide' : 'show'}
             </button>
           </div>
         </div>
@@ -188,14 +188,14 @@ export default function Signup() {
                      disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors"
         >
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isLoading ? 'creating account...' : 'create account'}
         </button>
       </form>
 
       <p className="mt-8 text-sm text-charcoal-light">
-        Already have an account?{' '}
+        already have an account?{' '}
         <Link to="/login" className="text-charcoal underline hover:no-underline">
-          Sign in
+          sign in
         </Link>
       </p>
     </div>

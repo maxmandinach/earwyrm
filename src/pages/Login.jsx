@@ -28,7 +28,7 @@ export default function Login() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-      <h1 className="text-2xl font-medium text-charcoal mb-8">Sign in</h1>
+      <h1 className="text-2xl font-light text-charcoal mb-8 lowercase">sign in</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm">
         {error && (
@@ -42,7 +42,7 @@ export default function Login() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="email"
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
@@ -53,7 +53,7 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="password"
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
@@ -69,14 +69,14 @@ export default function Login() {
                      disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors"
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? 'signing in...' : 'sign in'}
         </button>
       </form>
 
       <p className="mt-8 text-sm text-charcoal-light">
-        Don't have an account?{' '}
+        don't have an account?{' '}
         <Link to="/signup" className="text-charcoal underline hover:no-underline">
-          Sign up
+          sign up
         </Link>
       </p>
     </div>
