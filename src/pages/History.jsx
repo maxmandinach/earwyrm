@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase-wrapper'
 import LyricCard from '../components/LyricCard'
-import NoteDisplay from '../components/NoteDisplay'
+import NoteEditor from '../components/NoteEditor'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../lib/utils'
 import { themes } from '../lib/themes'
@@ -281,12 +281,8 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
             </div>
           </div>
 
-          {/* Note - marginalia style */}
-          {note && (
-            <div className="mt-4">
-              <NoteDisplay content={note.content} />
-            </div>
-          )}
+          {/* Note - where interpretation lives */}
+          <NoteEditor lyricId={lyric.id} initialNote={note} />
         </div>
       </div>
     </div>

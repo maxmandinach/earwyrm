@@ -4,7 +4,7 @@ import { useCollection } from '../contexts/CollectionContext'
 import { useLyric } from '../contexts/LyricContext'
 import { useAuth } from '../contexts/AuthContext'
 import { themes } from '../lib/themes'
-import NoteDisplay from '../components/NoteDisplay'
+import NoteEditor from '../components/NoteEditor'
 import { supabase } from '../lib/supabase-wrapper'
 
 // Collection color mapping
@@ -72,8 +72,8 @@ function LyricEntry({ lyric, note, onRemove, showRemove }) {
         )}
       </div>
 
-      {/* Note - displayed subtly outside the card */}
-      {note && <NoteDisplay content={note.content} />}
+      {/* Note - where interpretation lives */}
+      <NoteEditor lyricId={lyric.id} initialNote={note} />
 
       {/* Date and Remove button */}
       <div className="flex items-center justify-between mt-2">
