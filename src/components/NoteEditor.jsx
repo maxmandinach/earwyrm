@@ -21,7 +21,7 @@ const GENTLE_PROMPTS = [
   "why does this matter to you?"
 ]
 
-export default function NoteEditor({ lyricId, initialNote, className = '' }) {
+export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange }) {
   const { saveNote } = useLyric()
   const [note, setNote] = useState(initialNote?.content || '')
   const [isEditing, setIsEditing] = useState(false)
@@ -29,6 +29,13 @@ export default function NoteEditor({ lyricId, initialNote, className = '' }) {
   const [showSaved, setShowSaved] = useState(false)
   const textareaRef = useRef(null)
   const hasNote = note && note.trim().length > 0
+
+  // Notify parent of edit state changes
+  useEffect(() => {
+    if (onEditStateChange) {
+      onEditStateChange(isEditing)
+    }
+  }, [isEditing, onEditStateChange])
 
   // Random prompt for variety (but consistent per mount)
   const [prompt] = useState(() =>
@@ -95,12 +102,12 @@ export default function NoteEditor({ lyricId, initialNote, className = '' }) {
     return (
       <div
         className={`group relative mt-4 ${className}`}
-        onClick={() => setIsEditing(true)}
       >
         {/* The note itself - margin scribble aesthetic */}
         <div
           className="px-4 py-3 text-xs leading-relaxed text-charcoal/40 italic border-l-2 border-charcoal/10 cursor-text transition-colors hover:border-charcoal/20 hover:text-charcoal/50"
           style={{ fontFamily: 'Georgia, serif' }}
+          onClick={() => setIsEditing(true)}
         >
           {note}
         </div>
@@ -134,7 +141,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '' }) {
         {!isEditing && !hasNote && (
           <button
             onClick={() => setIsEditing(true)}
-            className="w-full px-4 py-3 text-left text-xs leading-relaxed text-charcoal/25 italic border-l-2 border-charcoal/10 hover:border-charcoal/15 hover:text-charcoal/35 transition-colors cursor-text"
+            className="w-full px-4 py-3 text-left text-xs leading-relaxed text-charcoal/25 italic border border-charcoal/10 rounded-sm bg-charcoal/5 hover:bg-charcoal/8 hover:border-charcoal/15 hover:text-charcoal/35 transition-all cursor-text"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             {prompt}

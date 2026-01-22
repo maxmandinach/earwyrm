@@ -106,34 +106,46 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
     }
   }
 
+  const [isEditingNote, setIsEditingNote] = useState(false)
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
       {/* Lyric card with edit icon */}
       <div className="relative w-full max-w-lg">
         <LyricCard lyric={lyric} />
-        <button
-          onClick={() => setShowEditModal(true)}
-          className="absolute bottom-4 right-4 p-2 text-charcoal-light hover:text-charcoal transition-colors"
-          title="Edit lyric"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-        </button>
 
-        {/* Note - where interpretation lives */}
-        <NoteEditor lyricId={lyric.id} initialNote={currentNote} />
+        {/* Edit lyric button - hidden when editing note */}
+        {!isEditingNote && (
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="absolute bottom-4 right-4 p-2 text-charcoal-light hover:text-charcoal transition-colors"
+            title="Edit lyric"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Note - separated zone with clear clickable area */}
+      <div className="w-full max-w-lg mt-8">
+        <NoteEditor
+          lyricId={lyric.id}
+          initialNote={currentNote}
+          onEditStateChange={setIsEditingNote}
+        />
       </div>
 
       {/* Actions */}
