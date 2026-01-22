@@ -66,11 +66,15 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     setIsSaving(true)
     try {
       await saveNote(lyricId, note.trim())
+
+      // Update initialNote so cancel works correctly next time
+      initialNote = { content: note.trim() }
+
       setIsEditing(false)
 
-      // Quiet, ephemeral save confirmation
+      // Brief save confirmation with slight animation
       setShowSaved(true)
-      setTimeout(() => setShowSaved(false), 1500)
+      setTimeout(() => setShowSaved(false), 2000)
     } catch (err) {
       console.error('Error saving note:', err)
       // Silent failure - don't disrupt the reflective mood
@@ -80,6 +84,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   }
 
   function handleCancel() {
+    // Restore original note, don't clear it
     setNote(initialNote?.content || '')
     setIsEditing(false)
   }
@@ -101,20 +106,20 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   if (!isEditing && hasNote) {
     return (
       <div
-        className={`group relative mt-4 ${className}`}
+        className={`group relative mt-4 animate-in fade-in duration-300 ${className}`}
       >
-        {/* The note itself - margin scribble aesthetic */}
+        {/* The note itself - margin scribble aesthetic (not blockquote) */}
         <div
-          className="px-4 py-3 text-xs leading-relaxed text-charcoal/40 italic border-l-2 border-charcoal/10 cursor-text transition-colors hover:border-charcoal/20 hover:text-charcoal/50"
+          className="px-5 py-3 text-xs leading-loose text-charcoal/45 italic bg-charcoal/[0.02] cursor-text transition-all hover:bg-charcoal/[0.04] hover:text-charcoal/55"
           style={{ fontFamily: 'Georgia, serif' }}
           onClick={() => setIsEditing(true)}
         >
           {note}
         </div>
 
-        {/* Subtle edit affordance (appears on hover) */}
+        {/* Subtle edit affordance (always visible but quiet) */}
         <button
-          className="absolute right-2 top-2 text-xs text-charcoal/20 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-2 top-2 text-xs text-charcoal/25 hover:text-charcoal/50 transition-opacity"
           onClick={(e) => {
             e.stopPropagation()
             setIsEditing(true)
@@ -123,9 +128,9 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
           edit
         </button>
 
-        {/* Quiet saved indicator */}
+        {/* Save confirmation - more visible */}
         {showSaved && (
-          <div className="absolute right-2 bottom-2 text-xs text-charcoal/30 italic">
+          <div className="absolute right-2 bottom-2 text-xs text-charcoal/40 italic animate-in fade-in duration-200">
             saved
           </div>
         )}
@@ -141,7 +146,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
         {!isEditing && !hasNote && (
           <button
             onClick={() => setIsEditing(true)}
-            className="w-full px-4 py-3 text-left text-xs leading-relaxed text-charcoal/25 italic border border-charcoal/10 rounded-sm bg-charcoal/5 hover:bg-charcoal/8 hover:border-charcoal/15 hover:text-charcoal/35 transition-all cursor-text"
+            className="w-full px-5 py-3 text-left text-xs leading-loose text-charcoal/25 italic border border-charcoal/10 bg-charcoal/[0.02] hover:bg-charcoal/[0.04] hover:border-charcoal/15 hover:text-charcoal/35 transition-all cursor-text"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             {prompt}
@@ -159,10 +164,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
               placeholder={prompt}
               maxLength={500}
               rows={3}
-              className="w-full px-4 py-3 text-xs leading-relaxed text-charcoal/60 italic border-l-2 border-charcoal/20 bg-transparent focus:outline-none focus:border-charcoal/30 resize-none placeholder:text-charcoal/20"
+              className="w-full px-5 py-3 text-xs leading-loose text-charcoal/60 italic border border-charcoal/20 bg-charcoal/[0.02] focus:outline-none focus:border-charcoal/30 focus:bg-charcoal/[0.04] resize-none placeholder:text-charcoal/25"
               style={{
                 fontFamily: 'Georgia, serif',
-                minHeight: '60px'
+                minHeight: '80px'
               }}
             />
 
