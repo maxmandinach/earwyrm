@@ -6,6 +6,7 @@ import LyricForm from '../components/LyricForm'
 import EditLyricModal from '../components/EditLyricModal'
 import ShareModal from '../components/ShareModal'
 import VisibilityToggle from '../components/VisibilityToggle'
+import NoteEditor from '../components/NoteEditor'
 import { getRandomPrompt } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -44,9 +45,27 @@ function EmptyState({ onSetLyric }) {
 
 function LyricView({ lyric, onUpdate, onVisibilityChange }) {
   const { profile, user } = useAuth()
+  const { fetchNoteForLyric } = useLyric()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [allUserTags, setAllUserTags] = useState([])
+  const [currentNote, setCurrentNote] = useState(null)
+
+  // Fetch note for current lyric
+  useEffect(() => {
+    async function fetchNote() {
+      if (!lyric?.id) return
+
+      try {
+        const note = await fetchNoteForLyric(lyric.id)
+        setCurrentNote(note)
+      } catch (err) {
+        console.error('Error fetching note:', err)
+      }
+    }
+
+    fetchNote()
+  }, [lyric?.id, fetchNoteForLyric])
 
   // Fetch all unique tags from user's lyrics for autocomplete
   useEffect(() => {
@@ -112,6 +131,9 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
         </button>
+
+        {/* Note - where interpretation lives */}
+        <NoteEditor lyricId={lyric.id} initialNote={currentNote} />
       </div>
 
       {/* Actions */}
