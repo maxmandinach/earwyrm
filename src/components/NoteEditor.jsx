@@ -24,11 +24,19 @@ const GENTLE_PROMPTS = [
 export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange }) {
   const { saveNote } = useLyric()
   const [note, setNote] = useState(initialNote?.content || '')
+  const [savedNote, setSavedNote] = useState(initialNote?.content || '') // Track last saved state
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [justSaved, setJustSaved] = useState(false) // For highlighting
   const textareaRef = useRef(null)
   const hasNote = note && note.trim().length > 0
+
+  // Update saved note when initialNote changes
+  useEffect(() => {
+    setSavedNote(initialNote?.content || '')
+    setNote(initialNote?.content || '')
+  }, [initialNote?.content])
 
   // Notify parent of edit state changes
   useEffect(() => {
@@ -67,14 +75,22 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     try {
       await saveNote(lyricId, note.trim())
 
-      // Update initialNote so cancel works correctly next time
-      initialNote = { content: note.trim() }
+      // Update saved state
+      setSavedNote(note.trim())
 
       setIsEditing(false)
 
-      // Brief save confirmation with slight animation
+      // Show save feedback with highlight
+      setJustSaved(true)
       setShowSaved(true)
-      setTimeout(() => setShowSaved(false), 2000)
+
+      setTimeout(() => {
+        setJustSaved(false)
+      }, 800)
+
+      setTimeout(() => {
+        setShowSaved(false)
+      }, 2500)
     } catch (err) {
       console.error('Error saving note:', err)
       // Silent failure - don't disrupt the reflective mood
@@ -84,8 +100,8 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   }
 
   function handleCancel() {
-    // Restore original note, don't clear it
-    setNote(initialNote?.content || '')
+    // Restore to last saved state, not empty
+    setNote(savedNote)
     setIsEditing(false)
   }
 
@@ -110,7 +126,11 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       >
         {/* The note itself - margin scribble aesthetic (not blockquote) */}
         <div
-          className="px-5 py-3 text-xs leading-loose text-charcoal/45 italic bg-charcoal/[0.02] cursor-text transition-all hover:bg-charcoal/[0.04] hover:text-charcoal/55"
+          className={`px-5 py-3 text-xs leading-loose text-charcoal/45 italic cursor-text transition-all hover:bg-charcoal/[0.04] hover:text-charcoal/55 ${
+            justSaved
+              ? 'bg-green-50 text-charcoal/60'
+              : 'bg-charcoal/[0.02]'
+          }`}
           style={{ fontFamily: 'Georgia, serif' }}
           onClick={() => setIsEditing(true)}
         >
@@ -128,10 +148,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
           edit
         </button>
 
-        {/* Save confirmation - more visible */}
+        {/* Save confirmation - clear and visible */}
         {showSaved && (
-          <div className="absolute right-2 bottom-2 text-xs text-charcoal/40 italic animate-in fade-in duration-200">
-            saved
+          <div className="absolute right-2 bottom-2 text-xs text-green-700 font-medium animate-in fade-in slide-in-from-bottom-1 duration-200">
+            saved ✓
           </div>
         )}
       </div>
