@@ -32,11 +32,14 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   const textareaRef = useRef(null)
   const hasNote = note && note.trim().length > 0
 
-  // Update saved note when initialNote changes
+  // Update saved note when initialNote changes (but not if we're editing)
   useEffect(() => {
-    setSavedNote(initialNote?.content || '')
-    setNote(initialNote?.content || '')
-  }, [initialNote?.content])
+    if (!isEditing) {
+      const content = initialNote?.content || ''
+      setSavedNote(content)
+      setNote(content)
+    }
+  }, [initialNote?.content, isEditing])
 
   // Notify parent of edit state changes
   useEffect(() => {
@@ -71,12 +74,15 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   async function handleSave() {
     if (isSaving) return
 
+    console.log('Save clicked. Saving note:', note.trim())
     setIsSaving(true)
     try {
       await saveNote(lyricId, note.trim())
 
       // Update saved state
-      setSavedNote(note.trim())
+      const trimmedNote = note.trim()
+      setSavedNote(trimmedNote)
+      console.log('Note saved successfully. savedNote now:', trimmedNote)
 
       setIsEditing(false)
 
@@ -101,6 +107,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
 
   function handleCancel() {
     // Restore to last saved state, not empty
+    console.log('Cancel clicked. Restoring from savedNote:', savedNote)
     setNote(savedNote)
     setIsEditing(false)
   }
@@ -197,7 +204,12 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
                 {note.length}/500
               </span>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-center">
+                {showSaved && (
+                  <span className="text-xs text-green-700 font-medium animate-in fade-in slide-in-from-right-2 duration-200">
+                    saved ✓
+                  </span>
+                )}
                 <button
                   onClick={handleCancel}
                   className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
@@ -208,7 +220,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
                 <button
                   onClick={handleSave}
                   disabled={isSaving || note.trim().length === 0}
-                  className="text-xs text-charcoal/50 hover:text-charcoal disabled:text-charcoal/20 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1 text-xs text-cream bg-charcoal hover:bg-charcoal/80 disabled:bg-charcoal/20 disabled:cursor-not-allowed transition-colors"
                 >
                   {isSaving ? 'saving...' : 'save'}
                 </button>
