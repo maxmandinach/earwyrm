@@ -23,7 +23,7 @@ supabaseAuth.auth.onAuthStateChange((event, session) => {
 })
 
 // Custom fetch-based wrapper for database queries
-async function dbQuery(table, { select, insert, update, eq, single, limit } = {}) {
+async function dbQuery(table, { select, insert, update, upsert, delete: doDelete, eq, single, limit } = {}) {
   const headers = {
     'apikey': supabaseAnonKey,
     'Authorization': cachedAccessToken ? `Bearer ${cachedAccessToken}` : `Bearer ${supabaseAnonKey}`,
@@ -60,6 +60,19 @@ async function dbQuery(table, { select, insert, update, eq, single, limit } = {}
     if (update.eq) {
       const params = new URLSearchParams()
       for (const [key, value] of Object.entries(update.eq)) {
+        params.append(key, `eq.${value}`)
+      }
+      url += `?${params.toString()}`
+    }
+  } else if (upsert) {
+    method = 'POST'
+    body = JSON.stringify(upsert)
+    headers['Prefer'] = 'resolution=merge-duplicates,return=representation'
+  } else if (doDelete) {
+    method = 'DELETE'
+    if (eq) {
+      const params = new URLSearchParams()
+      for (const [key, value] of Object.entries(eq)) {
         params.append(key, `eq.${value}`)
       }
       url += `?${params.toString()}`
@@ -143,6 +156,34 @@ export const supabase = {
             .catch(reject)
         }
       })
-    })
+    }),
+
+    upsert: (data) => ({
+      select: () => ({
+        single: () => dbQuery(table, { upsert: data, single: true }),
+        then: (resolve, reject) => {
+          return dbQuery(table, { upsert: data })
+            .then(resolve)
+            .catch(reject)
+        }
+      }),
+      then: (resolve, reject) => {
+        return dbQuery(table, { upsert: data })
+          .then(resolve)
+          .catch(reject)
+      }
+    }),
+
+    delete: () => {
+      const buildDeleteQuery = (eqFilters = {}) => ({
+        eq: (key, value) => buildDeleteQuery({ ...eqFilters, [key]: value }),
+        then: (resolve, reject) => {
+          return dbQuery(table, { delete: true, eq: eqFilters })
+            .then(resolve)
+            .catch(reject)
+        }
+      })
+      return buildDeleteQuery()
+    }
   })
 }
