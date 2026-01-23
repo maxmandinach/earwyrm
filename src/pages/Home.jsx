@@ -186,7 +186,7 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
 }
 
 export default function Home() {
-  const { currentLyric, loading, setLyric, replaceLyric, setTheme, setLayout, setVisibility } = useLyric()
+  const { currentLyric, loading, setLyric, replaceLyric, setTheme, setVisibility } = useLyric()
 
   const handleUpdate = async (data) => {
     // Update lyric content (and song/artist metadata, tags)
@@ -200,11 +200,6 @@ export default function Home() {
     // Update theme if changed
     if (data.theme && data.theme !== currentLyric.theme) {
       await setTheme(data.theme)
-    }
-
-    // Update layout if changed
-    if (data.layout && data.layout !== currentLyric.layout) {
-      await setLayout(data.layout)
     }
   }
 

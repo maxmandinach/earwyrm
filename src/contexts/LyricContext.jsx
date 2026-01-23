@@ -49,7 +49,7 @@ export function LyricProvider({ children }) {
     fetchCurrentLyric()
   }, [fetchCurrentLyric])
 
-  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'default', layout = 'standard' }) {
+  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'default' }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
 
     try {
@@ -76,7 +76,6 @@ export function LyricProvider({ children }) {
           artist_name: artistName || null,
           tags: tags || [],
           theme,
-          layout,
           is_current: true,
           is_public: false,
         })
@@ -122,23 +121,12 @@ export function LyricProvider({ children }) {
     return updateLyric({ theme })
   }
 
-  async function setLayout(layout) {
-    return updateLyric({ layout })
-  }
-
   async function setVisibility(isPublic) {
     return updateLyric({ is_public: isPublic })
   }
 
-  async function replaceLyric({ content, songTitle, artistName, tags, theme, layout }) {
-    return setLyric({
-      content,
-      songTitle,
-      artistName,
-      tags: tags || [],
-      theme: theme || currentLyric?.theme || 'default',
-      layout: layout || currentLyric?.layout || 'standard',
-    })
+  async function replaceLyric({ content, songTitle, artistName, tags, theme }) {
+    return setLyric({ content, songTitle, artistName, tags: tags || [], theme: theme || currentLyric?.theme || 'default' })
   }
 
   async function fetchNoteForLyric(lyricId) {
@@ -211,7 +199,6 @@ export function LyricProvider({ children }) {
     setLyric,
     updateLyric,
     setTheme,
-    setLayout,
     setVisibility,
     replaceLyric,
     refreshLyric: fetchCurrentLyric,
