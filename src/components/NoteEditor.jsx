@@ -84,19 +84,21 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       setSavedNote(trimmedNote)
       console.log('Note saved successfully. savedNote now:', trimmedNote)
 
-      setIsEditing(false)
-
-      // Show save feedback with highlight
-      setJustSaved(true)
+      // Show save feedback BEFORE exiting edit mode
       setShowSaved(true)
 
+      // Wait so user can see "saved ✓" message
+      await new Promise(resolve => setTimeout(resolve, 1200))
+
+      // Now exit edit mode
+      setIsEditing(false)
+      setJustSaved(true)
+
+      // Clear feedback after a bit
       setTimeout(() => {
         setJustSaved(false)
-      }, 800)
-
-      setTimeout(() => {
         setShowSaved(false)
-      }, 2500)
+      }, 1500)
     } catch (err) {
       console.error('Error saving note:', err)
       // Silent failure - don't disrupt the reflective mood
