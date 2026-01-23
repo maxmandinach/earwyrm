@@ -207,24 +207,25 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
               </span>
 
               <div className="flex gap-3 items-center">
-                {showSaved && (
-                  <span className="text-xs text-green-700 font-medium animate-in fade-in slide-in-from-right-2 duration-200">
-                    saved ✓
-                  </span>
-                )}
                 <button
                   onClick={handleCancel}
                   className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
-                  disabled={isSaving}
+                  disabled={isSaving || showSaved}
                 >
                   cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={isSaving || note.trim().length === 0}
-                  className="px-3 py-1 text-xs text-cream bg-charcoal hover:bg-charcoal/80 disabled:bg-charcoal/20 disabled:cursor-not-allowed transition-colors"
+                  disabled={isSaving || showSaved || note.trim().length === 0}
+                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                    showSaved
+                      ? 'bg-green-600 text-white'
+                      : isSaving
+                      ? 'bg-charcoal/60 text-cream'
+                      : 'bg-charcoal text-cream hover:bg-charcoal/80'
+                  } disabled:cursor-not-allowed`}
                 >
-                  {isSaving ? 'saving...' : 'save'}
+                  {showSaved ? 'saved ✓' : isSaving ? 'saving...' : 'save'}
                 </button>
               </div>
             </div>
