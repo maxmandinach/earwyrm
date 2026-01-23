@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { themes } from '../lib/themes'
+import { layouts } from '../lib/layouts'
 import { generateShareToken, getShareableUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -46,6 +47,8 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
 
     const ctx = canvas.getContext('2d')
     const theme = themes[lyric.theme] || themes.default
+    const layout = layouts[lyric.layout] || layouts.standard
+    const config = layout.canvas
     const width = 1080
     const height = 1080
 
@@ -56,22 +59,46 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
     ctx.fillStyle = theme.backgroundColor
     ctx.fillRect(0, 0, width, height)
 
-    // Text settings
-    ctx.textAlign = theme.textAlign === 'left' ? 'left' : 'center'
+    // Draw letterbox bars for cinematic layout
+    if (config.letterbox) {
+      ctx.fillStyle = '#000000'
+      const barHeight = height * config.letterboxHeight
+      ctx.fillRect(0, 0, width, barHeight)
+      ctx.fillRect(0, height - barHeight, width, barHeight)
+    }
+
+    // Calculate font size for canvas (scale up from CSS rem, then apply layout scale)
+    const baseFontSize = parseFloat(theme.fontSize) * 32 * config.lyricScale
+    const fontFamily = theme.fontFamily.split(',')[0].replace(/'/g, '')
+
+    // Get lyric content (apply transform if specified)
+    let displayContent = lyric.content
+    if (config.lyricTransform === 'uppercase') {
+      displayContent = displayContent.toUpperCase()
+    }
+
+    // Text settings based on layout
+    ctx.textAlign = config.lyricAlign
     ctx.textBaseline = 'middle'
-
-    // Calculate font size for canvas (scale up from CSS rem)
-    const baseFontSize = parseFloat(theme.fontSize) * 32
-
-    // Draw lyric
     ctx.fillStyle = theme.textColor
-    ctx.font = `${theme.fontStyle} ${theme.fontWeight} ${baseFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
+    ctx.font = `${theme.fontStyle} ${theme.fontWeight} ${baseFontSize}px ${fontFamily}`
 
-    const x = theme.textAlign === 'left' ? 80 : width / 2
-    const maxWidth = width - 160
+    // Calculate max width based on layout
+    const padding = config.padding
+    const maxWidth = width * config.lyricMaxWidth
+
+    // Calculate X position based on alignment
+    let x
+    if (config.lyricAlign === 'left') {
+      x = padding.left
+    } else if (config.lyricAlign === 'right') {
+      x = width - padding.right
+    } else {
+      x = width / 2
+    }
 
     // Word wrap
-    const words = lyric.content.split(' ')
+    const words = displayContent.split(' ')
     const lines = []
     let currentLine = ''
 
@@ -90,24 +117,61 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
 
     const lineHeight = baseFontSize * parseFloat(theme.lineHeight)
     const totalTextHeight = lines.length * lineHeight
-    let startY = (height - totalTextHeight) / 2
 
+    // Calculate Y position based on layout
+    let startY
+    if (typeof config.lyricVertical === 'number') {
+      // Percentage positioning
+      startY = height * config.lyricVertical - totalTextHeight / 2
+    } else if (config.lyricVertical === 'top') {
+      startY = padding.top
+    } else if (config.lyricVertical === 'bottom') {
+      startY = height - padding.bottom - totalTextHeight
+    } else {
+      // center
+      startY = (height - totalTextHeight) / 2
+    }
+
+    // Draw lyric lines
     lines.forEach((line, i) => {
       ctx.fillText(line, x, startY + i * lineHeight + lineHeight / 2)
     })
 
     // Draw song/artist if present
     if (lyric.song_title || lyric.artist_name) {
-      const secondaryFontSize = baseFontSize * 0.5
-      ctx.fillStyle = theme.secondaryColor
-      ctx.font = `normal 400 ${secondaryFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
-
       let secondaryText = ''
       if (lyric.song_title) secondaryText += lyric.song_title
       if (lyric.song_title && lyric.artist_name) secondaryText += ' — '
       if (lyric.artist_name) secondaryText += lyric.artist_name
 
-      ctx.fillText(secondaryText, x, startY + totalTextHeight + 60)
+      if (config.attributionTransform === 'uppercase') {
+        secondaryText = secondaryText.toUpperCase()
+      }
+
+      const secondaryFontSize = baseFontSize * config.attributionScale
+      ctx.fillStyle = theme.secondaryColor
+      ctx.font = `normal 400 ${secondaryFontSize}px ${fontFamily}`
+
+      if (config.attributionPosition === 'right-vertical') {
+        // Editorial layout: vertical text on right edge
+        ctx.save()
+        ctx.translate(width - 50, height / 2)
+        ctx.rotate(Math.PI / 2)
+        ctx.textAlign = 'center'
+        ctx.fillText(secondaryText, 0, 0)
+        ctx.restore()
+      } else if (config.attributionPosition === 'bottom') {
+        // Brutalist: at the bottom center
+        ctx.textAlign = 'center'
+        ctx.fillText(secondaryText, width / 2, height - padding.bottom)
+      } else {
+        // Default: below the lyric
+        ctx.textAlign = config.attributionAlign
+        const attrX = config.attributionAlign === 'left' ? padding.left :
+                      config.attributionAlign === 'right' ? width - padding.right :
+                      width / 2
+        ctx.fillText(secondaryText, attrX, startY + totalTextHeight + config.lyricAttributionGap)
+      }
     }
 
     // Draw branding at bottom
