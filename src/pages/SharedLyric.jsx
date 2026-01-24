@@ -132,7 +132,7 @@ export default function SharedLyric() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 pb-24">
-        {lyric && <LyricCard lyric={lyric} showTimestamp={false} />}
+        {lyric && <LyricCard lyric={lyric} showTimestamp={false} linkable />}
       </main>
 
       {/* Signup banner for anonymous users */}

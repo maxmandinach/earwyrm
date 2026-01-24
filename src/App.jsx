@@ -12,6 +12,8 @@ import Terms from './pages/Terms'
 import SharedLyric from './pages/SharedLyric'
 import Collections from './pages/Collections'
 import CollectionDetail from './pages/CollectionDetail'
+import Explore from './pages/Explore'
+import Following from './pages/Following'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -108,6 +110,16 @@ export default function App() {
             <AuthRoute>
               <Signup />
             </AuthRoute>
+          }
+        />
+        <Route path="explore" element={<Explore />} />
+        <Route path="explore/:filterType/:filterValue" element={<Explore />} />
+        <Route
+          path="following"
+          element={
+            <ProtectedRoute>
+              <Following />
+            </ProtectedRoute>
           }
         />
         <Route path="privacy" element={<Privacy />} />

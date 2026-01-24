@@ -49,7 +49,7 @@ export function LyricProvider({ children }) {
     fetchCurrentLyric()
   }, [fetchCurrentLyric])
 
-  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'default' }) {
+  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature' }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
 
     try {
@@ -125,8 +125,15 @@ export function LyricProvider({ children }) {
     return updateLyric({ is_public: isPublic })
   }
 
-  async function replaceLyric({ content, songTitle, artistName, tags, theme }) {
-    return setLyric({ content, songTitle, artistName, tags: tags || [], theme: theme || currentLyric?.theme || 'default' })
+  async function replaceLyric({ content, songTitle, artistName, tags }) {
+    // Always update in place - preserves note, handles typo fixes
+    // For a brand new lyric, use setLyric directly (e.g., from empty state)
+    return updateLyric({
+      content,
+      song_title: songTitle || null,
+      artist_name: artistName || null,
+      tags: tags || [],
+    })
   }
 
   async function fetchNoteForLyric(lyricId) {
@@ -147,7 +154,7 @@ export function LyricProvider({ children }) {
     return data
   }
 
-  async function saveNote(lyricId, content) {
+  async function saveNote(lyricId, content, isPublic = false) {
     if (!user) throw new Error('Must be logged in to save notes')
     if (!content || !content.trim()) {
       // If content is empty, delete the note instead
@@ -161,6 +168,7 @@ export function LyricProvider({ children }) {
         lyric_id: lyricId,
         user_id: user.id,
         content: content.trim(),
+        is_public: isPublic,
       })
       .select()
       .single()

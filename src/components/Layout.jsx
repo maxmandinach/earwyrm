@@ -64,6 +64,18 @@ export default function Layout() {
               <div className="absolute right-0 mt-2 w-48 bg-cream border border-charcoal/20 shadow-lg z-50">
                 <nav className="py-2">
                   <Link
+                    to="/explore"
+                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    explore
+                  </Link>
+                  <Link
+                    to="/following"
+                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    following
+                  </Link>
+                  <Link
                     to="/history"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >

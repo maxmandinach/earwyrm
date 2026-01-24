@@ -5,7 +5,7 @@ import LyricCard from '../components/LyricCard'
 import NoteEditor from '../components/NoteEditor'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../lib/utils'
-import { themes } from '../lib/themes'
+import { signatureStyle } from '../lib/themes'
 
 // Get season name from date
 function getSeason(date) {
@@ -196,16 +196,16 @@ function TimePeriodHeader({ title }) {
 }
 
 function TimelineEntry({ lyric, note, section = 'default' }) {
-  const theme = themes[lyric.theme] || themes.default
+  const theme = signatureStyle
   const [expanded, setExpanded] = useState(false)
 
   const cardStyle = {
     backgroundColor: theme.backgroundColor,
     color: theme.textColor,
     fontFamily: theme.fontFamily,
-    fontSize: '0.9375rem',
+    fontSize: '1.5rem',
     fontWeight: theme.fontWeight,
-    lineHeight: '1.7',
+    lineHeight: theme.lineHeight,
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
@@ -226,9 +226,9 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
          style={{ animationDelay: '50ms' }}>
       {/* Memory card - soft paper-like */}
       <div className="relative">
-        <div className="max-w-2xl">
+        <div>
           <div
-            className="p-8 rounded-sm transition-all duration-500 shadow-md hover:shadow-xl bg-white"
+            className="p-6 border border-charcoal/10"
             style={cardStyle}
           >
             {/* Lyric content - preview or full */}
@@ -258,9 +258,23 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
                 {formatTimestampForSection(lyric.created_at, section)}
                 {(lyric.song_title || lyric.artist_name) && (
                   <span className="ml-3">
-                    {lyric.song_title && <span>{lyric.song_title}</span>}
+                    {lyric.song_title && (
+                      <Link
+                        to={`/explore/song/${encodeURIComponent(lyric.song_title)}`}
+                        className="hover:text-charcoal/50 transition-colors"
+                      >
+                        {lyric.song_title}
+                      </Link>
+                    )}
                     {lyric.song_title && lyric.artist_name && <span> · </span>}
-                    {lyric.artist_name && <span>{lyric.artist_name}</span>}
+                    {lyric.artist_name && (
+                      <Link
+                        to={`/explore/artist/${encodeURIComponent(lyric.artist_name)}`}
+                        className="hover:text-charcoal/50 transition-colors"
+                      >
+                        {lyric.artist_name}
+                      </Link>
+                    )}
                   </span>
                 )}
               </div>
@@ -269,12 +283,13 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
               {lyric.tags && lyric.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {lyric.tags.map((tag, index) => (
-                    <span
+                    <Link
                       key={index}
-                      className="text-xs text-charcoal/25"
+                      to={`/explore/tag/${encodeURIComponent(tag)}`}
+                      className="text-xs text-charcoal/25 hover:text-charcoal/50 transition-colors"
                     >
                       #{tag}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -282,7 +297,7 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
           </div>
 
           {/* Note - where interpretation lives */}
-          <NoteEditor lyricId={lyric.id} initialNote={note} />
+          <NoteEditor lyricId={lyric.id} initialNote={note} className="mt-4" />
         </div>
       </div>
     </div>
@@ -298,7 +313,7 @@ export default function History() {
   const [lyrics, setLyrics] = useState([])
   const [notes, setNotes] = useState({}) // Map of lyricId -> note
   const [loading, setLoading] = useState(true)
-  const [useMockData, setUseMockData] = useState(true) // Start with mock data enabled
+  const [useMockData, setUseMockData] = useState(false) // Use real data by default
   const [realDataExists, setRealDataExists] = useState(false)
 
   useEffect(() => {
@@ -394,7 +409,7 @@ export default function History() {
   return (
     <div className="flex-1 w-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FDFDFB' }}>
       {/* Quiet header */}
-      <div className="max-w-3xl mx-auto px-6 pt-16 pb-12 flex-shrink-0">
+      <div className="max-w-lg mx-auto px-6 pt-16 pb-12 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
             memory lane
@@ -425,7 +440,7 @@ export default function History() {
 
       {/* Timeline - scrollable container */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 pb-16">
+        <div className="max-w-lg mx-auto px-6 pb-16">
           {/* No timeline line - just gentle progression */}
           <div className="relative">
             {/* This Week */}

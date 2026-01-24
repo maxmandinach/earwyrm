@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { themes } from '../lib/themes'
+import { signatureStyle } from '../lib/themes'
 import { generateShareToken, getShareableUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -45,7 +45,7 @@ export default function ShareModal({ lyric, username, isPublic, onVisibilityChan
     if (!canvas) return
 
     const ctx = canvas.getContext('2d')
-    const theme = themes[lyric.theme] || themes.default
+    const theme = signatureStyle
     const width = 1080
     const height = 1080
 

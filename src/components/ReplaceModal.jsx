@@ -1,20 +1,13 @@
 import { useState } from 'react'
 import TagInput from './TagInput'
-import CollectionPicker from './CollectionPicker'
 
-export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [] }) {
-  const [content, setContent] = useState(lyric.content)
-  const [songTitle, setSongTitle] = useState(lyric.song_title || '')
-  const [artistName, setArtistName] = useState(lyric.artist_name || '')
-  const [tags, setTags] = useState(lyric.tags || [])
+export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
+  const [content, setContent] = useState('')
+  const [songTitle, setSongTitle] = useState('')
+  const [artistName, setArtistName] = useState('')
+  const [tags, setTags] = useState([])
   const [saveState, setSaveState] = useState('idle') // idle | saving | saved
   const [error, setError] = useState(null)
-
-  const handleClear = () => {
-    setContent('')
-    setSongTitle('')
-    setArtistName('')
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -23,7 +16,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
     setSaveState('saving')
     setError(null)
     try {
-      await onSave({
+      await onReplace({
         content: content.trim(),
         songTitle: songTitle.trim() || null,
         artistName: artistName.trim() || null,
@@ -35,8 +28,8 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
         onClose()
       }, 600)
     } catch (err) {
-      console.error('Error updating lyric:', err)
-      setError(err.message || 'Failed to update lyric. Please try again.')
+      console.error('Error creating lyric:', err)
+      setError(err.message || 'Failed to save lyric. Please try again.')
       setSaveState('idle')
     }
   }
@@ -46,7 +39,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
       <div className="bg-cream w-full max-w-2xl flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-charcoal/10">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium text-charcoal">Edit lyric</h2>
+            <h2 className="text-lg font-medium text-charcoal">New lyric</h2>
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
@@ -57,6 +50,18 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 flex flex-col">
+          {/* Gentle note */}
+          <p
+            className="mb-6 text-center opacity-70"
+            style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: '1.125rem',
+              color: '#8B7355',
+            }}
+          >
+            Your current lyric will move to Memory Lane
+          </p>
+
           {error && (
             <div className="mb-4 p-3 text-sm text-red-800 bg-red-50 border border-red-200">
               {error}
@@ -73,7 +78,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Paste or type a lyric"
+                placeholder="What's stuck in your head?"
                 rows={4}
                 className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-40"
                 style={{
@@ -86,7 +91,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
                 autoFocus
               />
 
-              {/* Song & Artist - always visible, integrated */}
+              {/* Song & Artist */}
               <div className="mt-4 pt-4 border-t border-charcoal/10 space-y-2">
                 <input
                   type="text"
@@ -114,19 +119,9 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
                 />
               </div>
             </div>
-
-            {content && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
-              >
-                Clear
-              </button>
-            )}
           </div>
 
-          {/* Tags Section - signature style */}
+          {/* Tags Section */}
           <div className="mt-6 w-full max-w-md mx-auto">
             <TagInput
               value={tags}
@@ -136,13 +131,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             />
           </div>
 
-          {/* Collections Section */}
-          <div className="mt-6 pt-6 border-t border-charcoal/10 w-full max-w-md mx-auto">
-            <h3 className="text-sm font-medium text-charcoal mb-3">Collections</h3>
-            <CollectionPicker lyricId={lyric.id} />
-          </div>
-
-          {/* Save Button - ceremonial */}
+          {/* Save Button */}
           <div className="mt-8 pt-8 flex justify-center">
             <button
               type="submit"
@@ -159,8 +148,8 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
               }}
             >
               {saveState === 'saving' && 'Saving...'}
-              {saveState === 'saved' && 'Saved ✓'}
-              {saveState === 'idle' && 'Save'}
+              {saveState === 'saved' && 'Saved!'}
+              {saveState === 'idle' && 'Save & Replace'}
             </button>
           </div>
         </form>

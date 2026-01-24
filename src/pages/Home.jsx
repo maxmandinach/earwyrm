@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import LyricCard from '../components/LyricCard'
 import LyricForm from '../components/LyricForm'
-import EditLyricModal from '../components/EditLyricModal'
+import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import VisibilityToggle from '../components/VisibilityToggle'
 import NoteEditor from '../components/NoteEditor'
@@ -43,10 +43,11 @@ function EmptyState({ onSetLyric }) {
   )
 }
 
-function LyricView({ lyric, onUpdate, onVisibilityChange }) {
+function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
   const { profile, user } = useAuth()
   const { fetchNoteForLyric } = useLyric()
-  const [showEditModal, setShowEditModal] = useState(false)
+  const [isEditingCard, setIsEditingCard] = useState(false)
+  const [showReplaceModal, setShowReplaceModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [allUserTags, setAllUserTags] = useState([])
   const [currentNote, setCurrentNote] = useState(null)
@@ -108,34 +109,70 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
 
   const [isEditingNote, setIsEditingNote] = useState(false)
 
+  const handleCardSave = async (data) => {
+    // Preserve existing tags when doing inline edit
+    await onUpdate({ ...data, tags: lyric.tags || [] })
+    setIsEditingCard(false)
+  }
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-      {/* Lyric card with edit icon */}
+      {/* Lyric card with inline editing */}
       <div className="relative w-full max-w-lg">
-        <LyricCard lyric={lyric} />
+        <LyricCard
+          lyric={lyric}
+          isEditing={isEditingCard}
+          onSave={handleCardSave}
+          onCancel={() => setIsEditingCard(false)}
+          linkable={!isEditingCard}
+        />
 
-        {/* Edit lyric button - hidden when editing note */}
-        {!isEditingNote && (
-          <button
-            onClick={() => setShowEditModal(true)}
-            className="absolute bottom-4 right-4 p-2 text-charcoal-light hover:text-charcoal transition-colors"
-            title="Edit lyric"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        {/* Edit & New buttons - hidden when editing */}
+        {!isEditingNote && !isEditingCard && (
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            {/* Edit (pencil) - inline editing */}
+            <button
+              onClick={() => setIsEditingCard(true)}
+              className="p-2 text-charcoal-light/50 hover:text-charcoal transition-colors"
+              title="Edit"
             >
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              </svg>
+            </button>
+
+            {/* New lyric (plus) */}
+            <button
+              onClick={() => setShowReplaceModal(true)}
+              className="p-2 text-charcoal-light/50 hover:text-charcoal transition-colors"
+              title="New lyric"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -145,6 +182,7 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
           lyricId={lyric.id}
           initialNote={currentNote}
           onEditStateChange={setIsEditingNote}
+          showVisibilityToggle
         />
       </div>
 
@@ -163,11 +201,10 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
         </button>
       </div>
 
-      {showEditModal && (
-        <EditLyricModal
-          lyric={lyric}
-          onSave={handleUpdate}
-          onClose={() => setShowEditModal(false)}
+      {showReplaceModal && (
+        <ReplaceModal
+          onReplace={onReplace}
+          onClose={() => setShowReplaceModal(false)}
           allUserTags={allUserTags}
         />
       )}
@@ -186,21 +223,26 @@ function LyricView({ lyric, onUpdate, onVisibilityChange }) {
 }
 
 export default function Home() {
-  const { currentLyric, loading, setLyric, replaceLyric, setTheme, setVisibility } = useLyric()
+  const { currentLyric, loading, setLyric, replaceLyric, setVisibility } = useLyric()
 
+  // Edit in place - keeps note attached
   const handleUpdate = async (data) => {
-    // Update lyric content (and song/artist metadata, tags)
     await replaceLyric({
       content: data.content,
-      song_title: data.song_title,
-      artist_name: data.artist_name,
+      songTitle: data.songTitle,
+      artistName: data.artistName,
       tags: data.tags,
     })
+  }
 
-    // Update theme if changed
-    if (data.theme && data.theme !== currentLyric.theme) {
-      await setTheme(data.theme)
-    }
+  // Create new lyric - archives current one to Memory Lane
+  const handleReplace = async (data) => {
+    await setLyric({
+      content: data.content,
+      songTitle: data.songTitle,
+      artistName: data.artistName,
+      tags: data.tags,
+    })
   }
 
   if (loading) {
@@ -219,6 +261,7 @@ export default function Home() {
     <LyricView
       lyric={currentLyric}
       onUpdate={handleUpdate}
+      onReplace={handleReplace}
       onVisibilityChange={setVisibility}
     />
   )

@@ -2,70 +2,60 @@ import { useState, useRef, useEffect } from 'react'
 import { useLyric } from '../contexts/LyricContext'
 
 /**
- * NoteEditor: Where interpretation lives
+ * NoteEditor: Marginalia for your lyrics
  *
- * A lyric answers: "What line stayed with me?"
- * A note answers: "Why did it stay?"
- *
- * Design principles:
- * - User voice first (never AI-generated)
- * - Private by default (feels like margin scribbles)
- * - Optional, never demanding (silence is allowed)
- * - Interpretive, not analytical (why it mattered, not what it means)
+ * Feels like a handwritten note tucked beside the lyric —
+ * not a form to fill out.
  */
 
 const GENTLE_PROMPTS = [
-  "why did this line stay with you?",
-  "what did this lyric capture for you?",
+  "why did this stay with you?",
+  "what does this capture?",
   "what made this resonate?",
-  "why does this matter to you?"
 ]
 
-export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange }) {
+export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange, showVisibilityToggle = false }) {
   const { saveNote } = useLyric()
   const [note, setNote] = useState(initialNote?.content || '')
-  const [savedNote, setSavedNote] = useState(initialNote?.content || '') // Track last saved state
+  const [savedNote, setSavedNote] = useState(initialNote?.content || '')
+  const [isPublic, setIsPublic] = useState(initialNote?.is_public || false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [showSaved, setShowSaved] = useState(false)
-  const [justSaved, setJustSaved] = useState(false) // For highlighting
   const textareaRef = useRef(null)
   const hasNote = note && note.trim().length > 0
 
-  // Update saved note when initialNote changes (but not if we're editing)
+  const [prompt] = useState(() =>
+    GENTLE_PROMPTS[Math.floor(Math.random() * GENTLE_PROMPTS.length)]
+  )
+
+  // Only sync from parent when initialNote actually changes (external update)
+  // Don't sync based on isEditing - that would reset after local saves
   useEffect(() => {
+    const content = initialNote?.content || ''
+    setSavedNote(content)
+    setIsPublic(initialNote?.is_public || false)
+    // Only update note if not currently editing
     if (!isEditing) {
-      const content = initialNote?.content || ''
-      setSavedNote(content)
       setNote(content)
     }
-  }, [initialNote?.content, isEditing])
+  }, [initialNote?.content, initialNote?.is_public])
 
-  // Notify parent of edit state changes
   useEffect(() => {
     if (onEditStateChange) {
       onEditStateChange(isEditing)
     }
   }, [isEditing, onEditStateChange])
 
-  // Random prompt for variety (but consistent per mount)
-  const [prompt] = useState(() =>
-    GENTLE_PROMPTS[Math.floor(Math.random() * GENTLE_PROMPTS.length)]
-  )
-
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current && isEditing) {
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+      textareaRef.current.style.height = Math.max(60, textareaRef.current.scrollHeight) + 'px'
     }
   }, [note, isEditing])
 
-  // Focus when entering edit mode
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus()
-      // Move cursor to end
       const len = textareaRef.current.value.length
       textareaRef.current.setSelectionRange(len, len)
     }
@@ -73,57 +63,68 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
 
   async function handleSave() {
     if (isSaving) return
+    if (note.trim() === savedNote) {
+      setIsEditing(false)
+      return
+    }
 
-    console.log('Save clicked. Saving note:', note.trim())
     setIsSaving(true)
     try {
-      await saveNote(lyricId, note.trim())
-
-      // Update saved state
-      const trimmedNote = note.trim()
-      setSavedNote(trimmedNote)
-      console.log('Note saved successfully. savedNote now:', trimmedNote)
-
-      // Show save feedback BEFORE exiting edit mode
-      setShowSaved(true)
-
-      // Wait so user can see "saved ✓" message
-      await new Promise(resolve => setTimeout(resolve, 1200))
-
-      // Now exit edit mode
+      await saveNote(lyricId, note.trim(), isPublic)
+      setSavedNote(note.trim())
       setIsEditing(false)
-      setJustSaved(true)
-
-      // Clear feedback after a bit
-      setTimeout(() => {
-        setJustSaved(false)
-        setShowSaved(false)
-      }, 1500)
     } catch (err) {
       console.error('Error saving note:', err)
-      // Silent failure - don't disrupt the reflective mood
     } finally {
       setIsSaving(false)
     }
   }
 
-  function handleCancel() {
-    // Restore to last saved state, not empty
-    console.log('Cancel clicked. Restoring from savedNote:', savedNote)
-    setNote(savedNote)
-    setIsEditing(false)
+  async function handleTogglePublic() {
+    if (isSaving || !hasNote) return
+    const newIsPublic = !isPublic
+    setIsPublic(newIsPublic)
+    setIsSaving(true)
+    try {
+      await saveNote(lyricId, note.trim(), newIsPublic)
+    } catch (err) {
+      console.error('Error toggling note visibility:', err)
+      setIsPublic(!newIsPublic) // revert on error
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleClear() {
+    if (isSaving) return
+    setIsSaving(true)
+    try {
+      await saveNote(lyricId, '')
+      setNote('')
+      setSavedNote('')
+      setIsEditing(false)
+    } catch (err) {
+      console.error('Error clearing note:', err)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function handleBlur(e) {
+    // Don't save on blur if clicking inside the component
+    if (e.relatedTarget?.closest('.note-editor')) return
+    handleSave()
   }
 
   function handleKeyDown(e) {
-    // Save on Cmd/Ctrl + Enter
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault()
       handleSave()
     }
-    // Cancel on Escape
     if (e.key === 'Escape') {
       e.preventDefault()
-      handleCancel()
+      setNote(savedNote)
+      setIsEditing(false)
     }
   }
 
@@ -131,113 +132,112 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   if (!isEditing && hasNote) {
     return (
       <div
-        className={`group relative mt-4 animate-in fade-in duration-300 ${className}`}
+        className={`note-editor relative ${className}`}
+        style={{
+          transform: 'rotate(-0.5deg)',
+          transformOrigin: 'left top',
+        }}
       >
-        {/* The note itself - margin scribble aesthetic (not blockquote) */}
         <div
-          className={`px-5 py-3 text-xs leading-loose text-charcoal/45 italic cursor-text transition-all hover:bg-charcoal/[0.04] hover:text-charcoal/55 ${
-            justSaved
-              ? 'bg-green-50 text-charcoal/60'
-              : 'bg-charcoal/[0.02]'
-          }`}
-          style={{ fontFamily: 'Georgia, serif' }}
           onClick={() => setIsEditing(true)}
+          className="cursor-text pl-4 py-2 border-l-2 border-charcoal/10 hover:border-charcoal/20 transition-colors"
         >
-          {note}
+          <p
+            className="text-sm text-charcoal/50 leading-relaxed"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+          >
+            {note}
+          </p>
         </div>
 
-        {/* Subtle edit affordance (always visible but quiet) */}
-        <button
-          className="absolute right-2 top-2 text-xs text-charcoal/25 hover:text-charcoal/50 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsEditing(true)
-          }}
-        >
-          edit
-        </button>
-
-        {/* Save confirmation - clear and visible */}
-        {showSaved && (
-          <div className="absolute right-2 bottom-2 text-xs text-green-700 font-medium animate-in fade-in slide-in-from-bottom-1 duration-200">
-            saved ✓
-          </div>
+        {/* Visibility toggle - only show on home */}
+        {showVisibilityToggle && (
+          <button
+            onClick={handleTogglePublic}
+            disabled={isSaving}
+            className="mt-2 ml-4 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors flex items-center gap-1.5"
+          >
+            {isPublic ? (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                visible on explore
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+                private note
+              </>
+            )}
+          </button>
         )}
       </div>
     )
   }
 
   // Edit mode OR empty state
-  if (isEditing || !hasNote) {
-    return (
-      <div className={`mt-4 ${className}`}>
-        {/* Empty state prompt (when no note exists and not editing) */}
-        {!isEditing && !hasNote && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="w-full px-5 py-3 text-left text-xs leading-loose text-charcoal/25 italic border border-charcoal/10 bg-charcoal/[0.02] hover:bg-charcoal/[0.04] hover:border-charcoal/15 hover:text-charcoal/35 transition-all cursor-text"
-            style={{ fontFamily: 'Georgia, serif' }}
+  return (
+    <div
+      className={`note-editor ${className}`}
+      style={{
+        transform: 'rotate(-0.5deg)',
+        transformOrigin: 'left top',
+      }}
+    >
+      {!isEditing && !hasNote ? (
+        // Empty state - gentle invitation
+        <button
+          onClick={() => setIsEditing(true)}
+          className="text-left pl-4 py-2 border-l-2 border-transparent hover:border-charcoal/10 transition-all group"
+        >
+          <p
+            className="text-charcoal/20 group-hover:text-charcoal/35 transition-colors"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
           >
             {prompt}
-          </button>
-        )}
-
-        {/* Editing surface */}
-        {isEditing && (
-          <div>
-            <textarea
-              ref={textareaRef}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={prompt}
-              maxLength={500}
-              rows={3}
-              className="w-full px-5 py-3 text-xs leading-loose text-charcoal/60 italic border border-charcoal/20 bg-charcoal/[0.02] focus:outline-none focus:border-charcoal/30 focus:bg-charcoal/[0.04] resize-none placeholder:text-charcoal/25"
-              style={{
-                fontFamily: 'Georgia, serif',
-                minHeight: '80px'
-              }}
-            />
-
-            {/* Quiet controls */}
-            <div className="flex items-center justify-between mt-2 px-2">
-              <span className="text-xs text-charcoal/30">
-                {note.length}/500
-              </span>
-
-              <div className="flex gap-3 items-center">
+          </p>
+        </button>
+      ) : isEditing ? (
+        // Editing
+        <div className="pl-4 border-l-2 border-charcoal/20">
+          <textarea
+            ref={textareaRef}
+            value={note}
+            onChange={(e) => setNote(e.target.value.slice(0, 500))}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder={prompt}
+            className="w-full bg-transparent text-charcoal/60 leading-relaxed resize-none focus:outline-none placeholder:text-charcoal/25"
+            style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: '1.25rem',
+              minHeight: '60px',
+            }}
+          />
+          <div className="flex items-center gap-3 mt-1 text-xs text-charcoal/30">
+            <span>{isSaving ? 'saving...' : 'auto-saves'}</span>
+            <span className="text-charcoal/20">·</span>
+            <span>esc to cancel</span>
+            {(note.trim() || savedNote) && (
+              <>
+                <span className="text-charcoal/20">·</span>
                 <button
-                  onClick={handleCancel}
-                  className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
-                  disabled={isSaving || showSaved}
+                  type="button"
+                  onClick={handleClear}
+                  className="text-charcoal/30 hover:text-charcoal/50 transition-colors"
                 >
-                  cancel
+                  clear
                 </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving || showSaved || note.trim().length === 0}
-                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                    showSaved
-                      ? 'bg-green-600 text-white'
-                      : isSaving
-                      ? 'bg-charcoal/60 text-cream'
-                      : 'bg-charcoal text-cream hover:bg-charcoal/80'
-                  } disabled:cursor-not-allowed`}
-                >
-                  {showSaved ? 'saved ✓' : isSaving ? 'saving...' : 'save'}
-                </button>
-              </div>
-            </div>
-
-            <p className="text-xs text-charcoal/25 mt-3 px-2 italic">
-              ⌘ + enter to save, esc to cancel
-            </p>
+              </>
+            )}
           </div>
-        )}
-      </div>
-    )
-  }
-
-  return null
+        </div>
+      ) : null}
+    </div>
+  )
 }

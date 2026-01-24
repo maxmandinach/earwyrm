@@ -155,7 +155,7 @@ export default function Settings() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <h1 className="text-2xl font-light text-charcoal tracking-tight mb-8 lowercase">settings</h1>
+        <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase mb-8">settings</h1>
 
         <div className="space-y-8">
           {/* Username */}
