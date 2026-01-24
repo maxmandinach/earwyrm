@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useCollection } from '../contexts/CollectionContext'
 import { useLyric } from '../contexts/LyricContext'
 import { useAuth } from '../contexts/AuthContext'
-import { themes } from '../lib/themes'
+import { signatureStyle } from '../lib/themes'
 import NoteEditor from '../components/NoteEditor'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -18,15 +18,15 @@ const collectionColors = {
 }
 
 function LyricEntry({ lyric, note, onRemove, showRemove }) {
-  const theme = themes[lyric.theme] || themes.default
+  const theme = signatureStyle
 
   const cardStyle = {
     backgroundColor: theme.backgroundColor,
     color: theme.textColor,
     fontFamily: theme.fontFamily,
-    fontSize: '0.875rem',
+    fontSize: '1.5rem',
     fontWeight: theme.fontWeight,
-    lineHeight: '1.5',
+    lineHeight: theme.lineHeight,
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
@@ -47,13 +47,13 @@ function LyricEntry({ lyric, note, onRemove, showRemove }) {
 
   return (
     <div className="py-6 border-b border-charcoal/10 last:border-b-0 group">
-      <div className="w-full p-4 mb-2" style={cardStyle}>
+      <div className="p-6 border border-charcoal/10 mb-3" style={cardStyle}>
         <blockquote className="mb-2">
           {lyric.content}
         </blockquote>
 
         {(lyric.song_title || lyric.artist_name) && (
-          <p className="text-xs mt-1.5" style={secondaryStyle}>
+          <p className="text-sm mt-2" style={secondaryStyle}>
             {lyric.song_title && <span>{lyric.song_title}</span>}
             {lyric.song_title && lyric.artist_name && <span> — </span>}
             {lyric.artist_name && <span>{lyric.artist_name}</span>}
@@ -229,7 +229,7 @@ export default function CollectionDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="max-w-lg mx-auto px-4 py-12">
         <p className="text-sm text-charcoal-light/60">Loading...</p>
       </div>
     )
@@ -237,7 +237,7 @@ export default function CollectionDetail() {
 
   if (!collection) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="max-w-lg mx-auto px-4 py-12">
         <p className="text-charcoal-light/60 mb-4">Collection not found</p>
         <Link to="/collections" className="text-sm text-charcoal hover:opacity-70 transition-opacity">
           ← Back to collections
@@ -249,7 +249,7 @@ export default function CollectionDetail() {
   const colorClass = collectionColors[collection.color] || collectionColors.charcoal
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
+    <div className="max-w-lg mx-auto px-4 py-12">
       {/* Back link */}
       <Link
         to="/collections"
@@ -264,7 +264,7 @@ export default function CollectionDetail() {
           <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-2`} />
           <div className="flex-1">
             <div className="flex justify-between items-start mb-2">
-              <h1 className="text-2xl font-light text-charcoal lowercase">
+              <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
                 {collection.name}
               </h1>
               {!collection.is_smart && (
@@ -346,7 +346,6 @@ export default function CollectionDetail() {
               ) : (
                 <div className="space-y-4">
                   {availableLyrics.map((lyric) => {
-                    const theme = themes[lyric.theme] || themes.default
                     const isSelected = selectedLyrics.includes(lyric.id)
 
                     return (

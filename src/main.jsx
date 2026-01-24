@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { LyricProvider } from './contexts/LyricContext'
 import { CollectionProvider } from './contexts/CollectionContext'
+import { FollowProvider } from './contexts/FollowContext'
 import App from './App'
 import './index.css'
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <LyricProvider>
           <CollectionProvider>
-            <App />
+            <FollowProvider>
+              <App />
+            </FollowProvider>
           </CollectionProvider>
         </LyricProvider>
       </AuthProvider>

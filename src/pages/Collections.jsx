@@ -255,7 +255,7 @@ export default function Collections() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-2xl font-light text-charcoal lowercase">collections</h1>
+          <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">collections</h1>
           <button
             onClick={() => showCreateForm ? handleCancelForm() : setShowCreateForm(true)}
             className="text-xs text-charcoal-light hover:text-charcoal transition-colors"

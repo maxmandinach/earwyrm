@@ -130,7 +130,7 @@ export default function PublicProfile({ showHistory = false }) {
           </div>
         ) : lyric ? (
           <div className="w-full max-w-2xl">
-            <LyricCard lyric={lyric} showTimestamp={true} />
+            <LyricCard lyric={lyric} showTimestamp={true} linkable />
 
             {/* Subtle attribution below the lyric */}
             <div className="mt-6 text-center">

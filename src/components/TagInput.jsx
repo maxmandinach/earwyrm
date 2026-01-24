@@ -1,18 +1,24 @@
 import { useState, useRef, useEffect } from 'react'
 
-export default function TagInput({ value = [], onChange, suggestions = [] }) {
+// Trending/suggested tags for new users
+const TRENDING_TAGS = ['Nostalgia', 'Late Night', 'Driving', 'Heartbreak', 'Summer', 'Hopeful']
+
+export default function TagInput({ value = [], onChange, suggestions = [], showSuggestionsOnFocus = false }) {
   const [inputValue, setInputValue] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef(null)
 
+  // Combine user suggestions with trending, prioritizing user's tags
+  const allSuggestions = [...new Set([...suggestions, ...TRENDING_TAGS])]
+
   // Filter suggestions based on input and exclude already selected tags
-  const filteredSuggestions = suggestions
+  const filteredSuggestions = allSuggestions
     .filter(tag =>
-      tag.toLowerCase().includes(inputValue.toLowerCase().trim()) &&
+      (inputValue.trim() === '' || tag.toLowerCase().includes(inputValue.toLowerCase().trim())) &&
       !value.map(t => t.toLowerCase()).includes(tag.toLowerCase())
     )
-    .slice(0, 5) // Limit to 5 suggestions
+    .slice(0, 6) // Limit to 6 suggestions
 
   // Add a tag
   const addTag = (tag) => {
@@ -91,69 +97,82 @@ export default function TagInput({ value = [], onChange, suggestions = [] }) {
 
   return (
     <div className="relative" ref={inputRef}>
-      {/* Tag chips display */}
+      {/* Tag chips display - signature style */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {value.map((tag, index) => (
             <span
               key={index}
-              className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-charcoal/10 text-charcoal rounded-full"
+              className="inline-flex items-center gap-1.5 px-3 py-1"
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: '1.125rem',
+                backgroundColor: '#FBF8F3',
+                color: '#8B7355',
+                border: '1px solid rgba(139, 115, 85, 0.3)',
+              }}
             >
               #{tag}
               <button
                 type="button"
                 onClick={() => removeTag(index)}
-                className="hover:text-charcoal/60 transition-colors"
+                className="opacity-50 hover:opacity-100 transition-opacity"
                 aria-label={`Remove ${tag} tag`}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="3" y1="3" x2="11" y2="11" />
-                  <line x1="11" y1="3" x2="3" y2="11" />
-                </svg>
+                ×
               </button>
             </span>
           ))}
         </div>
       )}
 
-      {/* Input field */}
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          if (inputValue.trim().length > 0) {
-            setShowSuggestions(true)
-          }
-        }}
-        placeholder={value.length === 0 ? "Add tags (press Enter or comma)" : "Add another tag..."}
-        className="w-full px-4 py-2 text-sm bg-transparent border border-charcoal/20
-                   focus:border-charcoal/40 focus:outline-none
-                   placeholder:text-charcoal-light/50 text-charcoal"
-      />
+      {/* Input field - signature style */}
+      <div
+        className="px-4 py-3 border border-charcoal/10"
+        style={{ backgroundColor: '#FBF8F3' }}
+      >
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (showSuggestionsOnFocus || inputValue.trim().length > 0) {
+              setShowSuggestions(true)
+            }
+          }}
+          placeholder={value.length === 0 ? "Add a tag..." : "Add another..."}
+          className="w-full bg-transparent focus:outline-none placeholder:opacity-40"
+          style={{
+            fontFamily: "'Caveat', cursive",
+            fontSize: '1.25rem',
+            color: '#3D3226',
+          }}
+        />
+      </div>
 
-      {/* Autocomplete suggestions */}
+      {/* Autocomplete suggestions - signature style */}
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-cream border border-charcoal/20 shadow-lg max-h-48 overflow-auto">
+        <div
+          className="absolute z-10 w-full mt-1 border border-charcoal/10 shadow-lg max-h-48 overflow-auto"
+          style={{ backgroundColor: '#FBF8F3' }}
+        >
+          <div className="px-3 py-1.5 text-xs text-charcoal/40 border-b border-charcoal/10">
+            {suggestions.length > 0 ? 'Your tags & trending' : 'Trending tags'}
+          </div>
           {filteredSuggestions.map((suggestion, index) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => addTag(suggestion)}
-              className={`w-full px-4 py-2 text-sm text-left transition-colors ${
-                index === selectedIndex
-                  ? 'bg-charcoal/10 text-charcoal'
-                  : 'text-charcoal-light hover:bg-charcoal/5'
+              className={`w-full px-4 py-2 text-left transition-colors ${
+                index === selectedIndex ? 'bg-charcoal/10' : 'hover:bg-charcoal/5'
               }`}
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: '1.125rem',
+                color: '#8B7355',
+              }}
             >
               #{suggestion}
             </button>
