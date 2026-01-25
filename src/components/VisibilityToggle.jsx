@@ -37,7 +37,7 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
   )
 }
 
-export default function VisibilityToggle({ isPublic, onChange, disabled = false, showHelper = false }) {
+export default function VisibilityToggle({ isPublic, onChange, disabled = false }) {
   const [showConfirm, setShowConfirm] = useState(false)
 
   const handleToggle = () => {
@@ -57,13 +57,12 @@ export default function VisibilityToggle({ isPublic, onChange, disabled = false,
 
   return (
     <>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         <button
           type="button"
           onClick={handleToggle}
           disabled={disabled}
           className="flex items-center gap-2 text-sm group disabled:opacity-50 disabled:cursor-not-allowed"
-          title={isPublic ? "Visible on Explore and your profile" : "Only you can see this"}
         >
           <div className={`relative w-11 h-6 rounded-full transition-colors ${
             isPublic ? 'bg-charcoal' : 'bg-charcoal/20'
@@ -76,11 +75,9 @@ export default function VisibilityToggle({ isPublic, onChange, disabled = false,
             {isPublic ? 'public' : 'private'}
           </span>
         </button>
-        {showHelper && !isPublic && (
-          <p className="text-xs text-charcoal-light/60 ml-13">
-            Can still be shared via link
-          </p>
-        )}
+        <p className="text-xs text-charcoal/30 ml-13">
+          {isPublic ? 'on Explore + your profile' : 'shareable via link'}
+        </p>
       </div>
 
       {showConfirm && (
