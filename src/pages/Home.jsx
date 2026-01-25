@@ -187,6 +187,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
           lyricId={lyric.id}
           initialNote={currentNote}
           onEditStateChange={setIsEditingNote}
+          onNoteChange={setCurrentNote}
         />
       </div>
 
