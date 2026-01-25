@@ -63,6 +63,17 @@ export default function Layout() {
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-cream border border-charcoal/20 shadow-lg z-50">
                 <nav className="py-2">
+                  {/* Your artifact */}
+                  <Link
+                    to="/home"
+                    className="block px-4 py-2 text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
+                  >
+                    home
+                  </Link>
+
+                  <div className="my-1 border-t border-charcoal/10" />
+
+                  {/* Discover */}
                   <Link
                     to="/explore"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
@@ -75,6 +86,10 @@ export default function Layout() {
                   >
                     following
                   </Link>
+
+                  <div className="my-1 border-t border-charcoal/10" />
+
+                  {/* Your archive */}
                   <Link
                     to="/history"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
@@ -87,18 +102,21 @@ export default function Layout() {
                   >
                     collections
                   </Link>
+
+                  <div className="my-1 border-t border-charcoal/10" />
+
+                  {/* Meta */}
                   <Link
                     to="/settings"
                     className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     settings
                   </Link>
-                  <div className="my-1 border-t border-charcoal/10" />
                   <button
                     onClick={signOut}
                     className="w-full text-left px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
-                    Sign out
+                    sign out
                   </button>
                 </nav>
               </div>
