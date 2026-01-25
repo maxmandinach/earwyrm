@@ -161,7 +161,7 @@ export function LyricProvider({ children }) {
       return deleteNote(lyricId)
     }
 
-    // Upsert (insert or update)
+    // Upsert (insert or update) - specify conflict columns for the unique constraint
     const { data, error } = await supabase
       .from('lyric_notes')
       .upsert({
@@ -169,7 +169,7 @@ export function LyricProvider({ children }) {
         user_id: user.id,
         content: content.trim(),
         is_public: isPublic,
-      })
+      }, { onConflict: 'lyric_id,user_id' })
       .select()
       .single()
 

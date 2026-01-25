@@ -45,7 +45,7 @@ function EmptyState({ onSetLyric }) {
 
 function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
   const { profile, user } = useAuth()
-  const { fetchNoteForLyric } = useLyric()
+  const { fetchNoteForLyric, saveNote } = useLyric()
   const [isEditingCard, setIsEditingCard] = useState(false)
   const [showReplaceModal, setShowReplaceModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -102,6 +102,11 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
   const handleVisibilityChange = async (isPublic) => {
     try {
       await onVisibilityChange(isPublic)
+      // Also update note visibility if there's a note
+      if (currentNote?.content) {
+        await saveNote(lyric.id, currentNote.content, isPublic)
+        setCurrentNote(prev => prev ? { ...prev, is_public: isPublic } : null)
+      }
     } catch (err) {
       console.error('Error changing visibility:', err)
     }
@@ -182,7 +187,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
           lyricId={lyric.id}
           initialNote={currentNote}
           onEditStateChange={setIsEditingNote}
-          showVisibilityToggle
         />
       </div>
 
@@ -212,6 +216,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
       {showShareModal && (
         <ShareModal
           lyric={lyric}
+          note={currentNote}
           username={profile?.username}
           isPublic={lyric.is_public}
           onVisibilityChange={handleVisibilityChange}

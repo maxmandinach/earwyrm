@@ -22,23 +22,25 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const textareaRef = useRef(null)
+  const isSavingRef = useRef(false) // Track saving state without triggering re-renders
   const hasNote = note && note.trim().length > 0
 
   const [prompt] = useState(() =>
     GENTLE_PROMPTS[Math.floor(Math.random() * GENTLE_PROMPTS.length)]
   )
 
-  // Only sync from parent when initialNote actually changes (external update)
-  // Don't sync based on isEditing - that would reset after local saves
+  // Sync note content from parent (but not isPublic - that's only changed locally via toggle)
+  // Only sync when lyricId changes (different lyric) to avoid overwriting during edits
   useEffect(() => {
     const content = initialNote?.content || ''
     setSavedNote(content)
-    setIsPublic(initialNote?.is_public || false)
-    // Only update note if not currently editing
-    if (!isEditing) {
-      setNote(content)
-    }
-  }, [initialNote?.content, initialNote?.is_public])
+    setNote(content)
+  }, [lyricId])
+
+  // Sync isPublic only on initial mount or when lyricId changes (different lyric)
+  useEffect(() => {
+    setIsPublic(initialNote?.is_public ?? false)
+  }, [lyricId])
 
   useEffect(() => {
     if (onEditStateChange) {
@@ -68,15 +70,19 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       return
     }
 
+    isSavingRef.current = true
     setIsSaving(true)
     try {
       await saveNote(lyricId, note.trim(), isPublic)
       setSavedNote(note.trim())
-      setIsEditing(false)
     } catch (err) {
       console.error('Error saving note:', err)
+      // Still update savedNote to prevent re-save attempts
+      setSavedNote(note.trim())
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
+      setIsEditing(false) // Always exit edit mode
     }
   }
 
@@ -84,6 +90,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     if (isSaving || !hasNote) return
     const newIsPublic = !isPublic
     setIsPublic(newIsPublic)
+    isSavingRef.current = true
     setIsSaving(true)
     try {
       await saveNote(lyricId, note.trim(), newIsPublic)
@@ -91,12 +98,14 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       console.error('Error toggling note visibility:', err)
       setIsPublic(!newIsPublic) // revert on error
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
     }
   }
 
   async function handleClear() {
     if (isSaving) return
+    isSavingRef.current = true
     setIsSaving(true)
     try {
       await saveNote(lyricId, '')
@@ -106,6 +115,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     } catch (err) {
       console.error('Error clearing note:', err)
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
     }
   }
