@@ -143,16 +143,23 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       attributionY += 60
     }
 
-    // Draw note if included and present (styled like marginalia, no quotes)
+    // Draw note if included and present (styled like marginalia - left-aligned with border)
     if (includeNote && hasNote) {
-      const noteY = isTall ? height * 0.65 : attributionY + 50
-      const noteFontSize = baseFontSize * 0.55
-      const noteMaxWidth = width - 240
+      const noteX = 120 // Left margin
+      const noteY = isTall ? height * 0.62 : attributionY + 60
+      const noteFontSize = baseFontSize * 0.7
+      const noteMaxWidth = width - 200
+
+      // Draw left border line
+      ctx.strokeStyle = theme.textColor
+      ctx.globalAlpha = 0.15
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(noteX - 16, noteY - 10)
 
       // Use Caveat for handwritten feel, matching the card
-      ctx.fillStyle = theme.textColor
-      ctx.globalAlpha = 0.45
       ctx.font = `normal 400 ${noteFontSize}px Caveat, cursive`
+      ctx.textAlign = 'left'
 
       // Word wrap the note
       const noteWords = note.content.split(' ')
@@ -172,10 +179,22 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       }
       noteLines.push(noteLine)
 
-      const noteLineHeight = noteFontSize * 1.5
+      const noteLineHeight = noteFontSize * 1.4
+      const totalNoteHeight = noteLines.length * noteLineHeight
+
+      // Complete the border line
+      ctx.lineTo(noteX - 16, noteY + totalNoteHeight)
+      ctx.stroke()
+
+      // Draw the note text
+      ctx.fillStyle = theme.textColor
+      ctx.globalAlpha = 0.5
       noteLines.forEach((line, i) => {
-        ctx.fillText(line, width / 2, noteY + i * noteLineHeight)
+        ctx.fillText(line, noteX, noteY + i * noteLineHeight)
       })
+
+      // Reset alignment for subsequent draws
+      ctx.textAlign = 'center'
       ctx.globalAlpha = 1.0
     }
 
