@@ -14,7 +14,7 @@ const GENTLE_PROMPTS = [
   "what made this resonate?",
 ]
 
-export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange, showVisibilityToggle = false }) {
+export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange, onNoteChange, showVisibilityToggle = false }) {
   const { saveNote } = useLyric()
   const [note, setNote] = useState(initialNote?.content || '')
   const [savedNote, setSavedNote] = useState(initialNote?.content || '')
@@ -75,6 +75,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     try {
       await saveNote(lyricId, note.trim(), isPublic)
       setSavedNote(note.trim())
+      // Notify parent of the change
+      if (onNoteChange) {
+        onNoteChange(note.trim() ? { content: note.trim(), is_public: isPublic } : null)
+      }
     } catch (err) {
       console.error('Error saving note:', err)
       // Still update savedNote to prevent re-save attempts
@@ -112,6 +116,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       setNote('')
       setSavedNote('')
       setIsEditing(false)
+      // Notify parent that note was cleared
+      if (onNoteChange) {
+        onNoteChange(null)
+      }
     } catch (err) {
       console.error('Error clearing note:', err)
     } finally {
