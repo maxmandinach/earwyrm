@@ -4,16 +4,16 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
 
-function AnonymousSignupBanner() {
+function AnonymousFooter({ username }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-charcoal/95 backdrop-blur-sm border-t border-charcoal/20 py-4 px-6 z-20">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        <p className="text-sm text-cream/90">
-          Create your own lyric on earwyrm
+    <div className="fixed bottom-0 left-0 right-0 bg-cream border-t border-charcoal/10 py-4 px-6 z-20">
+      <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
+        <p className="text-sm text-charcoal/50">
+          Save the lyrics that stay with you
         </p>
         <Link
           to="/signup"
-          className="text-sm text-cream font-medium hover:text-cream/80 transition-colors underline"
+          className="text-sm text-charcoal font-medium hover:text-charcoal/70 transition-colors"
         >
           Sign up
         </Link>
@@ -26,6 +26,7 @@ export default function SharedLyric() {
   const { token } = useParams()
   const { user } = useAuth()
   const [lyric, setLyric] = useState(null)
+  const [note, setNote] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -65,6 +66,20 @@ export default function SharedLyric() {
         } else {
           setProfile(profileData)
         }
+
+        // Fetch note if it exists and is public (or if lyric owner shared it)
+        const { data: noteData, error: noteError } = await supabase
+          .from('lyric_notes')
+          .select('*')
+          .eq('lyric_id', lyricData.id)
+          .eq('is_public', true)
+          .single()
+
+        if (noteError && noteError.code !== 'PGRST116') {
+          console.error('Error fetching note:', noteError)
+        } else if (noteData) {
+          setNote(noteData)
+        }
       } catch (err) {
         console.error('Error fetching shared lyric:', err)
         setError('Something went wrong')
@@ -89,10 +104,10 @@ export default function SharedLyric() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-cream px-4">
         <p className="text-charcoal mb-4">{error}</p>
         <Link
-          to={user ? "/home" : "/"}
+          to={user ? "/home" : "/explore"}
           className="text-sm text-charcoal-light underline hover:no-underline"
         >
-          {user ? 'Go to your page' : 'Go to earwyrm'}
+          {user ? 'Go to your page' : 'Explore lyrics'}
         </Link>
       </div>
     )
@@ -103,7 +118,7 @@ export default function SharedLyric() {
       {/* Header */}
       <header className="px-4 py-4 flex justify-between items-center">
         <Link
-          to={user ? "/home" : "/"}
+          to={user ? "/home" : "/explore"}
           className="text-charcoal font-medium tracking-tight hover:opacity-70 transition-opacity"
         >
           earwyrm
@@ -113,7 +128,7 @@ export default function SharedLyric() {
           {profile && (
             <Link
               to={`/@${profile.username}`}
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
+              className="text-sm text-charcoal/40 hover:text-charcoal/60 transition-colors"
             >
               @{profile.username}
             </Link>
@@ -122,7 +137,7 @@ export default function SharedLyric() {
           {user && (
             <Link
               to="/home"
-              className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
+              className="text-sm text-charcoal/40 hover:text-charcoal/60 transition-colors"
             >
               Your page
             </Link>
@@ -132,11 +147,31 @@ export default function SharedLyric() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 pb-24">
-        {lyric && <LyricCard lyric={lyric} showTimestamp={false} linkable />}
+        <div className="w-full max-w-lg">
+          {lyric && <LyricCard lyric={lyric} showTimestamp={false} linkable />}
+
+          {/* Note displayed like marginalia */}
+          {note && (
+            <div
+              className="mt-8 pl-4 border-l-2 border-charcoal/10"
+              style={{
+                transform: 'rotate(-0.5deg)',
+                transformOrigin: 'left top',
+              }}
+            >
+              <p
+                className="text-charcoal/50 leading-relaxed"
+                style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+              >
+                {note.content}
+              </p>
+            </div>
+          )}
+        </div>
       </main>
 
-      {/* Signup banner for anonymous users */}
-      {isAnonymous && <AnonymousSignupBanner />}
+      {/* Footer for anonymous users */}
+      {isAnonymous && <AnonymousFooter username={profile?.username} />}
     </div>
   )
 }
