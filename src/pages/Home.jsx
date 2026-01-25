@@ -195,6 +195,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
       <div className="mt-8 flex items-center gap-6 text-sm">
         <VisibilityToggle
           isPublic={lyric.is_public}
+          profileIsPublic={profile?.is_public}
           onChange={handleVisibilityChange}
         />
 

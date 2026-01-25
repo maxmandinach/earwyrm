@@ -1,19 +1,23 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 function ConfirmPublicModal({ onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
       <div className="bg-cream w-full max-w-md p-6">
-        <h3 className="text-lg font-medium text-charcoal mb-4">Make public?</h3>
+        <h3 className="text-lg font-medium text-charcoal mb-4">Make this lyric public?</h3>
         <p className="text-sm text-charcoal-light mb-4">
           This will share your lyric (and note, if you have one) to:
         </p>
         <ul className="text-sm text-charcoal-light mb-6 space-y-1 ml-4">
-          <li>• <strong>Explore</strong> — others can discover it by tag, artist, or song</li>
-          <li>• <strong>Your profile</strong> — visible at your @username page</li>
+          <li>• <strong>Explore</strong> — others can discover it</li>
+          <li>• <strong>Your profile</strong> — visible at your @username</li>
         </ul>
         <p className="text-xs text-charcoal-light/60 mb-6">
-          The share link works either way — public or private.
+          Want all your lyrics to be public by default?{' '}
+          <Link to="/settings" className="underline hover:text-charcoal">
+            Change in Settings
+          </Link>
         </p>
         <div className="flex gap-3 justify-end">
           <button
@@ -37,15 +41,31 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
   )
 }
 
-export default function VisibilityToggle({ isPublic, onChange, disabled = false }) {
+export default function VisibilityToggle({ isPublic, profileIsPublic, onChange, disabled = false }) {
   const [showConfirm, setShowConfirm] = useState(false)
 
+  // If profile is public, show static indicator
+  if (profileIsPublic) {
+    return (
+      <Link
+        to="/settings"
+        className="flex items-center gap-1.5 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+        title="Your profile is public. Change in Settings."
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <span>public</span>
+      </Link>
+    )
+  }
+
+  // Profile is private - show toggle for this lyric
   const handleToggle = () => {
     if (!isPublic) {
-      // Going from hidden to visible - show confirmation
       setShowConfirm(true)
     } else {
-      // Going from visible to hidden - no confirmation needed
       onChange(false)
     }
   }
@@ -63,7 +83,7 @@ export default function VisibilityToggle({ isPublic, onChange, disabled = false 
         disabled={disabled}
         className="flex items-center gap-1.5 text-sm text-charcoal-light hover:text-charcoal
                    transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        title={isPublic ? 'Public — on Explore + your profile' : 'Private — shareable via link'}
+        title={isPublic ? 'On Explore + your profile' : 'Only visible via share link'}
       >
         {isPublic ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
