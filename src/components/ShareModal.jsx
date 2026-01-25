@@ -24,13 +24,13 @@ function formatTimeAgo(date) {
 
 export default function ShareModal({ lyric, note, username, isPublic, onVisibilityChange, onClose }) {
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [includeNote, setIncludeNote] = useState(true)
   const [selectedFormat, setSelectedFormat] = useState('square')
   const canvasRef = useRef(null)
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   const hasNote = note?.content?.trim()
 
   const copyLink = async () => {
@@ -178,34 +178,66 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       ctx.globalAlpha = 1.0
     }
 
-    // Draw branding at bottom
+    // Draw branding at bottom (ensures attribution even when text/url dropped)
     const brandFontSize = 22 * scale
     ctx.fillStyle = theme.secondaryColor || theme.textColor
     ctx.globalAlpha = 0.35
     ctx.font = `normal 400 ${brandFontSize}px system-ui, -apple-system, sans-serif`
-    ctx.fillText('earwyrm', width / 2, height - 45)
+    ctx.fillText('earwyrm.app', width / 2, height - 45)
     ctx.globalAlpha = 1.0
 
     return canvas
   }
 
-  const shareImage = async () => {
+  // Build share text based on note inclusion
+  const getShareText = () => {
+    if (includeNote && hasNote) {
+      return `${note.content}\n\n— earwyrm\n${shareUrl}`
+    }
+    return `— earwyrm\n${shareUrl}`
+  }
+
+  const share = async () => {
     const canvas = generateImage(selectedFormat)
     if (!canvas) return
 
     canvas.toBlob(async (blob) => {
       const file = new File([blob], `earwyrm-${selectedFormat}.png`, { type: 'image/png' })
 
-      // On mobile with share support, use native share
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file] })
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.log('Share failed:', err)
+      // Try native share with full payload (image + text + url)
+      if (navigator.share) {
+        const shareData = {
+          files: [file],
+          text: getShareText(),
+          url: shareUrl,
+        }
+
+        // Check if we can share with files
+        if (navigator.canShare?.(shareData)) {
+          try {
+            await navigator.share(shareData)
+            setShared(true)
+            setTimeout(() => setShared(false), 2000)
+            return
+          } catch (err) {
+            if (err.name === 'AbortError') return
+            // Some targets reject text/url with files - try image only
           }
         }
-        return
+
+        // Fallback: try sharing image only
+        const imageOnlyData = { files: [file] }
+        if (navigator.canShare?.(imageOnlyData)) {
+          try {
+            await navigator.share(imageOnlyData)
+            setShared(true)
+            setTimeout(() => setShared(false), 2000)
+            return
+          } catch (err) {
+            if (err.name === 'AbortError') return
+            // Fall through to download
+          }
+        }
       }
 
       // Desktop or no share support - download
@@ -214,6 +246,8 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       link.href = URL.createObjectURL(blob)
       link.click()
       URL.revokeObjectURL(link.href)
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
     }, 'image/png')
   }
 
@@ -254,19 +288,19 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   }, [lyric])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/25">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
       <div className="bg-cream w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex justify-between items-center">
           <h2
-            className="text-base text-charcoal/70"
+            className="text-base text-charcoal/60"
             style={{ fontFamily: "'Caveat', cursive" }}
           >
             Share this moment
           </h2>
           <button
             onClick={onClose}
-            className="text-charcoal/30 hover:text-charcoal/60 transition-colors p-1 -mr-1"
+            className="text-charcoal/25 hover:text-charcoal/50 transition-colors p-1 -mr-1"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -275,62 +309,52 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
         </div>
 
         <div className="flex-1 overflow-auto px-6 pb-6">
-          {/* Preview - Hero */}
+          {/* Preview - Hero, minimal framing */}
           <div className="flex justify-center">
-            <div
-              className="bg-white shadow-sm transition-all duration-300 ease-out"
+            <canvas
+              ref={canvasRef}
+              className={`transition-all duration-300 ease-out shadow-sm ${
+                selectedFormat === 'tall' ? 'h-72 aspect-[9/16]' : 'h-52 aspect-square'
+              }`}
               style={{
-                padding: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               }}
-            >
-              <canvas
-                ref={canvasRef}
-                className={`transition-all duration-300 ease-out ${
-                  selectedFormat === 'tall' ? 'h-72 aspect-[9/16]' : 'h-52 aspect-square'
-                }`}
-              />
-            </div>
+            />
           </div>
 
-          {/* Preview caption */}
-          <p className="text-center text-xs text-charcoal/30 mt-3">
-            {hasNote && includeNote ? 'Your note will be included.' : 'Lyric only.'}
-          </p>
-
-          {/* Format selector */}
+          {/* Format selector - quieter styling */}
           <div className="mt-6">
-            <div className="flex rounded border border-charcoal/15 overflow-hidden">
+            <div className="flex rounded border border-charcoal/10 overflow-hidden">
               <button
                 onClick={() => setSelectedFormat('square')}
-                className={`flex-1 py-2.5 text-sm transition-colors ${
+                className={`flex-1 py-2 text-sm transition-colors ${
                   selectedFormat === 'square'
-                    ? 'bg-charcoal text-cream'
-                    : 'text-charcoal/50 hover:bg-charcoal/5'
+                    ? 'bg-charcoal/90 text-cream'
+                    : 'text-charcoal/40 hover:text-charcoal/60 hover:bg-charcoal/5'
                 }`}
               >
                 Square
               </button>
               <button
                 onClick={() => setSelectedFormat('tall')}
-                className={`flex-1 py-2.5 text-sm transition-colors ${
+                className={`flex-1 py-2 text-sm transition-colors ${
                   selectedFormat === 'tall'
-                    ? 'bg-charcoal text-cream'
-                    : 'text-charcoal/50 hover:bg-charcoal/5'
+                    ? 'bg-charcoal/90 text-cream'
+                    : 'text-charcoal/40 hover:text-charcoal/60 hover:bg-charcoal/5'
                 }`}
               >
                 Tall
               </button>
             </div>
-            <div className="flex mt-1.5">
-              <span className="flex-1 text-center text-xs text-charcoal/30">1:1</span>
-              <span className="flex-1 text-center text-xs text-charcoal/30">9:16</span>
+            <div className="flex mt-1">
+              <span className="flex-1 text-center text-xs text-charcoal/25">1:1</span>
+              <span className="flex-1 text-center text-xs text-charcoal/25">9:16</span>
             </div>
           </div>
 
-          {/* Note toggle */}
+          {/* Note toggle - only show if note exists */}
           {hasNote ? (
-            <label className="flex items-start gap-3 mt-6 cursor-pointer group">
+            <label className="flex items-start gap-3 mt-5 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={includeNote}
@@ -338,19 +362,19 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
                 className="mt-0.5 w-4 h-4 accent-charcoal cursor-pointer"
               />
               <div>
-                <span className="text-sm text-charcoal/70 group-hover:text-charcoal transition-colors">
+                <span className="text-sm text-charcoal/60 group-hover:text-charcoal/80 transition-colors">
                   Include my note
                 </span>
-                <p className="text-xs text-charcoal/40 mt-0.5">
+                <p className="text-xs text-charcoal/35 mt-0.5">
                   Adds your words beneath the lyric.
                 </p>
               </div>
             </label>
           ) : (
-            <p className="mt-6 text-xs text-charcoal/40 text-center">
+            <p className="mt-5 text-xs text-charcoal/35 text-center">
               <button
                 onClick={onClose}
-                className="text-charcoal/50 hover:text-charcoal/70 transition-colors underline underline-offset-2"
+                className="text-charcoal/45 hover:text-charcoal/65 transition-colors underline underline-offset-2"
               >
                 Add a note
               </button>
@@ -359,19 +383,26 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
           )}
 
           {/* Primary action */}
-          <button
-            onClick={shareImage}
-            className="w-full mt-6 py-3 text-sm font-medium text-cream bg-charcoal
-                     hover:bg-charcoal/90 active:bg-charcoal transition-colors"
-          >
-            {isMobile ? 'Share image' : 'Download image'}
-          </button>
+          <div className="mt-6">
+            <button
+              onClick={share}
+              className="w-full py-3 text-sm font-medium text-cream bg-charcoal
+                       hover:bg-charcoal/90 active:bg-charcoal transition-colors"
+            >
+              Share
+            </button>
+            {shared && (
+              <p className="text-center text-xs text-charcoal/40 mt-2 animate-pulse">
+                Shared
+              </p>
+            )}
+          </div>
 
           {/* Secondary action */}
           <button
             onClick={copyLink}
             disabled={loading || !shareUrl}
-            className="w-full mt-2 py-2 text-sm text-charcoal/50 hover:text-charcoal/70
+            className="w-full mt-2 py-2 text-sm text-charcoal/40 hover:text-charcoal/60
                      transition-colors disabled:opacity-40"
           >
             {loading ? 'Generating link...' : copied ? 'Copied' : 'Copy link'}
