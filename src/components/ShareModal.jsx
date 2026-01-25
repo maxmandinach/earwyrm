@@ -133,15 +133,16 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       attributionY += 60
     }
 
-    // Draw note if included and present
+    // Draw note if included and present (styled like marginalia, no quotes)
     if (includeNote && hasNote) {
-      const noteY = isTall ? height * 0.65 : attributionY + 40
-      const noteFontSize = baseFontSize * 0.5
-      const noteMaxWidth = width - 200
+      const noteY = isTall ? height * 0.65 : attributionY + 50
+      const noteFontSize = baseFontSize * 0.55
+      const noteMaxWidth = width - 240
 
-      ctx.fillStyle = theme.secondaryColor
-      ctx.globalAlpha = 0.6
-      ctx.font = `italic 400 ${noteFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
+      // Use Caveat for handwritten feel, matching the card
+      ctx.fillStyle = theme.textColor
+      ctx.globalAlpha = 0.45
+      ctx.font = `normal 400 ${noteFontSize}px Caveat, cursive`
 
       // Word wrap the note
       const noteWords = note.content.split(' ')
@@ -161,9 +162,9 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       }
       noteLines.push(noteLine)
 
-      const noteLineHeight = noteFontSize * 1.4
+      const noteLineHeight = noteFontSize * 1.5
       noteLines.forEach((line, i) => {
-        ctx.fillText(`"${line}${i === noteLines.length - 1 ? '"' : ''}`, width / 2, noteY + i * noteLineHeight)
+        ctx.fillText(line, width / 2, noteY + i * noteLineHeight)
       })
       ctx.globalAlpha = 1.0
     }
@@ -189,12 +190,9 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     return canvas
   }
 
-  // Build share text based on note inclusion
+  // Build share text - understated, not the note itself
   const getShareText = () => {
-    if (includeNote && hasNote) {
-      return `${note.content}\n\n— earwyrm\n${shareUrl}`
-    }
-    return `— earwyrm\n${shareUrl}`
+    return `a lyric that stayed with me\n\n— earwyrm\n${shareUrl}`
   }
 
   const share = async () => {
