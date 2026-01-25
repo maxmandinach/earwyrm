@@ -4,8 +4,10 @@ import { useAuth } from './AuthContext'
 
 const LyricContext = createContext({})
 
+// Note: New lyrics inherit visibility from profile.is_public
+
 export function LyricProvider({ children }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [currentLyric, setCurrentLyric] = useState(null)
   const [currentNote, setCurrentNote] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -66,7 +68,7 @@ export function LyricProvider({ children }) {
         }
       }
 
-      // Create new lyric
+      // Create new lyric - inherit visibility from profile
       const { data, error } = await supabase
         .from('lyrics')
         .insert({
@@ -77,7 +79,7 @@ export function LyricProvider({ children }) {
           tags: tags || [],
           theme,
           is_current: true,
-          is_public: false,
+          is_public: profile?.is_public || false,
         })
         .select()
         .single()

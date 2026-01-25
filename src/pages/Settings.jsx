@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useLyric } from '../contexts/LyricContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
 import { useNavigate } from 'react-router-dom'
 
 export default function Settings() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, updateProfile } = useAuth()
+  const { currentLyric, setVisibility } = useLyric()
   const navigate = useNavigate()
 
   const [username, setUsername] = useState(profile?.username || '')
+  const [isPublic, setIsPublic] = useState(profile?.is_public || false)
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -198,29 +202,70 @@ export default function Settings() {
             </form>
           </section>
 
-          {/* Public Profile URL */}
+          {/* Profile Visibility */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">public profile</h2>
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">profile visibility</h2>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={publicUrl}
-                readOnly
-                className="flex-1 px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
-                         text-charcoal"
-              />
-              <button
-                onClick={handleCopyUrl}
-                className="px-6 py-2 text-sm border border-charcoal/30
-                         hover:border-charcoal/60 transition-colors"
-              >
-                {urlCopied ? 'copied!' : 'copy'}
-              </button>
+            <div className="space-y-4">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={async (e) => {
+                    const newValue = e.target.checked
+                    setIsPublic(newValue)
+                    setIsUpdatingVisibility(true)
+                    try {
+                      await updateProfile({ is_public: newValue })
+                      // If making profile public, also make current lyric public
+                      if (newValue && currentLyric && !currentLyric.is_public) {
+                        await setVisibility(true)
+                      }
+                    } catch (err) {
+                      console.error('Error updating visibility:', err)
+                      setIsPublic(!newValue) // revert on error
+                    } finally {
+                      setIsUpdatingVisibility(false)
+                    }
+                  }}
+                  disabled={isUpdatingVisibility}
+                  className="mt-1 w-4 h-4 accent-charcoal cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
+                    Make my profile public
+                  </span>
+                  <p className="text-xs text-charcoal-light/60 mt-1">
+                    Your current lyric and note will appear on Explore and at your @username page.
+                    New lyrics will automatically be public.
+                  </p>
+                </div>
+              </label>
+
+              {isPublic && (
+                <div className="pl-7">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={publicUrl}
+                      readOnly
+                      className="flex-1 px-3 py-2 text-sm bg-cream-dark border border-charcoal/20
+                               text-charcoal"
+                    />
+                    <button
+                      onClick={handleCopyUrl}
+                      className="px-4 py-2 text-sm border border-charcoal/30
+                               hover:border-charcoal/60 transition-colors"
+                    >
+                      {urlCopied ? 'copied!' : 'copy'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-charcoal-light/60">
+                    Your public profile URL
+                  </p>
+                </div>
+              )}
             </div>
-            <p className="mt-2 text-xs text-charcoal-light/60">
-              Share this link to show your public lyric
-            </p>
           </section>
 
           {/* Email */}
