@@ -13,6 +13,7 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   const [shareUrl, setShareUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [includeNote, setIncludeNote] = useState(true)
+  const [selectedFormat, setSelectedFormat] = useState('post')
   const canvasRef = useRef(null)
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
@@ -164,31 +165,29 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     return canvas
   }
 
-  const shareToDestination = async (format) => {
-    const canvas = generateImage(format)
+  const shareImage = async () => {
+    const canvas = generateImage(selectedFormat)
     if (!canvas) return
 
     canvas.toBlob(async (blob) => {
-      if (navigator.share && isMobile) {
-        try {
-          const file = new File([blob], `earwyrm-${format}.png`, { type: 'image/png' })
+      const file = new File([blob], `earwyrm-${selectedFormat}.png`, { type: 'image/png' })
 
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-            })
-            return
-          }
+      // On mobile with share support, use native share
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] })
         } catch (err) {
+          // User cancelled - that's fine, don't do anything
           if (err.name !== 'AbortError') {
             console.log('Share failed:', err)
           }
         }
+        return
       }
 
-      // Fallback to download
+      // Desktop or no share support - download
       const link = document.createElement('a')
-      link.download = `earwyrm-${format}.png`
+      link.download = `earwyrm-${selectedFormat}.png`
       link.href = URL.createObjectURL(blob)
       link.click()
       URL.revokeObjectURL(link.href)
@@ -196,9 +195,9 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   }
 
   useEffect(() => {
-    // Generate preview (post format)
-    generateImage('post')
-  }, [lyric, note, includeNote])
+    // Generate preview with selected format
+    generateImage(selectedFormat)
+  }, [lyric, note, includeNote, selectedFormat])
 
   useEffect(() => {
     async function ensureShareToken() {
@@ -250,10 +249,10 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
         <div className="flex-1 overflow-auto px-4 pb-4">
           {/* Preview */}
-          <div className="border border-charcoal/10">
+          <div className="border border-charcoal/10 flex justify-center bg-charcoal/5">
             <canvas
               ref={canvasRef}
-              className="w-full aspect-square"
+              className={`h-64 ${selectedFormat === 'story' ? 'aspect-[9/16]' : 'aspect-square'}`}
             />
           </div>
 
@@ -270,65 +269,47 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
             </label>
           )}
 
-          {/* Destination buttons */}
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {/* Instagram Story */}
+          {/* Format toggle */}
+          <div className="mt-4 flex rounded border border-charcoal/20 overflow-hidden">
             <button
-              onClick={() => shareToDestination('story')}
-              className="flex flex-col items-center gap-1.5 py-3 border border-charcoal/10
-                       hover:border-charcoal/30 hover:bg-charcoal/5 transition-colors rounded"
-              title="Instagram Story (9:16)"
+              onClick={() => setSelectedFormat('post')}
+              className={`flex-1 py-2 text-sm transition-colors ${
+                selectedFormat === 'post'
+                  ? 'bg-charcoal text-cream'
+                  : 'text-charcoal/60 hover:bg-charcoal/5'
+              }`}
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
-              </svg>
-              <span className="text-xs text-charcoal/60">Story</span>
+              Post · 1:1
+            </button>
+            <button
+              onClick={() => setSelectedFormat('story')}
+              className={`flex-1 py-2 text-sm transition-colors ${
+                selectedFormat === 'story'
+                  ? 'bg-charcoal text-cream'
+                  : 'text-charcoal/60 hover:bg-charcoal/5'
+              }`}
+            >
+              Story · 9:16
+            </button>
+          </div>
+
+          {/* Actions */}
+          <div className="mt-4 space-y-2">
+            <button
+              onClick={shareImage}
+              className="w-full py-3 text-sm font-medium text-cream bg-charcoal
+                       hover:bg-charcoal/90 transition-colors"
+            >
+              {isMobile ? 'Share image' : 'Download image'}
             </button>
 
-            {/* Instagram Post */}
-            <button
-              onClick={() => shareToDestination('post')}
-              className="flex flex-col items-center gap-1.5 py-3 border border-charcoal/10
-                       hover:border-charcoal/30 hover:bg-charcoal/5 transition-colors rounded"
-              title="Instagram Post (1:1)"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
-              </svg>
-              <span className="text-xs text-charcoal/60">Post</span>
-            </button>
-
-            {/* X/Twitter */}
-            <button
-              onClick={() => shareToDestination('post')}
-              className="flex flex-col items-center gap-1.5 py-3 border border-charcoal/10
-                       hover:border-charcoal/30 hover:bg-charcoal/5 transition-colors rounded"
-              title="X / Twitter (1:1)"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              <span className="text-xs text-charcoal/60">X</span>
-            </button>
-
-            {/* Messages/More */}
             <button
               onClick={copyLink}
               disabled={loading || !shareUrl}
-              className="flex flex-col items-center gap-1.5 py-3 border border-charcoal/10
-                       hover:border-charcoal/30 hover:bg-charcoal/5 transition-colors rounded
-                       disabled:opacity-50"
-              title="Copy link"
+              className="w-full py-3 text-sm text-charcoal/70 border border-charcoal/20
+                       hover:border-charcoal/40 transition-colors disabled:opacity-50"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              <span className="text-xs text-charcoal/60">{copied ? 'Copied!' : 'Link'}</span>
+              {loading ? 'Generating...' : copied ? 'Link copied!' : 'Copy link'}
             </button>
           </div>
         </div>
