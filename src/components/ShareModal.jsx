@@ -33,18 +33,28 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
   const hasNote = note?.content?.trim()
 
+  // Build the share URL with note parameter if included
+  const getFullShareUrl = () => {
+    if (!shareUrl) return ''
+    if (includeNote && hasNote) {
+      return `${shareUrl}?n=1`
+    }
+    return shareUrl
+  }
+
   const copyLink = async () => {
-    if (!shareUrl) return
+    const url = getFullShareUrl()
+    if (!url) return
 
     try {
-      await navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       // Fallback for mobile Safari
       try {
         const input = document.createElement('input')
-        input.value = shareUrl
+        input.value = url
         input.style.position = 'fixed'
         input.style.opacity = '0'
         document.body.appendChild(input)
@@ -192,7 +202,7 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
   // Build share text - understated, not the note itself
   const getShareText = () => {
-    return `a lyric that stayed with me\n\n— earwyrm\n${shareUrl}`
+    return `a lyric that stayed with me\n\n— earwyrm\n${getFullShareUrl()}`
   }
 
   const share = async () => {
@@ -207,7 +217,7 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
         const shareData = {
           files: [file],
           text: getShareText(),
-          url: shareUrl,
+          url: getFullShareUrl(),
         }
 
         // Check if we can share with files
