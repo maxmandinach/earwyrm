@@ -4,8 +4,22 @@ import { generateShareToken, getShareableUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
 const FORMATS = {
-  story: { width: 1080, height: 1920, name: 'Story' },
-  post: { width: 1080, height: 1080, name: 'Post' },
+  square: { width: 1080, height: 1080, label: 'Square', hint: '1:1' },
+  tall: { width: 1080, height: 1920, label: 'Tall', hint: '9:16' },
+}
+
+// Helper to format relative time
+function formatTimeAgo(date) {
+  const now = new Date()
+  const then = new Date(date)
+  const diffMs = now - then
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffHours < 1) return 'Saved just now'
+  if (diffHours < 24) return `Saved ${diffHours}h ago`
+  if (diffDays < 7) return `Saved ${diffDays}d ago`
+  return `Saved ${then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
 export default function ShareModal({ lyric, note, username, isPublic, onVisibilityChange, onClose }) {
@@ -13,7 +27,7 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   const [shareUrl, setShareUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [includeNote, setIncludeNote] = useState(true)
-  const [selectedFormat, setSelectedFormat] = useState('post')
+  const [selectedFormat, setSelectedFormat] = useState('square')
   const canvasRef = useRef(null)
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
@@ -65,13 +79,13 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
-    // Scale font based on format (larger for story)
-    const scale = format === 'story' ? 1.15 : 1
+    // Scale font based on format
+    const scale = format === 'tall' ? 1.15 : 1
     const baseFontSize = parseFloat(theme.fontSize) * 32 * scale
 
     // Calculate vertical positioning
-    const isStory = format === 'story'
-    const contentY = isStory ? height * 0.4 : height * 0.45
+    const isTall = format === 'tall'
+    const contentY = isTall ? height * 0.38 : height * 0.45
 
     // Draw lyric
     ctx.fillStyle = theme.textColor
@@ -121,12 +135,12 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
     // Draw note if included and present
     if (includeNote && hasNote) {
-      const noteY = isStory ? height * 0.68 : attributionY + 40
-      const noteFontSize = baseFontSize * 0.55
+      const noteY = isTall ? height * 0.65 : attributionY + 40
+      const noteFontSize = baseFontSize * 0.5
       const noteMaxWidth = width - 200
 
       ctx.fillStyle = theme.secondaryColor
-      ctx.globalAlpha = 0.7
+      ctx.globalAlpha = 0.6
       ctx.font = `italic 400 ${noteFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
 
       // Word wrap the note
@@ -154,12 +168,22 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       ctx.globalAlpha = 1.0
     }
 
+    // Draw timestamp (subtle, bottom area)
+    if (lyric.created_at) {
+      const timestampFontSize = 20 * scale
+      ctx.fillStyle = theme.secondaryColor || theme.textColor
+      ctx.globalAlpha = 0.3
+      ctx.font = `normal 400 ${timestampFontSize}px system-ui, -apple-system, sans-serif`
+      ctx.fillText(formatTimeAgo(lyric.created_at), width / 2, height - 80)
+      ctx.globalAlpha = 1.0
+    }
+
     // Draw branding at bottom
-    const brandFontSize = 24 * scale
+    const brandFontSize = 22 * scale
     ctx.fillStyle = theme.secondaryColor || theme.textColor
-    ctx.globalAlpha = 0.4
+    ctx.globalAlpha = 0.35
     ctx.font = `normal 400 ${brandFontSize}px system-ui, -apple-system, sans-serif`
-    ctx.fillText('earwyrm', width / 2, height - 50)
+    ctx.fillText('earwyrm', width / 2, height - 45)
     ctx.globalAlpha = 1.0
 
     return canvas
@@ -177,7 +201,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
         try {
           await navigator.share({ files: [file] })
         } catch (err) {
-          // User cancelled - that's fine, don't do anything
           if (err.name !== 'AbortError') {
             console.log('Share failed:', err)
           }
@@ -195,7 +218,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   }
 
   useEffect(() => {
-    // Generate preview with selected format
     generateImage(selectedFormat)
   }, [lyric, note, includeNote, selectedFormat])
 
@@ -232,86 +254,128 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   }, [lyric])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/30">
-      <div className="bg-cream w-full max-w-sm flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/25">
+      <div className="bg-cream w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 flex justify-between items-center">
-          <h2 className="text-sm font-medium text-charcoal/60 lowercase tracking-wide">share</h2>
+        <div className="px-6 pt-6 pb-4 flex justify-between items-center">
+          <h2
+            className="text-base text-charcoal/70"
+            style={{ fontFamily: "'Caveat', cursive" }}
+          >
+            Share this moment
+          </h2>
           <button
             onClick={onClose}
-            className="text-charcoal/40 hover:text-charcoal transition-colors"
+            className="text-charcoal/30 hover:text-charcoal/60 transition-colors p-1 -mr-1"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto px-4 pb-4">
-          {/* Preview */}
-          <div className="border border-charcoal/10 flex justify-center bg-charcoal/5">
-            <canvas
-              ref={canvasRef}
-              className={`h-64 ${selectedFormat === 'story' ? 'aspect-[9/16]' : 'aspect-square'}`}
-            />
+        <div className="flex-1 overflow-auto px-6 pb-6">
+          {/* Preview - Hero */}
+          <div className="flex justify-center">
+            <div
+              className="bg-white shadow-sm transition-all duration-300 ease-out"
+              style={{
+                padding: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)',
+              }}
+            >
+              <canvas
+                ref={canvasRef}
+                className={`transition-all duration-300 ease-out ${
+                  selectedFormat === 'tall' ? 'h-72 aspect-[9/16]' : 'h-52 aspect-square'
+                }`}
+              />
+            </div>
           </div>
 
-          {/* Include note toggle */}
-          {hasNote && (
-            <label className="flex items-center gap-2 mt-3 cursor-pointer">
+          {/* Preview caption */}
+          <p className="text-center text-xs text-charcoal/30 mt-3">
+            {hasNote && includeNote ? 'Your note will be included.' : 'Lyric only.'}
+          </p>
+
+          {/* Format selector */}
+          <div className="mt-6">
+            <div className="flex rounded border border-charcoal/15 overflow-hidden">
+              <button
+                onClick={() => setSelectedFormat('square')}
+                className={`flex-1 py-2.5 text-sm transition-colors ${
+                  selectedFormat === 'square'
+                    ? 'bg-charcoal text-cream'
+                    : 'text-charcoal/50 hover:bg-charcoal/5'
+                }`}
+              >
+                Square
+              </button>
+              <button
+                onClick={() => setSelectedFormat('tall')}
+                className={`flex-1 py-2.5 text-sm transition-colors ${
+                  selectedFormat === 'tall'
+                    ? 'bg-charcoal text-cream'
+                    : 'text-charcoal/50 hover:bg-charcoal/5'
+                }`}
+              >
+                Tall
+              </button>
+            </div>
+            <div className="flex mt-1.5">
+              <span className="flex-1 text-center text-xs text-charcoal/30">1:1</span>
+              <span className="flex-1 text-center text-xs text-charcoal/30">9:16</span>
+            </div>
+          </div>
+
+          {/* Note toggle */}
+          {hasNote ? (
+            <label className="flex items-start gap-3 mt-6 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={includeNote}
                 onChange={(e) => setIncludeNote(e.target.checked)}
-                className="w-4 h-4 accent-charcoal"
+                className="mt-0.5 w-4 h-4 accent-charcoal cursor-pointer"
               />
-              <span className="text-sm text-charcoal/60">Include my note</span>
+              <div>
+                <span className="text-sm text-charcoal/70 group-hover:text-charcoal transition-colors">
+                  Include my note
+                </span>
+                <p className="text-xs text-charcoal/40 mt-0.5">
+                  Adds your words beneath the lyric.
+                </p>
+              </div>
             </label>
+          ) : (
+            <p className="mt-6 text-xs text-charcoal/40 text-center">
+              <button
+                onClick={onClose}
+                className="text-charcoal/50 hover:text-charcoal/70 transition-colors underline underline-offset-2"
+              >
+                Add a note
+              </button>
+              {' '}to include your thoughts.
+            </p>
           )}
 
-          {/* Format toggle */}
-          <div className="mt-4 flex rounded border border-charcoal/20 overflow-hidden">
-            <button
-              onClick={() => setSelectedFormat('post')}
-              className={`flex-1 py-2 text-sm transition-colors ${
-                selectedFormat === 'post'
-                  ? 'bg-charcoal text-cream'
-                  : 'text-charcoal/60 hover:bg-charcoal/5'
-              }`}
-            >
-              Post · 1:1
-            </button>
-            <button
-              onClick={() => setSelectedFormat('story')}
-              className={`flex-1 py-2 text-sm transition-colors ${
-                selectedFormat === 'story'
-                  ? 'bg-charcoal text-cream'
-                  : 'text-charcoal/60 hover:bg-charcoal/5'
-              }`}
-            >
-              Story · 9:16
-            </button>
-          </div>
+          {/* Primary action */}
+          <button
+            onClick={shareImage}
+            className="w-full mt-6 py-3 text-sm font-medium text-cream bg-charcoal
+                     hover:bg-charcoal/90 active:bg-charcoal transition-colors"
+          >
+            {isMobile ? 'Share image' : 'Download image'}
+          </button>
 
-          {/* Actions */}
-          <div className="mt-4 space-y-2">
-            <button
-              onClick={shareImage}
-              className="w-full py-3 text-sm font-medium text-cream bg-charcoal
-                       hover:bg-charcoal/90 transition-colors"
-            >
-              {isMobile ? 'Share image' : 'Download image'}
-            </button>
-
-            <button
-              onClick={copyLink}
-              disabled={loading || !shareUrl}
-              className="w-full py-3 text-sm text-charcoal/70 border border-charcoal/20
-                       hover:border-charcoal/40 transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Generating...' : copied ? 'Link copied!' : 'Copy link'}
-            </button>
-          </div>
+          {/* Secondary action */}
+          <button
+            onClick={copyLink}
+            disabled={loading || !shareUrl}
+            className="w-full mt-2 py-2 text-sm text-charcoal/50 hover:text-charcoal/70
+                     transition-colors disabled:opacity-40"
+          >
+            {loading ? 'Generating link...' : copied ? 'Copied' : 'Copy link'}
+          </button>
         </div>
       </div>
     </div>
