@@ -67,12 +67,11 @@ export default function SharedLyric() {
           setProfile(profileData)
         }
 
-        // Fetch note if it exists and is public (or if lyric owner shared it)
+        // Fetch note if it exists - share link implies permission to view
         const { data: noteData, error: noteError } = await supabase
           .from('lyric_notes')
           .select('*')
           .eq('lyric_id', lyricData.id)
-          .eq('is_public', true)
           .single()
 
         if (noteError && noteError.code !== 'PGRST116') {
