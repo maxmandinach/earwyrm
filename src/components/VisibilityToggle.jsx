@@ -4,9 +4,16 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
       <div className="bg-cream w-full max-w-md p-6">
-        <h3 className="text-lg font-medium text-charcoal mb-4">Show on profile?</h3>
-        <p className="text-sm text-charcoal-light mb-6">
-          This lyric will appear on your @username page. It will still be shareable via link whether visible on your profile or not.
+        <h3 className="text-lg font-medium text-charcoal mb-4">Make public?</h3>
+        <p className="text-sm text-charcoal-light mb-4">
+          This will share your lyric (and note, if you have one) to:
+        </p>
+        <ul className="text-sm text-charcoal-light mb-6 space-y-1 ml-4">
+          <li>• <strong>Explore</strong> — others can discover it by tag, artist, or song</li>
+          <li>• <strong>Your profile</strong> — visible at your @username page</li>
+        </ul>
+        <p className="text-xs text-charcoal-light/60 mb-6">
+          The share link works either way — public or private.
         </p>
         <div className="flex gap-3 justify-end">
           <button
@@ -15,14 +22,14 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
                        border border-charcoal/20 hover:border-charcoal/40
                        transition-colors"
           >
-            Cancel
+            Keep private
           </button>
           <button
             onClick={onConfirm}
             className="px-6 py-2 text-sm font-medium text-cream bg-charcoal
                        hover:bg-charcoal/80 transition-colors"
           >
-            Show on profile
+            Make public
           </button>
         </div>
       </div>
@@ -56,7 +63,7 @@ export default function VisibilityToggle({ isPublic, onChange, disabled = false,
           onClick={handleToggle}
           disabled={disabled}
           className="flex items-center gap-2 text-sm group disabled:opacity-50 disabled:cursor-not-allowed"
-          title={isPublic ? "Currently visible on your profile" : "Currently hidden from your profile"}
+          title={isPublic ? "Visible on Explore and your profile" : "Only you can see this"}
         >
           <div className={`relative w-11 h-6 rounded-full transition-colors ${
             isPublic ? 'bg-charcoal' : 'bg-charcoal/20'
@@ -66,7 +73,7 @@ export default function VisibilityToggle({ isPublic, onChange, disabled = false,
             }`} />
           </div>
           <span className="text-charcoal-light group-hover:text-charcoal transition-colors">
-            {isPublic ? 'Visible on profile' : 'Hidden from profile'}
+            {isPublic ? 'public' : 'private'}
           </span>
         </button>
         {showHelper && !isPublic && (
