@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
@@ -24,6 +24,7 @@ function AnonymousFooter({ username }) {
 
 export default function SharedLyric() {
   const { token } = useParams()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [lyric, setLyric] = useState(null)
   const [note, setNote] = useState(null)
@@ -32,6 +33,8 @@ export default function SharedLyric() {
   const [error, setError] = useState(null)
 
   const isAnonymous = !user
+  // Only show note if sharer opted in via ?n=1 parameter
+  const showNote = searchParams.get('n') === '1'
 
   useEffect(() => {
     async function fetchSharedLyric() {
@@ -67,17 +70,19 @@ export default function SharedLyric() {
           setProfile(profileData)
         }
 
-        // Fetch note if it exists - share link implies permission to view
-        const { data: noteData, error: noteError } = await supabase
-          .from('lyric_notes')
-          .select('*')
-          .eq('lyric_id', lyricData.id)
-          .single()
+        // Only fetch note if sharer included it
+        if (showNote) {
+          const { data: noteData, error: noteError } = await supabase
+            .from('lyric_notes')
+            .select('*')
+            .eq('lyric_id', lyricData.id)
+            .single()
 
-        if (noteError && noteError.code !== 'PGRST116') {
-          console.error('Error fetching note:', noteError)
-        } else if (noteData) {
-          setNote(noteData)
+          if (noteError && noteError.code !== 'PGRST116') {
+            console.error('Error fetching note:', noteError)
+          } else if (noteData) {
+            setNote(noteData)
+          }
         }
       } catch (err) {
         console.error('Error fetching shared lyric:', err)
@@ -88,7 +93,7 @@ export default function SharedLyric() {
     }
 
     fetchSharedLyric()
-  }, [token])
+  }, [token, showNote])
 
   if (loading) {
     return (
