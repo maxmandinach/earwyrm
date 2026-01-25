@@ -24,8 +24,6 @@ export default function Settings() {
 
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const [urlCopied, setUrlCopied] = useState(false)
 
@@ -138,22 +136,8 @@ export default function Settings() {
   }
 
   const handleDeleteAccount = async () => {
-    setIsDeleting(true)
-
-    try {
-      // Delete user account (cascades to profile and lyrics via foreign keys)
-      const { error } = await supabase.auth.admin.deleteUser(user.id)
-
-      if (error) throw error
-
-      // Sign out and redirect
-      await signOut()
-      navigate('/signup')
-    } catch (err) {
-      console.error('Error deleting account:', err)
-      alert('Failed to delete account. Please contact support.')
-      setIsDeleting(false)
-    }
+    // Account deletion requires contacting support for security
+    window.location.href = 'mailto:support@earwyrm.app?subject=Delete%20my%20account&body=Please%20delete%20my%20account.%20My%20username%20is%20' + (profile?.username || '')
   }
 
   return (
@@ -356,47 +340,17 @@ export default function Settings() {
           <section className="pb-8">
             <h2 className="text-lg font-light text-charcoal mb-4 lowercase">delete account</h2>
 
-            {!showDeleteConfirm ? (
-              <>
-                <p className="text-sm text-charcoal-light mb-4">
-                  Permanently delete your account and all your lyrics. This cannot be undone.
-                </p>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="px-6 py-2 text-sm font-medium text-red-600
-                           border border-red-600/30 hover:border-red-600/60
-                           transition-colors"
-                >
-                  delete account
-                </button>
-              </>
-            ) : (
-              <div className="bg-red-50 border border-red-200 p-6">
-                <p className="text-sm text-red-800 font-medium mb-4">
-                  Are you absolutely sure? This action cannot be undone.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={isDeleting}
-                    className="px-6 py-2 text-sm font-medium text-cream bg-red-600
-                             hover:bg-red-700 disabled:opacity-50
-                             transition-colors"
-                  >
-                    {isDeleting ? 'deleting...' : 'yes, delete my account'}
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={isDeleting}
-                    className="px-6 py-2 text-sm text-charcoal-light hover:text-charcoal
-                             border border-charcoal/20 hover:border-charcoal/40
-                             disabled:opacity-50 transition-colors"
-                  >
-                    cancel
-                  </button>
-                </div>
-              </div>
-            )}
+            <p className="text-sm text-charcoal-light mb-4">
+              To delete your account and all your lyrics, contact us.
+            </p>
+            <button
+              onClick={handleDeleteAccount}
+              className="px-6 py-2 text-sm font-medium text-red-600
+                       border border-red-600/30 hover:border-red-600/60
+                       transition-colors"
+            >
+              request account deletion
+            </button>
           </section>
         </div>
       </div>
