@@ -20,9 +20,12 @@ const collectionColors = {
 function LyricEntry({ lyric, note, onRemove, showRemove }) {
   const theme = signatureStyle
 
+  // Unified card styling - matches LyricCard
   const cardStyle = {
-    backgroundColor: theme.backgroundColor,
-    color: theme.textColor,
+    // Surface color from CSS variables
+    backgroundColor: 'var(--surface-card, #F5F2ED)',
+    // Typography
+    color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
     fontSize: '1.5rem',
     fontWeight: theme.fontWeight,
@@ -30,6 +33,9 @@ function LyricEntry({ lyric, note, onRemove, showRemove }) {
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
+    // Depth - card floats above background
+    boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+    border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
   const secondaryStyle = {
@@ -47,7 +53,7 @@ function LyricEntry({ lyric, note, onRemove, showRemove }) {
 
   return (
     <div className="py-6 border-b border-charcoal/10 last:border-b-0 group">
-      <div className="p-6 border border-charcoal/10 mb-3" style={cardStyle}>
+      <div className="p-6 mb-3" style={cardStyle}>
         <blockquote className="mb-2">
           {lyric.content}
         </blockquote>
@@ -323,7 +329,13 @@ export default function CollectionDetail() {
       {/* Add lyrics modal */}
       {showAddLyrics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
-          <div className="bg-cream w-full max-w-2xl flex flex-col max-h-[80vh]">
+          <div
+            className="w-full max-w-2xl flex flex-col max-h-[80vh] shadow-lg"
+            style={{
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+            }}
+          >
             <div className="p-6 border-b border-charcoal/10 flex justify-between items-center">
               <h2 className="text-lg font-light text-charcoal lowercase">add lyrics to collection</h2>
               <button

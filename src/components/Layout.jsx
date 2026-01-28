@@ -29,7 +29,7 @@ export default function Layout() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col">
       <header className="px-4 py-4 flex justify-between items-center">
         <Link
           to={user ? "/home" : "/"}
@@ -61,7 +61,13 @@ export default function Layout() {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-cream border border-charcoal/20 shadow-lg z-50">
+              <div
+                className="absolute right-0 mt-2 w-48 shadow-lg z-50"
+                style={{
+                  backgroundColor: 'var(--surface-elevated, #FAF8F5)',
+                  border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                }}
+              >
                 <nav className="py-2">
                   {/* Your artifact */}
                   <Link

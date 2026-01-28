@@ -199,9 +199,12 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
   const theme = signatureStyle
   const [expanded, setExpanded] = useState(false)
 
+  // Unified card styling - matches LyricCard
   const cardStyle = {
-    backgroundColor: theme.backgroundColor,
-    color: theme.textColor,
+    // Surface color from CSS variables
+    backgroundColor: 'var(--surface-card, #F5F2ED)',
+    // Typography
+    color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
     fontSize: '1.5rem',
     fontWeight: theme.fontWeight,
@@ -209,6 +212,9 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
+    // Depth - card floats above background
+    boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+    border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
   const secondaryStyle = {
@@ -224,11 +230,11 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
   return (
     <div className="mb-8 animate-in fade-in-0 slide-in-from-bottom-2 duration-700 fill-mode-backwards"
          style={{ animationDelay: '50ms' }}>
-      {/* Memory card - soft paper-like */}
+      {/* Memory card - paper texture with depth */}
       <div className="relative">
         <div>
           <div
-            className="p-6 border border-charcoal/10"
+            className="p-6"
             style={cardStyle}
           >
             {/* Lyric content - preview or full */}
@@ -407,7 +413,7 @@ export default function History() {
   const groupedLyrics = groupLyricsByPeriod(lyrics)
 
   return (
-    <div className="flex-1 w-full flex flex-col overflow-hidden" style={{ backgroundColor: '#FDFDFB' }}>
+    <div className="flex-1 w-full flex flex-col overflow-hidden">
       {/* Quiet header */}
       <div className="max-w-lg mx-auto px-6 pt-16 pb-12 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">

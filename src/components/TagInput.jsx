@@ -107,9 +107,9 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
               style={{
                 fontFamily: "'Caveat', cursive",
                 fontSize: '1.125rem',
-                backgroundColor: '#FBF8F3',
-                color: '#8B7355',
-                border: '1px solid rgba(139, 115, 85, 0.3)',
+                backgroundColor: 'var(--surface-elevated, #F5F0E8)',
+                color: 'var(--text-secondary, #6B635A)',
+                border: '1px solid var(--border-medium, rgba(107, 99, 90, 0.3))',
               }}
             >
               #{tag}
@@ -129,7 +129,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
       {/* Input field - signature style */}
       <div
         className="px-4 py-3 border border-charcoal/10"
-        style={{ backgroundColor: '#FBF8F3' }}
+        style={{ backgroundColor: 'var(--surface-elevated, #F5F0E8)' }}
       >
         <input
           type="text"
@@ -146,7 +146,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
           style={{
             fontFamily: "'Caveat', cursive",
             fontSize: '1.25rem',
-            color: '#3D3226',
+            color: 'var(--text-primary, #2C2825)',
           }}
         />
       </div>
@@ -155,7 +155,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
           className="absolute z-10 w-full mt-1 border border-charcoal/10 shadow-lg max-h-48 overflow-auto"
-          style={{ backgroundColor: '#FBF8F3' }}
+          style={{ backgroundColor: 'var(--surface-elevated, #F5F0E8)' }}
         >
           <div className="px-3 py-1.5 text-xs text-charcoal/40 border-b border-charcoal/10">
             {suggestions.length > 0 ? 'Your tags & trending' : 'Trending tags'}
@@ -171,7 +171,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
               style={{
                 fontFamily: "'Caveat', cursive",
                 fontSize: '1.125rem',
-                color: '#8B7355',
+                color: 'var(--text-secondary, #6B635A)',
               }}
             >
               #{suggestion}

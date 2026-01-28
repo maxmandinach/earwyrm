@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
+import { setColorSchemePreference, applyColorScheme } from '../lib/paperTexture'
 import { useNavigate } from 'react-router-dom'
 
 export default function Settings() {
@@ -26,6 +27,16 @@ export default function Settings() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
 
   const [urlCopied, setUrlCopied] = useState(false)
+
+  // Theme preference
+  const [themePreference, setThemePreference] = useState(() => {
+    return localStorage.getItem('earwyrm-theme') || 'auto'
+  })
+
+  const handleThemeChange = (preference) => {
+    setThemePreference(preference)
+    setColorSchemePreference(preference)
+  }
 
   const publicUrl = getPublicProfileUrl(profile?.username)
 
@@ -249,6 +260,70 @@ export default function Settings() {
                   </p>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Appearance */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">appearance</h2>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="theme"
+                  value="auto"
+                  checked={themePreference === 'auto'}
+                  onChange={() => handleThemeChange('auto')}
+                  className="w-4 h-4 accent-charcoal cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
+                    Auto
+                  </span>
+                  <p className="text-xs text-charcoal-light/60">
+                    Match your system preference
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="theme"
+                  value="light"
+                  checked={themePreference === 'light'}
+                  onChange={() => handleThemeChange('light')}
+                  className="w-4 h-4 accent-charcoal cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
+                    Light
+                  </span>
+                  <p className="text-xs text-charcoal-light/60">
+                    Warm cream tones
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="theme"
+                  value="dark"
+                  checked={themePreference === 'dark'}
+                  onChange={() => handleThemeChange('dark')}
+                  className="w-4 h-4 accent-charcoal cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
+                    Dark
+                  </span>
+                  <p className="text-xs text-charcoal-light/60">
+                    Easy on the eyes at night
+                  </p>
+                </div>
+              </label>
             </div>
           </section>
 

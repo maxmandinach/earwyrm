@@ -1,11 +1,39 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 
 function ConfirmPublicModal({ onConfirm, onCancel }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
-      <div className="bg-cream w-full max-w-md p-6">
-        <h3 className="text-lg font-medium text-charcoal mb-4">Make this lyric public?</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      onClick={onCancel}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '28rem',
+          padding: '1.5rem',
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
+          borderRadius: '4px',
+        }}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-medium text-charcoal">Make this lyric public?</h3>
+          <button
+            onClick={onCancel}
+            className="text-charcoal/40 hover:text-charcoal/60 transition-colors p-1 -mr-1 -mt-1"
+            aria-label="Close"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
         <p className="text-sm text-charcoal-light mb-4">
           This will share your lyric (and note, if you have one) to:
         </p>
@@ -19,7 +47,7 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
             Change in Settings
           </Link>
         </p>
-        <div className="flex gap-3 justify-end">
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
             className="px-6 py-2 text-sm text-charcoal-light hover:text-charcoal
@@ -99,11 +127,12 @@ export default function VisibilityToggle({ isPublic, profileIsPublic, onChange, 
         <span>{isPublic ? 'public' : 'private'}</span>
       </button>
 
-      {showConfirm && (
+      {showConfirm && createPortal(
         <ConfirmPublicModal
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
-        />
+        />,
+        document.body
       )}
     </>
   )

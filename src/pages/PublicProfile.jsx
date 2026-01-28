@@ -6,7 +6,7 @@ import LyricCard from '../components/LyricCard'
 
 function AnonymousFooter() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-cream border-t border-charcoal/10 py-4 px-6 z-20">
+    <div className="fixed bottom-0 left-0 right-0 bg-transparent border-t border-charcoal/10 py-4 px-6 z-20">
       <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
         <p className="text-sm text-charcoal/50">
           Save the lyrics that stay with you
@@ -102,7 +102,7 @@ export default function PublicProfile({ showHistory = false }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="text-charcoal-light text-sm">Loading...</div>
       </div>
     )
@@ -110,7 +110,7 @@ export default function PublicProfile({ showHistory = false }) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-cream px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-4">
         <p className="text-charcoal mb-4">{error}</p>
         <Link
           to={user ? "/home" : "/explore"}
@@ -123,7 +123,7 @@ export default function PublicProfile({ showHistory = false }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col bg-transparent">
       {/* Minimal header */}
       <header className="px-4 py-4 flex justify-between items-center">
         <Link

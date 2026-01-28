@@ -27,7 +27,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
       {/* Signature style card */}
       <div
         className="p-6 border border-charcoal/10"
-        style={{ backgroundColor: '#FBF8F3' }}
+        style={{ backgroundColor: 'var(--surface-elevated, #F5F0E8)' }}
       >
         {/* Lyric */}
         <textarea
@@ -41,7 +41,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             fontSize: '1.875rem',
             fontWeight: 500,
             lineHeight: 1.5,
-            color: '#3D3226',
+            color: 'var(--text-primary, #2C2825)',
           }}
           autoFocus
         />
@@ -57,7 +57,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             style={{
               fontFamily: "'Caveat', cursive",
               fontSize: '1.25rem',
-              color: '#8B7355',
+              color: 'var(--text-secondary, #6B635A)',
             }}
           />
           <input
@@ -69,7 +69,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             style={{
               fontFamily: "'Caveat', cursive",
               fontSize: '1.25rem',
-              color: '#8B7355',
+              color: 'var(--text-secondary, #6B635A)',
             }}
           />
         </div>
@@ -97,9 +97,9 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
           className="px-12 py-4 text-lg font-medium transition-all duration-300"
           style={{
             fontFamily: "'Caveat', cursive",
-            backgroundColor: isLoading ? '#3D3226' : '#FBF8F3',
-            color: isLoading ? '#FBF8F3' : '#3D3226',
-            border: '2px solid #3D3226',
+            backgroundColor: isLoading ? 'var(--text-primary, #2C2825)' : 'var(--surface-elevated, #F5F0E8)',
+            color: isLoading ? 'var(--surface-bg, #F5F0E8)' : 'var(--text-primary, #2C2825)',
+            border: '2px solid var(--text-primary, #2C2825)',
             opacity: !content.trim() ? 0.4 : 1,
             cursor: !content.trim() || isLoading ? 'not-allowed' : 'pointer',
             transform: isLoading ? 'scale(1.02)' : 'scale(1)',

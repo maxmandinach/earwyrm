@@ -36,7 +36,13 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
-      <div className="bg-cream w-full max-w-2xl flex flex-col max-h-[90vh]">
+      <div
+        className="w-full max-w-2xl flex flex-col max-h-[90vh] shadow-lg"
+        style={{
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+        }}
+      >
         <div className="p-6 border-b border-charcoal/10">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-medium text-charcoal">New lyric</h2>
@@ -56,7 +62,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
             style={{
               fontFamily: "'Caveat', cursive",
               fontSize: '1.125rem',
-              color: '#8B7355',
+              color: '#6B635A',
             }}
           >
             Your current lyric will move to Memory Lane
@@ -72,7 +78,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
           <div className="w-full max-w-md mx-auto">
             <div
               className="p-6 border border-charcoal/10"
-              style={{ backgroundColor: '#FBF8F3' }}
+              style={{ backgroundColor: 'var(--surface-elevated, #F5F0E8)' }}
             >
               {/* Lyric */}
               <textarea
@@ -86,7 +92,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                   fontSize: '1.875rem',
                   fontWeight: 500,
                   lineHeight: 1.5,
-                  color: '#3D3226',
+                  color: 'var(--text-primary, #2C2825)',
                 }}
                 autoFocus
               />
@@ -102,7 +108,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                   style={{
                     fontFamily: "'Caveat', cursive",
                     fontSize: '1.25rem',
-                    color: '#8B7355',
+                    color: 'var(--text-secondary, #6B635A)',
                   }}
                 />
                 <input
@@ -114,7 +120,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                   style={{
                     fontFamily: "'Caveat', cursive",
                     fontSize: '1.25rem',
-                    color: '#8B7355',
+                    color: 'var(--text-secondary, #6B635A)',
                   }}
                 />
               </div>
@@ -139,9 +145,9 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
               className="px-12 py-4 text-lg font-medium transition-all duration-300"
               style={{
                 fontFamily: "'Caveat', cursive",
-                backgroundColor: saveState === 'saved' ? '#3D3226' : '#FBF8F3',
-                color: saveState === 'saved' ? '#FBF8F3' : '#3D3226',
-                border: '2px solid #3D3226',
+                backgroundColor: saveState === 'saved' ? 'var(--text-primary, #2C2825)' : 'var(--surface-elevated, #F5F0E8)',
+                color: saveState === 'saved' ? 'var(--surface-bg, #F5F0E8)' : 'var(--text-primary, #2C2825)',
+                border: '2px solid var(--text-primary, #2C2825)',
                 opacity: !content.trim() ? 0.4 : 1,
                 cursor: !content.trim() ? 'not-allowed' : 'pointer',
                 transform: saveState === 'saved' ? 'scale(1.05)' : 'scale(1)',

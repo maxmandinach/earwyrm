@@ -1,21 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Typography - DM Sans for UI, Caveat for lyrics */
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
   --font-serif: 'EB Garamond', Georgia, serif;
   --font-mono: 'Courier Prime', 'Courier New', monospace;
-  --font-display: 'Work Sans', system-ui, sans-serif;
+  --font-hand: 'Caveat', cursive;
 
-  --color-cream: #FAF9F6;
-  --color-cream-dark: #F5F4F0;
-  --color-charcoal: #2C2C2C;
-  --color-charcoal-light: #4A4A4A;
-  --color-accent: #C4A69D;
-  --color-accent-muted: #8B8B8B;
-  --color-paper: #FDF8F3;
-  --color-ink: #1a1a1a;
-  --color-darkroom-bg: #1C1C1E;
-  --color-darkroom-text: #F5F5F5;
+  /* Primary surfaces - warm white to cream, no pure white */
+  --color-cream: #FAF8F5;
+  --color-cream-dark: #F5F0E8;
+  --color-cream-deeper: #EBE4D8;
+
+  /* Text - warm blacks and grays, no pure black */
+  --color-charcoal: #2C2825;
+  --color-charcoal-light: #6B635A;
+  --color-charcoal-muted: #9C948A;
+
+  /* Accent - soft taupe for brand elements */
+  --color-accent: #B8A99A;
+
+  /* Legacy aliases for compatibility */
+  --color-paper: #FAF8F5;
+  --color-ink: #2C2825;
+
+  /* Dark variant (share cards only) */
+  --color-dark-bg: #1F1D1A;
+  --color-dark-text: #F5F0E8;
+  --color-dark-muted: #6B635A;
 }
 
 * {
@@ -30,25 +42,338 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: var(--color-cream);
-  color: var(--color-charcoal);
+  background-color: var(--surface-bg, #E8E2D9);
+  color: var(--text-primary, var(--color-charcoal));
   min-height: 100vh;
+  position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Vignette overlay - draws focus to center, adds depth */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 50%,
+    var(--vignette-color, rgba(60, 50, 40, 0.08)) 100%
+  );
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
-/* Focus styles */
+/* Focus styles - warm accent */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Selection */
+/* Selection - warm tones */
 ::selection {
-  background-color: var(--color-accent);
-  color: white;
+  background-color: var(--color-cream-deeper);
+  color: var(--color-charcoal);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Typography scale utilities */
+.text-lyric {
+  font-family: var(--font-hand);
+  font-size: 1.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.text-attribution {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-charcoal-light);
+}
+
+.text-note {
+  font-family: var(--font-hand);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-charcoal-light);
+}
+
+.text-ui {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-charcoal);
+}
+
+.text-ui-small {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-charcoal-muted);
+}
+
+/* Breathing animation for prompts */
+@keyframes breathe {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.4; }
+}
+
+.animate-breathe {
+  animation: breathe 3.5s ease-in-out infinite;
+}
+
+/* ==========================================
+   DARK MODE OVERRIDES
+   ========================================== */
+
+/* Dark mode color scheme overrides */
+html.dark {
+  --color-cream: #252220;
+  --color-cream-dark: #1F1D1A;
+  --color-cream-deeper: #2D2A27;
+  --color-charcoal: #F5F0E8;
+  --color-charcoal-light: #A89F94;
+  --color-charcoal-muted: #6B635A;
+  --color-accent: #C8B8A8;
+  --color-paper: #252220;
+  --color-ink: #F5F0E8;
+}
+
+/* Selection in dark mode */
+html.dark ::selection {
+  background-color: rgba(200, 184, 168, 0.3);
+  color: #F5F0E8;
+}
+
+/* Text utilities dark mode */
+html.dark .text-attribution,
+html.dark .text-note {
+  color: var(--text-secondary);
+}
+
+html.dark .text-ui {
+  color: var(--text-primary);
+}
+
+html.dark .text-ui-small {
+  color: var(--text-muted);
+}
+
+/* Background overrides */
+html.dark .bg-cream {
+  background-color: var(--surface-card) !important;
+}
+
+html.dark .bg-cream-dark {
+  background-color: var(--surface-bg) !important;
+}
+
+html.dark .bg-cream-deeper {
+  background-color: var(--surface-elevated) !important;
+}
+
+html.dark .bg-white {
+  background-color: var(--surface-card) !important;
+}
+
+/* Text color overrides */
+html.dark .text-charcoal {
+  color: var(--text-primary) !important;
+}
+
+html.dark .text-charcoal-light {
+  color: var(--text-secondary) !important;
+}
+
+html.dark .text-charcoal-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Border overrides */
+html.dark .border-charcoal\/10,
+html.dark .border-charcoal\/20 {
+  border-color: var(--border-medium) !important;
+}
+
+html.dark .border-t.border-charcoal\/10 {
+  border-top-color: var(--border-medium) !important;
+}
+
+html.dark .border-b.border-charcoal\/10 {
+  border-bottom-color: var(--border-medium) !important;
+}
+
+/* Input/form fields */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: var(--surface-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-medium) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus {
+  border-color: var(--color-accent) !important;
+}
+
+/* Buttons in dark mode */
+html.dark button.bg-charcoal {
+  background-color: var(--text-primary) !important;
+  color: var(--surface-bg) !important;
+}
+
+html.dark button.text-cream {
+  color: var(--surface-bg) !important;
+}
+
+/* Links */
+html.dark a {
+  color: inherit;
+}
+
+/* Hover states */
+html.dark .hover\:bg-charcoal\/5:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .hover\:text-charcoal:hover {
+  color: var(--text-primary) !important;
+}
+
+html.dark .hover\:text-charcoal\/60:hover {
+  color: rgba(245, 240, 232, 0.6) !important;
+}
+
+html.dark .hover\:border-charcoal\/40:hover,
+html.dark .hover\:border-charcoal\/60:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Opacity classes with text colors */
+html.dark .text-charcoal\/30 {
+  color: rgba(245, 240, 232, 0.3) !important;
+}
+
+html.dark .text-charcoal\/40 {
+  color: rgba(245, 240, 232, 0.4) !important;
+}
+
+html.dark .text-charcoal\/50 {
+  color: rgba(245, 240, 232, 0.5) !important;
+}
+
+html.dark .text-charcoal\/60 {
+  color: rgba(245, 240, 232, 0.6) !important;
+}
+
+html.dark .text-charcoal\/70 {
+  color: rgba(245, 240, 232, 0.7) !important;
+}
+
+html.dark .text-charcoal-light\/40,
+html.dark .text-charcoal-light\/50,
+html.dark .text-charcoal-light\/60,
+html.dark .text-charcoal-light\/70 {
+  color: rgba(168, 159, 148, 0.7) !important;
+}
+
+/* Border opacity classes */
+html.dark .border-charcoal\/5 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .border-black\/5 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Background opacity classes */
+html.dark .bg-charcoal\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .bg-charcoal\/20 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .bg-charcoal\/30 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Modal overlays */
+html.dark .bg-charcoal\/20,
+html.dark .bg-charcoal\/30 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Dividers and rules */
+html.dark .divide-charcoal\/10 > * + * {
+  border-color: var(--border-medium) !important;
+}
+
+/* Specific component overrides */
+
+/* Header/footer borders */
+html.dark header,
+html.dark footer {
+  border-color: var(--border-subtle) !important;
+}
+
+/* Note editor placeholder */
+html.dark .placeholder\:opacity-30::placeholder {
+  opacity: 0.4 !important;
+}
+
+/* Search/filter dropdowns */
+html.dark .shadow-lg {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Tags */
+html.dark .opacity-50,
+html.dark .opacity-60 {
+  opacity: 0.7 !important;
+}
+
+/* Red/error text (keep visible in dark mode) */
+html.dark .text-red-600 {
+  color: #f87171 !important;
+}
+
+html.dark .border-red-600\/30 {
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+/* Green/success text */
+html.dark .text-green-600 {
+  color: #4ade80 !important;
+}
+
+/* Cream text (used for buttons with dark bg) */
+html.dark .text-cream {
+  color: var(--surface-bg) !important;
 }

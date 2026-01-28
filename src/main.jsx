@@ -7,6 +7,10 @@ import { CollectionProvider } from './contexts/CollectionContext'
 import { FollowProvider } from './contexts/FollowContext'
 import App from './App'
 import './index.css'
+import { initializePageTexture } from './lib/paperTexture'
+
+// Initialize the beautiful paper background texture
+initializePageTexture()
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode> - Temporarily disabled due to React 19 + Supabase compatibility issue
