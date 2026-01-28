@@ -10,7 +10,7 @@ import NoteEditor from '../components/NoteEditor'
 import { getRandomPrompt } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
-function EmptyState({ onSetLyric }) {
+function EmptyState({ onSetLyric, revealed }) {
   const [prompt] = useState(() => getRandomPrompt())
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -30,20 +30,41 @@ function EmptyState({ onSetLyric }) {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-      <p className="text-lg text-charcoal mb-8 text-center max-w-md">
+      <p
+        className="text-lg text-charcoal mb-8 text-center max-w-md transition-all duration-700 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(8px)',
+        }}
+      >
         {prompt}
       </p>
 
-      <LyricForm onSubmit={handleSubmit} isLoading={isLoading} error={error} />
+      <div
+        className="transition-all duration-700 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(12px)',
+          transitionDelay: '200ms',
+        }}
+      >
+        <LyricForm onSubmit={handleSubmit} isLoading={isLoading} error={error} />
+      </div>
 
-      <p className="mt-12 text-xs text-charcoal-light/60 text-center max-w-sm">
+      <p
+        className="mt-12 text-xs text-charcoal-light/60 text-center max-w-sm transition-all duration-500 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transitionDelay: '600ms',
+        }}
+      >
         Lyrics are private by default. You decide when (and if) others can see what's here.
       </p>
     </div>
   )
 }
 
-function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
+function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed }) {
   const { profile, user } = useAuth()
   const { fetchNoteForLyric, saveNote } = useLyric()
   const [isEditingCard, setIsEditingCard] = useState(false)
@@ -122,8 +143,14 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-      {/* Lyric card with inline editing */}
-      <div className="relative w-full max-w-lg">
+      {/* Lyric card with inline editing - main reveal */}
+      <div
+        className="relative w-full max-w-lg transition-all duration-1000 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
+        }}
+      >
         <LyricCard
           lyric={lyric}
           isEditing={isEditingCard}
@@ -134,7 +161,13 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
 
         {/* Edit & New buttons - hidden when editing */}
         {!isEditingNote && !isEditingCard && (
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          <div
+            className="absolute bottom-4 right-4 flex gap-2 transition-opacity duration-500"
+            style={{
+              opacity: revealed ? 1 : 0,
+              transitionDelay: '400ms',
+            }}
+          >
             {/* Edit (pencil) - inline editing */}
             <button
               onClick={() => setIsEditingCard(true)}
@@ -182,7 +215,14 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
       </div>
 
       {/* Note - separated zone with clear clickable area */}
-      <div className="w-full max-w-lg mt-8">
+      <div
+        className="w-full max-w-lg mt-8 transition-all duration-700 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(16px)',
+          transitionDelay: '400ms',
+        }}
+      >
         <NoteEditor
           lyricId={lyric.id}
           initialNote={currentNote}
@@ -192,7 +232,14 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
       </div>
 
       {/* Actions */}
-      <div className="mt-8 flex items-center gap-6 text-sm">
+      <div
+        className="mt-8 flex items-center gap-6 text-sm transition-all duration-600 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(10px)',
+          transitionDelay: '600ms',
+        }}
+      >
         <VisibilityToggle
           isPublic={lyric.is_public}
           profileIsPublic={profile?.is_public}
@@ -203,7 +250,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
           onClick={() => setShowShareModal(true)}
           className="text-charcoal-light hover:text-charcoal transition-colors"
         >
-          Share
+          share
         </button>
       </div>
 
@@ -231,6 +278,17 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange }) {
 
 export default function Home() {
   const { currentLyric, loading, setLyric, replaceLyric, setVisibility } = useLyric()
+  const [revealed, setRevealed] = useState(false)
+
+  // The slow reveal - content appears like ink on paper
+  // This is the first impression. It sets the tone.
+  useEffect(() => {
+    if (!loading) {
+      // Longer pause to let paper texture settle, then reveal
+      const timer = setTimeout(() => setRevealed(true), 400)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   // Edit in place - keeps note attached
   const handleUpdate = async (data) => {
@@ -252,16 +310,13 @@ export default function Home() {
     })
   }
 
+  // During loading, show just the warm paper texture - no spinner
   if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-charcoal-light text-sm">Loading...</div>
-      </div>
-    )
+    return <div className="flex-1" />
   }
 
   if (!currentLyric) {
-    return <EmptyState onSetLyric={setLyric} />
+    return <EmptyState onSetLyric={setLyric} revealed={revealed} />
   }
 
   return (
@@ -270,6 +325,7 @@ export default function Home() {
       onUpdate={handleUpdate}
       onReplace={handleReplace}
       onVisibilityChange={setVisibility}
+      revealed={revealed}
     />
   )
 }

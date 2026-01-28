@@ -84,7 +84,13 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
             className="fixed inset-0 z-10"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-6 top-6 z-20 bg-cream border border-charcoal/20 shadow-lg min-w-[120px]">
+          <div
+            className="absolute right-6 top-6 z-20 shadow-lg min-w-[120px]"
+            style={{
+              backgroundColor: 'var(--surface-elevated, #FAF8F5)',
+              border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+            }}
+          >
             <button
               onClick={handleEdit}
               className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors lowercase"

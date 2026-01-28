@@ -19,6 +19,7 @@ export default function LyricCard({
   const [songTitle, setSongTitle] = useState(lyric.song_title || '')
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
   const [isSaving, setIsSaving] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
 
   // Reset local state when lyric changes or editing starts
   useEffect(() => {
@@ -36,6 +37,9 @@ export default function LyricCard({
         songTitle: songTitle.trim() || null,
         artistName: artistName.trim() || null,
       })
+      // Trigger settle animation
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 400)
     } catch (err) {
       console.error('Error saving:', err)
     } finally {
@@ -50,10 +54,16 @@ export default function LyricCard({
     onCancel?.()
   }
 
+  const secondaryStyle = {
+    color: theme.secondaryColor,
+  }
+
+  // Card styling - clean surface with depth
   const cardStyle = {
-    backgroundColor: theme.backgroundColor,
-    backgroundImage: theme.backgroundGradient || 'none',
-    color: theme.textColor,
+    // Surface color from CSS variables
+    backgroundColor: 'var(--surface-card, #F5F2ED)',
+    // Typography
+    color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
     fontSize: theme.fontSize,
     fontWeight: theme.fontWeight,
@@ -61,19 +71,19 @@ export default function LyricCard({
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
-    textShadow: theme.textShadow || 'none',
-  }
-
-  const secondaryStyle = {
-    color: theme.secondaryColor,
-    fontFamily: theme.fontFamily,
-    textShadow: theme.textShadow || 'none',
+    // Depth - card floats above the background
+    boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+    // Subtle border
+    border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
   return (
     <div
-      className={`w-full max-w-lg mx-auto p-8 sm:p-12 ${className}`}
-      style={cardStyle}
+      className={`w-full max-w-lg mx-auto p-8 sm:p-10 transition-all duration-300 ${className}`}
+      style={{
+        ...cardStyle,
+        transform: justSaved ? 'scale(1.01)' : 'scale(1)',
+      }}
     >
       {isEditing ? (
         // Edit mode
@@ -99,16 +109,26 @@ export default function LyricCard({
               value={songTitle}
               onChange={(e) => setSongTitle(e.target.value)}
               placeholder="Song title"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-30 text-sm"
-              style={secondaryStyle}
+              className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+              style={{
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                fontSize: '0.875rem',
+                fontStyle: 'italic',
+                color: theme.secondaryColor,
+              }}
             />
             <input
               type="text"
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
               placeholder="Artist"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-30 text-sm"
-              style={secondaryStyle}
+              className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+              style={{
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                fontSize: '0.875rem',
+                fontStyle: 'italic',
+                color: theme.secondaryColor,
+              }}
             />
           </div>
 
@@ -116,10 +136,11 @@ export default function LyricCard({
             <button
               onClick={handleSave}
               disabled={!content.trim() || isSaving}
-              className="text-sm font-medium transition-colors"
+              className="text-sm font-medium transition-all duration-200"
               style={{
                 color: theme.textColor,
                 opacity: !content.trim() ? 0.4 : 1,
+                transform: isSaving ? 'scale(0.98)' : 'scale(1)',
               }}
             >
               {isSaving ? 'Saving...' : 'Save'}
@@ -136,48 +157,66 @@ export default function LyricCard({
       ) : (
         // View mode
         <>
-          <blockquote className="mb-3">
+          <blockquote className="mb-4 leading-relaxed">
             {lyric.content}
           </blockquote>
 
           {(lyric.song_title || lyric.artist_name) && (
-            <p className="text-sm mt-2" style={secondaryStyle}>
-              {lyric.song_title && (
-                linkable ? (
-                  <Link
-                    to={`/explore/song/${encodeURIComponent(lyric.song_title)}`}
-                    className="hover:opacity-70 transition-opacity"
-                  >
-                    {lyric.song_title}
-                  </Link>
-                ) : (
-                  <span>{lyric.song_title}</span>
-                )
-              )}
-              {lyric.song_title && lyric.artist_name && <span> — </span>}
-              {lyric.artist_name && (
-                linkable ? (
-                  <Link
-                    to={`/explore/artist/${encodeURIComponent(lyric.artist_name)}`}
-                    className="hover:opacity-70 transition-opacity"
-                  >
-                    {lyric.artist_name}
-                  </Link>
-                ) : (
-                  <span>{lyric.artist_name}</span>
-                )
-              )}
-            </p>
+            <>
+              {/* Signature element: thin rule - matches share card */}
+              <div
+                className="w-20 mt-5 mb-4"
+                style={{
+                  height: '1.5px',
+                  backgroundColor: theme.accentColor || '#B8A99A',
+                  opacity: 0.5
+                }}
+              />
+              <p
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: '0.875rem',
+                  fontStyle: 'italic',
+                  color: theme.secondaryColor,
+                }}
+              >
+                {lyric.song_title && (
+                  linkable ? (
+                    <Link
+                      to={`/explore/song/${encodeURIComponent(lyric.song_title)}`}
+                      className="hover:opacity-70 transition-opacity"
+                    >
+                      {lyric.song_title}
+                    </Link>
+                  ) : (
+                    <span>{lyric.song_title}</span>
+                  )
+                )}
+                {lyric.song_title && lyric.artist_name && <span> — </span>}
+                {lyric.artist_name && (
+                  linkable ? (
+                    <Link
+                      to={`/explore/artist/${encodeURIComponent(lyric.artist_name)}`}
+                      className="hover:opacity-70 transition-opacity"
+                    >
+                      {lyric.artist_name}
+                    </Link>
+                  ) : (
+                    <span>{lyric.artist_name}</span>
+                  )
+                )}
+              </p>
+            </>
           )}
 
           {lyric.tags && lyric.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 mt-4">
               {lyric.tags.map((tag, index) => (
                 linkable ? (
                   <Link
                     key={index}
                     to={`/explore/tag/${encodeURIComponent(tag)}`}
-                    className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+                    className="text-xs opacity-50 hover:opacity-80 transition-opacity"
                     style={secondaryStyle}
                   >
                     #{tag}
@@ -185,7 +224,7 @@ export default function LyricCard({
                 ) : (
                   <span
                     key={index}
-                    className="text-xs opacity-60"
+                    className="text-xs opacity-50"
                     style={secondaryStyle}
                   >
                     #{tag}
@@ -196,7 +235,13 @@ export default function LyricCard({
           )}
 
           {showTimestamp && lyric.created_at && (
-            <p className="text-xs mt-4 opacity-60" style={secondaryStyle}>
+            <p
+              className="text-xs mt-5 opacity-40"
+              style={{
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                color: theme.mutedColor || theme.secondaryColor,
+              }}
+            >
               {formatRelativeTime(lyric.created_at)}
             </p>
           )}

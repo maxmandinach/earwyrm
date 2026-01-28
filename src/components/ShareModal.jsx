@@ -1,25 +1,188 @@
 import { useState, useRef, useEffect } from 'react'
-import { signatureStyle } from '../lib/themes'
+import { createPortal } from 'react-dom'
+import { signatureStyle, darkVariant } from '../lib/themes'
 import { generateShareToken, getShareableUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
+import { applyPaperTextureToCanvas, applyDarkPaperTexture } from '../lib/paperTexture'
 
 const FORMATS = {
   square: { width: 1080, height: 1080, label: 'Square', hint: '1:1' },
   tall: { width: 1080, height: 1920, label: 'Tall', hint: '9:16' },
 }
 
-// Helper to format relative time
-function formatTimeAgo(date) {
-  const now = new Date()
-  const then = new Date(date)
-  const diffMs = now - then
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+// Draw paper texture with optional border
+function drawPaperTexture(ctx, width, height, isDark) {
+  // Use the sophisticated procedural texture
+  if (isDark) {
+    applyDarkPaperTexture(ctx, width, height, { seed: 42 })
+  } else {
+    applyPaperTextureToCanvas(ctx, width, height, { seed: 42 })
+  }
 
-  if (diffHours < 1) return 'Saved just now'
-  if (diffHours < 24) return `Saved ${diffHours}h ago`
-  if (diffDays < 7) return `Saved ${diffDays}d ago`
-  return `Saved ${then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  // Thin border for edge definition
+  ctx.strokeStyle = isDark ? '#4A4540' : '#D4CFC4'
+  ctx.lineWidth = 2
+  ctx.strokeRect(1, 1, width - 2, height - 2)
+}
+
+// Words that should never start a line (they belong with the previous word)
+const NO_START_WORDS = new Set([
+  'the', 'a', 'an', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+  'to', 'of', 'in', 'on', 'at', 'for', 'with', 'by', 'from',
+  'and', 'or', 'but', 'so', 'yet', 'nor',
+  'i', 'me', 'you', 'he', 'she', 'it', 'we', 'they',
+  'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'that', 'this', 'these', 'those', 'what', 'which', 'who',
+])
+
+// Check if breaking after this word index would create an orphan
+function wouldCreateOrphan(words, breakIndex) {
+  const nextWord = words[breakIndex + 1]?.toLowerCase()
+  return nextWord && NO_START_WORDS.has(nextWord)
+}
+
+// Break lyrics into poetic lines - every break should feel like a breath
+function breakIntoPoetryLines(text, ctx, maxWidth) {
+  const manualLines = text.split('\n')
+  const result = []
+
+  for (const manualLine of manualLines) {
+    if (!manualLine.trim()) {
+      result.push('')
+      continue
+    }
+
+    // If line fits, use it as-is
+    if (ctx.measureText(manualLine).width <= maxWidth) {
+      result.push(manualLine)
+      continue
+    }
+
+    const words = manualLine.split(' ')
+    const lines = []
+
+    // Strategy: build lines greedily, but never break before orphan-prone words
+    let i = 0
+    while (i < words.length) {
+      let currentLine = words[i]
+      let lastGoodBreak = i // Track last position where breaking is acceptable
+
+      i++
+      while (i < words.length) {
+        const testLine = currentLine + ' ' + words[i]
+        const testWidth = ctx.measureText(testLine).width
+
+        if (testWidth > maxWidth) {
+          // We've exceeded width - need to break
+          break
+        }
+
+        currentLine = testLine
+
+        // Only mark this as a good break point if next word isn't orphan-prone
+        if (!wouldCreateOrphan(words, i)) {
+          lastGoodBreak = i
+        }
+        i++
+      }
+
+      // If we stopped mid-phrase (would create orphan), try to find better break
+      if (i < words.length && wouldCreateOrphan(words, i - 1)) {
+        // Look back for a better break point
+        const wordsInLine = currentLine.split(' ')
+        let betterBreak = -1
+
+        for (let j = wordsInLine.length - 1; j >= Math.max(0, wordsInLine.length - 3); j--) {
+          const wordAtJ = wordsInLine[j]?.toLowerCase()
+          const nextWord = wordsInLine[j + 1]?.toLowerCase()
+
+          // Good break: after punctuation, or before a non-orphan word
+          if (/[,;:.!?]$/.test(wordsInLine[j]) || (nextWord && !NO_START_WORDS.has(nextWord))) {
+            betterBreak = j
+            break
+          }
+        }
+
+        if (betterBreak >= 0 && betterBreak < wordsInLine.length - 1) {
+          // Rewind: take fewer words on this line
+          const take = betterBreak + 1
+          currentLine = wordsInLine.slice(0, take).join(' ')
+          i = i - (wordsInLine.length - take)
+        }
+      }
+
+      lines.push(currentLine)
+    }
+
+    // Post-process: fix any remaining orphans at the end
+    if (lines.length >= 2) {
+      const lastLine = lines[lines.length - 1]
+      const lastWords = lastLine.split(' ')
+
+      // If last line is very short (1-2 words, under 12 chars), rebalance
+      if (lastWords.length <= 2 && lastLine.length < 12) {
+        const prevLine = lines[lines.length - 2]
+        const prevWords = prevLine.split(' ')
+
+        if (prevWords.length >= 2) {
+          // Try moving 1-2 words down
+          for (let moveCount = 1; moveCount <= Math.min(2, prevWords.length - 2); moveCount++) {
+            const wordsToMove = prevWords.slice(-moveCount)
+            const newPrev = prevWords.slice(0, -moveCount).join(' ')
+            const newLast = wordsToMove.join(' ') + ' ' + lastLine
+
+            if (ctx.measureText(newLast).width <= maxWidth &&
+                ctx.measureText(newPrev).width <= maxWidth &&
+                newPrev.split(' ').length >= 2) {
+              lines[lines.length - 2] = newPrev
+              lines[lines.length - 1] = newLast
+              break
+            }
+          }
+        }
+      }
+    }
+
+    // Final pass: if only 2 lines, try to balance them evenly
+    if (lines.length === 2) {
+      const allWords = lines.join(' ').split(' ')
+      const total = allWords.length
+
+      // Try different split points to find most balanced
+      let bestSplit = -1
+      let bestDiff = Infinity
+
+      for (let split = Math.floor(total / 2) - 1; split <= Math.ceil(total / 2) + 1; split++) {
+        if (split < 2 || split >= total - 1) continue
+
+        const line1 = allWords.slice(0, split).join(' ')
+        const line2 = allWords.slice(split).join(' ')
+
+        // Skip if would create orphan
+        if (NO_START_WORDS.has(allWords[split]?.toLowerCase())) continue
+
+        const w1 = ctx.measureText(line1).width
+        const w2 = ctx.measureText(line2).width
+
+        if (w1 <= maxWidth && w2 <= maxWidth) {
+          const diff = Math.abs(w1 - w2)
+          if (diff < bestDiff) {
+            bestDiff = diff
+            bestSplit = split
+          }
+        }
+      }
+
+      if (bestSplit > 0) {
+        lines[0] = allWords.slice(0, bestSplit).join(' ')
+        lines[1] = allWords.slice(bestSplit).join(' ')
+      }
+    }
+
+    result.push(...lines)
+  }
+
+  return result
 }
 
 export default function ShareModal({ lyric, note, username, isPublic, onVisibilityChange, onClose }) {
@@ -29,11 +192,11 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
   const [loading, setLoading] = useState(true)
   const [includeNote, setIncludeNote] = useState(true)
   const [selectedFormat, setSelectedFormat] = useState('square')
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const canvasRef = useRef(null)
 
   const hasNote = note?.content?.trim()
 
-  // Build the share URL with note parameter if included
   const getFullShareUrl = () => {
     if (!shareUrl) return ''
     if (includeNote && hasNote) {
@@ -51,7 +214,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      // Fallback for mobile Safari
       try {
         const input = document.createElement('input')
         input.value = url
@@ -75,96 +237,170 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     if (!canvas) return null
 
     const ctx = canvas.getContext('2d')
-    const theme = signatureStyle
+    const colors = isDarkMode ? darkVariant : signatureStyle
     const { width, height } = FORMATS[format]
 
     canvas.width = width
     canvas.height = height
 
-    // Background
-    ctx.fillStyle = theme.backgroundColor
-    ctx.fillRect(0, 0, width, height)
+    // Draw rich paper texture
+    drawPaperTexture(ctx, width, height, isDarkMode)
 
-    // Text settings
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-
-    // Scale font based on format
-    const scale = format === 'tall' ? 1.15 : 1
-    const baseFontSize = parseFloat(theme.fontSize) * 32 * scale
-
-    // Calculate vertical positioning
+    // Scale and positioning
+    const scale = format === 'tall' ? 1.2 : 1
     const isTall = format === 'tall'
-    const contentY = isTall ? height * 0.38 : height * 0.45
 
-    // Draw lyric
-    ctx.fillStyle = theme.textColor
-    ctx.font = `${theme.fontStyle} ${theme.fontWeight} ${baseFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
+    // Generous margins - editorial spacing
+    const marginX = 120
+    const maxWidth = width - (marginX * 2)
 
-    const maxWidth = width - 160
-    const words = lyric.content.split(' ')
-    const lines = []
-    let currentLine = ''
+    // Reserved space
+    const topMargin = 80
+    const brandHeight = 100  // Space for brand signature at bottom
+    const availableHeight = height - topMargin - brandHeight
 
-    for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word
-      const metrics = ctx.measureText(testLine)
+    // === DYNAMIC FONT SIZING ===
+    // First, measure how many lines we'll have at base size
+    const baseLyricFontSize = 64 * scale
+    ctx.font = `500 ${baseLyricFontSize}px Caveat, cursive`
+    const testLines = breakIntoPoetryLines(lyric.content, ctx, maxWidth)
+    const lineCount = testLines.filter(l => l !== '').length
 
-      if (metrics.width > maxWidth && currentLine) {
-        lines.push(currentLine)
-        currentLine = word
-      } else {
-        currentLine = testLine
-      }
+    // Scale font based on content length
+    let fontScale = 1.0
+    if (lineCount <= 2) {
+      fontScale = 1.25  // Short lyrics: bigger, more presence
+    } else if (lineCount <= 4) {
+      fontScale = 1.1   // Medium-short: slightly bigger
+    } else if (lineCount >= 8) {
+      fontScale = 0.85  // Long lyrics: smaller to fit
+    } else if (lineCount >= 6) {
+      fontScale = 0.92  // Medium-long: slightly smaller
     }
-    lines.push(currentLine)
 
-    const lineHeight = baseFontSize * parseFloat(theme.lineHeight)
-    const totalTextHeight = lines.length * lineHeight
-    let startY = contentY - totalTextHeight / 2
+    // Additional scaling for square format with note - needs more space
+    const hasNoteToShow = includeNote && hasNote
+    if (!isTall && hasNoteToShow && lineCount >= 4) {
+      fontScale *= 0.85  // Scale down more aggressively
+    }
 
-    lines.forEach((line, i) => {
-      ctx.fillText(line, width / 2, startY + i * lineHeight + lineHeight / 2)
+    // Typography settings - editorial scale with dynamic sizing
+    let lyricFontSize = baseLyricFontSize * fontScale
+    let attributionFontSize = 24 * scale
+    let noteFontSize = 32 * scale
+    const brandFontSize = 26 * scale
+
+    // Recalculate lines with actual font size
+    ctx.font = `500 ${lyricFontSize}px Caveat, cursive`
+    let lines = breakIntoPoetryLines(lyric.content, ctx, maxWidth)
+    let lineHeight = lyricFontSize * 1.35
+    let totalLyricHeight = lines.length * lineHeight
+
+    // Estimate total content height
+    const ruleAndAttrHeight = (lyric.song_title || lyric.artist_name) ? 130 : 0
+    const noteEstimate = hasNoteToShow ? 120 : 0  // Rough estimate for 2-3 lines of note
+    const totalContentHeight = totalLyricHeight + ruleAndAttrHeight + noteEstimate
+
+    // If content won't fit, scale down further
+    if (totalContentHeight > availableHeight) {
+      const scaleFactor = availableHeight / totalContentHeight * 0.95
+      lyricFontSize *= scaleFactor
+      attributionFontSize *= scaleFactor
+      noteFontSize *= scaleFactor
+
+      // Recalculate with new sizes
+      ctx.font = `500 ${lyricFontSize}px Caveat, cursive`
+      lines = breakIntoPoetryLines(lyric.content, ctx, maxWidth)
+      lineHeight = lyricFontSize * 1.35
+      totalLyricHeight = lines.length * lineHeight
+    }
+
+    // Calculate content positioning
+    let contentStartY
+    if (isTall) {
+      // Story: center the content vertically with bias toward upper-middle
+      const contentHeight = totalLyricHeight + ruleAndAttrHeight + noteEstimate
+      contentStartY = Math.max(height * 0.25, (height - contentHeight) / 2 - 50)
+    } else {
+      // Square: position based on content amount
+      // Start higher if we have a note to fit
+      const baseStart = hasNoteToShow ? height * 0.15 : height * 0.22
+      contentStartY = Math.max(topMargin, baseStart)
+    }
+
+    // === DRAW LYRICS ===
+    ctx.fillStyle = colors.textColor
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+
+    let y = contentStartY
+    lines.forEach((line) => {
+      if (line === '') {
+        y += lineHeight * 0.5 // Half-height for empty lines
+      } else {
+        ctx.fillText(line, marginX, y)
+        y += lineHeight
+      }
     })
 
-    // Draw song/artist if present
-    let attributionY = startY + totalTextHeight + 50
+    // Track current Y for flowing layout
+    let currentY = y
+
+    // === SIGNATURE ELEMENT: THIN RULE ===
     if (lyric.song_title || lyric.artist_name) {
-      const secondaryFontSize = baseFontSize * 0.45
-      ctx.fillStyle = theme.secondaryColor
-      ctx.font = `normal 400 ${secondaryFontSize}px ${theme.fontFamily.split(',')[0].replace(/'/g, '')}`
-
-      let secondaryText = ''
-      if (lyric.song_title) secondaryText += lyric.song_title
-      if (lyric.song_title && lyric.artist_name) secondaryText += ' — '
-      if (lyric.artist_name) secondaryText += lyric.artist_name
-
-      ctx.fillText(secondaryText, width / 2, attributionY)
-      attributionY += 60
+      const ruleY = currentY + 55  // More breathing room after lyrics
+      ctx.strokeStyle = colors.accentColor || colors.secondaryColor
+      ctx.globalAlpha = 0.5
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.moveTo(marginX, ruleY)
+      ctx.lineTo(marginX + 80, ruleY)
+      ctx.stroke()
+      ctx.globalAlpha = 1.0
+      currentY = ruleY
     }
 
-    // Draw note if included and present (styled like marginalia - left-aligned with border)
-    if (includeNote && hasNote) {
-      const noteX = 120 // Left margin
-      const noteY = isTall ? height * 0.62 : attributionY + 60
-      const noteFontSize = baseFontSize * 0.7
-      const noteMaxWidth = width - 200
+    // === DRAW ATTRIBUTION ===
+    if (lyric.song_title || lyric.artist_name) {
+      const attrY = currentY + 40  // Clear spacing after rule
+      ctx.fillStyle = colors.secondaryColor
+      ctx.globalAlpha = isDarkMode ? 0.9 : 1.0  // High contrast on dark mode
+      ctx.font = `italic 400 ${attributionFontSize}px "DM Sans", system-ui, sans-serif`
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'top'
 
-      // Draw left border line
-      ctx.strokeStyle = theme.textColor
-      ctx.globalAlpha = 0.15
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(noteX - 16, noteY - 10)
+      let attributionText = ''
+      if (lyric.song_title) attributionText += lyric.song_title
+      if (lyric.song_title && lyric.artist_name) attributionText += ' — '
+      if (lyric.artist_name) attributionText += lyric.artist_name
 
-      // Use Caveat for handwritten feel, matching the card
-      ctx.font = `normal 400 ${noteFontSize}px Caveat, cursive`
+      ctx.fillText(attributionText, marginX, attrY)
+      ctx.globalAlpha = 1.0
+      currentY = attrY + attributionFontSize + 30  // More space before note
+    }
+
+    // === DRAW NOTE (marginalia style) ===
+    if (hasNoteToShow) {
+      // Position note with breathing room after attribution
+      const noteY = currentY + 50
+      const noteMarginX = marginX + 20
+
+      // Calculate available space for note (leave room for brand signature)
+      const brandAreaTop = height - brandHeight
+      const availableNoteHeight = Math.max(0, brandAreaTop - noteY - 20)
+
+      ctx.font = `400 ${noteFontSize}px Caveat, cursive`
       ctx.textAlign = 'left'
 
-      // Word wrap the note
+      // Word wrap note
       const noteWords = note.content.split(' ')
       const noteLines = []
       let noteLine = ''
+      const noteMaxWidth = maxWidth - 40
+      const noteLineHeight = noteFontSize * 1.5
+
+      // Calculate max lines that fit
+      const maxNoteLines = Math.max(1, Math.floor(availableNoteHeight / noteLineHeight))
 
       for (const word of noteWords) {
         const testLine = noteLine ? `${noteLine} ${word}` : word
@@ -172,54 +408,86 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
         if (metrics.width > noteMaxWidth && noteLine) {
           noteLines.push(noteLine)
+          if (noteLines.length >= maxNoteLines) break
           noteLine = word
         } else {
           noteLine = testLine
         }
       }
-      noteLines.push(noteLine)
 
-      const noteLineHeight = noteFontSize * 1.4
-      const totalNoteHeight = noteLines.length * noteLineHeight
+      // Add final line if we have room
+      if (noteLine && noteLines.length < maxNoteLines) {
+        noteLines.push(noteLine)
+      }
 
-      // Complete the border line
-      ctx.lineTo(noteX - 16, noteY + totalNoteHeight)
-      ctx.stroke()
+      // Check if we truncated - add ellipsis to last line
+      const fullNoteLines = []
+      let tempLine = ''
+      for (const word of noteWords) {
+        const testLine = tempLine ? `${tempLine} ${word}` : word
+        const metrics = ctx.measureText(testLine)
+        if (metrics.width > noteMaxWidth && tempLine) {
+          fullNoteLines.push(tempLine)
+          tempLine = word
+        } else {
+          tempLine = testLine
+        }
+      }
+      if (tempLine) fullNoteLines.push(tempLine)
 
-      // Draw the note text
-      ctx.fillStyle = theme.textColor
-      ctx.globalAlpha = 0.5
-      noteLines.forEach((line, i) => {
-        ctx.fillText(line, noteX, noteY + i * noteLineHeight)
-      })
+      const wasTruncated = fullNoteLines.length > noteLines.length
+      if (wasTruncated && noteLines.length > 0) {
+        let lastLine = noteLines[noteLines.length - 1]
+        const ellipsis = '...'
+        while (ctx.measureText(lastLine + ellipsis).width > noteMaxWidth && lastLine.length > 0) {
+          lastLine = lastLine.slice(0, -1).trim()
+        }
+        noteLines[noteLines.length - 1] = lastLine + ellipsis
+      }
 
-      // Reset alignment for subsequent draws
-      ctx.textAlign = 'center'
-      ctx.globalAlpha = 1.0
+      // Only draw if we have lines to show
+      if (noteLines.length > 0) {
+        const totalNoteHeight = noteLines.length * noteLineHeight
+
+        // Left border - the marginalia signature
+        ctx.strokeStyle = colors.secondaryColor
+        ctx.globalAlpha = 0.25
+        ctx.lineWidth = 2
+
+        ctx.beginPath()
+        ctx.moveTo(marginX, noteY - 8)
+        ctx.lineTo(marginX, noteY + totalNoteHeight)
+        ctx.stroke()
+        ctx.globalAlpha = 1.0
+
+        // Draw note text
+        ctx.fillStyle = colors.secondaryColor
+        ctx.globalAlpha = 0.7
+        noteLines.forEach((line, i) => {
+          ctx.fillText(line, noteMarginX, noteY + i * noteLineHeight)
+        })
+        ctx.globalAlpha = 1.0
+      }
     }
 
-    // Draw timestamp (subtle, bottom area)
-    if (lyric.created_at) {
-      const timestampFontSize = 20 * scale
-      ctx.fillStyle = theme.secondaryColor || theme.textColor
-      ctx.globalAlpha = 0.3
-      ctx.font = `normal 400 ${timestampFontSize}px system-ui, -apple-system, sans-serif`
-      ctx.fillText(formatTimeAgo(lyric.created_at), width / 2, height - 80)
-      ctx.globalAlpha = 1.0
-    }
+    // === BRAND SIGNATURE (bottom, centered) ===
+    // Clean. Minimal. Just the name.
+    const brandY = height - 70
 
-    // Draw branding at bottom (ensures attribution even when text/url dropped)
-    const brandFontSize = 22 * scale
-    ctx.fillStyle = theme.secondaryColor || theme.textColor
-    ctx.globalAlpha = 0.35
-    ctx.font = `normal 400 ${brandFontSize}px system-ui, -apple-system, sans-serif`
-    ctx.fillText('earwyrm.app', width / 2, height - 45)
+    ctx.textAlign = 'center'
+    ctx.font = `600 ${brandFontSize}px "DM Sans", system-ui, sans-serif`
+
+    // Brand name only
+    ctx.fillStyle = colors.secondaryColor
+    ctx.globalAlpha = isDarkMode ? 0.85 : 0.65
+    ctx.fillText('earwyrm', width / 2, brandY + 5)
+
     ctx.globalAlpha = 1.0
+    ctx.textAlign = 'left'
 
     return canvas
   }
 
-  // Build share text - understated, not the note itself
   const getShareText = () => {
     return `a lyric that stayed with me\n\n— earwyrm\n${getFullShareUrl()}`
   }
@@ -231,7 +499,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     canvas.toBlob(async (blob) => {
       const file = new File([blob], `earwyrm-${selectedFormat}.png`, { type: 'image/png' })
 
-      // Try native share with full payload (image + text + url)
       if (navigator.share) {
         const shareData = {
           files: [file],
@@ -239,7 +506,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
           url: getFullShareUrl(),
         }
 
-        // Check if we can share with files
         if (navigator.canShare?.(shareData)) {
           try {
             await navigator.share(shareData)
@@ -248,11 +514,9 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
             return
           } catch (err) {
             if (err.name === 'AbortError') return
-            // Some targets reject text/url with files - try image only
           }
         }
 
-        // Fallback: try sharing image only
         const imageOnlyData = { files: [file] }
         if (navigator.canShare?.(imageOnlyData)) {
           try {
@@ -262,12 +526,10 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
             return
           } catch (err) {
             if (err.name === 'AbortError') return
-            // Fall through to download
           }
         }
       }
 
-      // Desktop or no share support - download
       const link = document.createElement('a')
       link.download = `earwyrm-${selectedFormat}.png`
       link.href = URL.createObjectURL(blob)
@@ -280,7 +542,7 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
   useEffect(() => {
     generateImage(selectedFormat)
-  }, [lyric, note, includeNote, selectedFormat])
+  }, [lyric, note, includeNote, selectedFormat, isDarkMode])
 
   useEffect(() => {
     async function ensureShareToken() {
@@ -314,20 +576,41 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
     ensureShareToken()
   }, [lyric])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
-      <div className="bg-cream w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '24rem',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          borderRadius: '4px',
+        }}
+      >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 flex justify-between items-center">
+        <div style={{ padding: '1.5rem 1.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2
-            className="text-base text-charcoal/60"
-            style={{ fontFamily: "'Caveat', cursive" }}
+            style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: '1rem',
+              color: 'var(--text-secondary, #6B635A)',
+            }}
           >
             Share this moment
           </h2>
           <button
             onClick={onClose}
-            className="text-charcoal/25 hover:text-charcoal/50 transition-colors p-1 -mr-1"
+            style={{ color: 'var(--text-muted, #9C948A)', padding: '0.25rem' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -335,102 +618,136 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto px-6 pb-6">
-          {/* Preview - Hero, minimal framing */}
-          <div className="flex justify-center">
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 1.5rem 1.5rem' }}>
+          {/* Preview */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <canvas
               ref={canvasRef}
-              className={`transition-all duration-300 ease-out shadow-sm ${
-                selectedFormat === 'tall' ? 'h-72 aspect-[9/16]' : 'h-52 aspect-square'
-              }`}
               style={{
-                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                height: selectedFormat === 'tall' ? '20rem' : '14rem',
+                aspectRatio: selectedFormat === 'tall' ? '9/16' : '1/1',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                transition: 'all 0.3s ease-out',
               }}
             />
           </div>
 
-          {/* Format selector - quieter styling */}
-          <div className="mt-6">
-            <div className="flex rounded border border-charcoal/10 overflow-hidden">
-              <button
-                onClick={() => setSelectedFormat('square')}
-                className={`flex-1 py-2 text-sm transition-colors ${
-                  selectedFormat === 'square'
-                    ? 'bg-charcoal/90 text-cream'
-                    : 'text-charcoal/40 hover:text-charcoal/60 hover:bg-charcoal/5'
-                }`}
-              >
-                Square
-              </button>
-              <button
-                onClick={() => setSelectedFormat('tall')}
-                className={`flex-1 py-2 text-sm transition-colors ${
-                  selectedFormat === 'tall'
-                    ? 'bg-charcoal/90 text-cream'
-                    : 'text-charcoal/40 hover:text-charcoal/60 hover:bg-charcoal/5'
-                }`}
-              >
-                Tall
-              </button>
+          {/* Controls */}
+          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setSelectedFormat('square')}
+                  style={{
+                    flex: 1,
+                    padding: '0.625rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: selectedFormat === 'square' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                    color: selectedFormat === 'square' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Square
+                </button>
+                <button
+                  onClick={() => setSelectedFormat('tall')}
+                  style={{
+                    flex: 1,
+                    padding: '0.625rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: selectedFormat === 'tall' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                    color: selectedFormat === 'tall' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Story
+                </button>
+              </div>
             </div>
-            <div className="flex mt-1">
-              <span className="flex-1 text-center text-xs text-charcoal/25">1:1</span>
-              <span className="flex-1 text-center text-xs text-charcoal/25">9:16</span>
-            </div>
+
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{
+                width: '3rem',
+                padding: '0.625rem',
+                fontSize: '0.875rem',
+                backgroundColor: isDarkMode ? 'var(--text-primary, #2C2825)' : 'transparent',
+                color: isDarkMode ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              title={isDarkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {isDarkMode ? '◐' : '○'}
+            </button>
           </div>
 
-          {/* Note toggle - only show if note exists */}
+          {/* Note toggle */}
           {hasNote ? (
-            <label className="flex items-start gap-3 mt-5 cursor-pointer group">
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginTop: '1.25rem', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={includeNote}
                 onChange={(e) => setIncludeNote(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-charcoal cursor-pointer"
+                style={{ marginTop: '0.125rem', width: '1rem', height: '1rem', cursor: 'pointer' }}
               />
               <div>
-                <span className="text-sm text-charcoal/60 group-hover:text-charcoal/80 transition-colors">
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #6B635A)' }}>
                   Include my note
                 </span>
-                <p className="text-xs text-charcoal/35 mt-0.5">
-                  Adds your words beneath the lyric.
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted, #9C948A)', marginTop: '0.125rem' }}>
+                  Your words appear as marginalia
                 </p>
               </div>
             </label>
           ) : (
-            <p className="mt-5 text-xs text-charcoal/35 text-center">
+            <p style={{ marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--text-muted, #9C948A)', textAlign: 'center' }}>
               <button
                 onClick={onClose}
-                className="text-charcoal/45 hover:text-charcoal/65 transition-colors underline underline-offset-2"
+                style={{ color: 'var(--text-secondary, #6B635A)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 Add a note
               </button>
-              {' '}to include your thoughts.
+              {' '}to include your thoughts
             </p>
           )}
 
-          {/* Primary action */}
-          <div className="mt-6">
+          {/* Actions */}
+          <div style={{ marginTop: '1.5rem' }}>
             <button
               onClick={share}
-              className="w-full py-3 text-sm font-medium text-cream bg-charcoal
-                       hover:bg-charcoal/90 active:bg-charcoal transition-colors"
+              style={{
+                width: '100%',
+                padding: '0.875rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                backgroundColor: 'var(--text-primary, #2C2825)',
+                color: 'var(--surface-bg, #F5F2ED)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              Share
+              {shared ? 'Shared' : 'Share'}
             </button>
-            {shared && (
-              <p className="text-center text-xs text-charcoal/40 mt-2 animate-pulse">
-                Shared
-              </p>
-            )}
           </div>
 
-          {/* Secondary action */}
           <button
             onClick={copyLink}
             disabled={loading || !shareUrl}
-            className="w-full mt-2 py-2 text-sm text-charcoal/40 hover:text-charcoal/60
-                     transition-colors disabled:opacity-40"
+            style={{
+              width: '100%',
+              marginTop: '0.5rem',
+              padding: '0.625rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary, #6B635A)',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: loading || !shareUrl ? 'not-allowed' : 'pointer',
+              opacity: loading || !shareUrl ? 0.4 : 1,
+            }}
           >
             {loading ? 'Generating link...' : copied ? 'Copied' : 'Copy link'}
           </button>
@@ -438,4 +755,6 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }

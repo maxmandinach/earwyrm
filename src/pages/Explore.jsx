@@ -375,7 +375,7 @@ export default function Explore() {
             className="text-xl mb-2"
             style={{
               fontFamily: "'Caveat', cursive",
-              color: '#8B7355',
+              color: '#6B635A',
             }}
           >
             {searchQuery ? 'No matches' : filterType ? 'No lyrics here yet' : 'Nothing to explore yet'}

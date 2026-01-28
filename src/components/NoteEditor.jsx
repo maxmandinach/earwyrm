@@ -208,14 +208,14 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
       }}
     >
       {!isEditing && !hasNote ? (
-        // Empty state - gentle invitation
+        // Empty state - gentle invitation with breathing animation
         <button
           onClick={() => setIsEditing(true)}
           className="text-left pl-4 py-2 border-l-2 border-transparent hover:border-charcoal/10 transition-all group"
         >
           <p
-            className="text-charcoal/20 group-hover:text-charcoal/35 transition-colors"
-            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+            className="animate-breathe group-hover:animate-none group-hover:opacity-40 transition-opacity"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem', color: 'var(--text-primary, #2C2825)' }}
           >
             {prompt}
           </p>
