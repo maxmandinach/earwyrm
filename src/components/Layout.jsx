@@ -42,12 +42,12 @@ export default function Layout() {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-charcoal-light hover:text-charcoal transition-colors"
+              className="p-3 text-charcoal-light hover:text-charcoal transition-colors"
               aria-label="Menu"
             >
               <svg
-                width="20"
-                height="20"
+                width="24"
+                height="24"
                 viewBox="0 0 20 20"
                 fill="none"
                 stroke="currentColor"
@@ -72,7 +72,7 @@ export default function Layout() {
                   {/* Your artifact */}
                   <Link
                     to="/home"
-                    className="block px-4 py-2 text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     home
                   </Link>
@@ -82,13 +82,13 @@ export default function Layout() {
                   {/* Discover */}
                   <Link
                     to="/explore"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     explore
                   </Link>
                   <Link
                     to="/following"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     following
                   </Link>
@@ -98,13 +98,13 @@ export default function Layout() {
                   {/* Your archive */}
                   <Link
                     to="/history"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     memory lane
                   </Link>
                   <Link
                     to="/collections"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     collections
                   </Link>
@@ -114,13 +114,13 @@ export default function Layout() {
                   {/* Meta */}
                   <Link
                     to="/settings"
-                    className="block px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     settings
                   </Link>
                   <button
                     onClick={signOut}
-                    className="w-full text-left px-4 py-2 text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                   >
                     sign out
                   </button>
@@ -136,12 +136,12 @@ export default function Layout() {
       </main>
 
       <footer className="px-4 py-6 border-t border-charcoal/10">
-        <div className="flex items-center justify-center gap-4 text-xs text-charcoal-light/60">
-          <Link to="/privacy" className="hover:text-charcoal transition-colors">
+        <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal-light/60">
+          <Link to="/privacy" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Privacy
           </Link>
           <span>·</span>
-          <Link to="/terms" className="hover:text-charcoal transition-colors">
+          <Link to="/terms" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Terms
           </Link>
         </div>

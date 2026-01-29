@@ -578,27 +578,30 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        className="w-full md:max-w-sm rounded-t-2xl md:rounded-lg"
         style={{
-          width: '100%',
-          maxWidth: '24rem',
-          maxHeight: '90vh',
+          maxHeight: '85vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: 'var(--surface-card, #F5F2ED)',
           border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          borderRadius: '4px',
         }}
       >
+        {/* Drag handle - mobile only */}
+        <div className="flex justify-center pt-3 pb-1 md:hidden">
+          <div className="w-10 h-1 rounded-full bg-charcoal/20" />
+        </div>
+
         {/* Header */}
-        <div style={{ padding: '1.5rem 1.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '0.75rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2
             style={{
               fontFamily: "'Caveat', cursive",
@@ -610,11 +613,10 @@ export default function ShareModal({ lyric, note, username, isPublic, onVisibili
           </h2>
           <button
             onClick={onClose}
-            style={{ color: 'var(--text-muted, #9C948A)', padding: '0.25rem' }}
+            className="py-2 px-3 text-sm"
+            style={{ color: 'var(--text-secondary, #6B635A)' }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            Cancel
           </button>
         </div>
 

@@ -55,7 +55,7 @@ export default function LyricCard({
   }
 
   const secondaryStyle = {
-    color: theme.secondaryColor,
+    color: 'var(--text-secondary, #6B635A)',
   }
 
   // Card styling - clean surface with depth
@@ -79,7 +79,7 @@ export default function LyricCard({
 
   return (
     <div
-      className={`w-full max-w-lg mx-auto p-8 sm:p-10 transition-all duration-300 ${className}`}
+      className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 transition-all duration-300 ${className}`}
       style={{
         ...cardStyle,
         transform: justSaved ? 'scale(1.01)' : 'scale(1)',
@@ -97,7 +97,7 @@ export default function LyricCard({
               fontSize: theme.fontSize,
               fontWeight: theme.fontWeight,
               lineHeight: theme.lineHeight,
-              color: theme.textColor,
+              color: 'var(--text-primary, #2C2825)',
             }}
             rows={4}
             autoFocus
@@ -109,12 +109,12 @@ export default function LyricCard({
               value={songTitle}
               onChange={(e) => setSongTitle(e.target.value)}
               placeholder="Song title"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+              className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
               style={{
                 fontFamily: "'DM Sans', system-ui, sans-serif",
                 fontSize: '0.875rem',
                 fontStyle: 'italic',
-                color: theme.secondaryColor,
+                color: 'var(--text-secondary, #6B635A)',
               }}
             />
             <input
@@ -122,12 +122,12 @@ export default function LyricCard({
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
               placeholder="Artist"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+              className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
               style={{
                 fontFamily: "'DM Sans', system-ui, sans-serif",
                 fontSize: '0.875rem',
                 fontStyle: 'italic',
-                color: theme.secondaryColor,
+                color: 'var(--text-secondary, #6B635A)',
               }}
             />
           </div>
@@ -138,7 +138,7 @@ export default function LyricCard({
               disabled={!content.trim() || isSaving}
               className="text-sm font-medium transition-all duration-200"
               style={{
-                color: theme.textColor,
+                color: 'var(--text-primary, #2C2825)',
                 opacity: !content.trim() ? 0.4 : 1,
                 transform: isSaving ? 'scale(0.98)' : 'scale(1)',
               }}
@@ -148,7 +148,7 @@ export default function LyricCard({
             <button
               onClick={handleCancel}
               className="text-sm transition-colors opacity-60 hover:opacity-100"
-              style={{ color: theme.secondaryColor }}
+              style={{ color: 'var(--text-secondary, #6B635A)' }}
             >
               Cancel
             </button>
@@ -168,7 +168,7 @@ export default function LyricCard({
                 className="w-20 mt-5 mb-4"
                 style={{
                   height: '1.5px',
-                  backgroundColor: theme.accentColor || '#B8A99A',
+                  backgroundColor: 'var(--color-accent, #B8A99A)',
                   opacity: 0.5
                 }}
               />
@@ -177,7 +177,7 @@ export default function LyricCard({
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                   fontSize: '0.875rem',
                   fontStyle: 'italic',
-                  color: theme.secondaryColor,
+                  color: 'var(--text-secondary, #6B635A)',
                 }}
               >
                 {lyric.song_title && (
@@ -239,7 +239,7 @@ export default function LyricCard({
               className="text-xs mt-5 opacity-40"
               style={{
                 fontFamily: "'DM Sans', system-ui, sans-serif",
-                color: theme.mutedColor || theme.secondaryColor,
+                color: 'var(--text-muted, #9C948A)',
               }}
             >
               {formatRelativeTime(lyric.created_at)}

@@ -59,7 +59,7 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
               e.stopPropagation()
               setShowMenu(!showMenu)
             }}
-            className="text-charcoal-light/40 hover:text-charcoal transition-colors p-1"
+            className="text-charcoal-light/40 hover:text-charcoal transition-colors p-2"
           >
             ⋯
           </button>
@@ -135,34 +135,48 @@ export default function Collections() {
       setLoadingCounts(true)
       const counts = {}
 
-      for (const collection of collections) {
-        if (collection.is_smart) {
-          // Smart collection: fetch all user lyrics and filter client-side
-          const { data, error } = await supabase
+      // Fetch all user lyrics once for smart collections
+      const smartCollections = collections.filter(c => c.is_smart)
+      const manualCollections = collections.filter(c => !c.is_smart)
+
+      const promises = []
+
+      // Single fetch for all smart collections
+      if (smartCollections.length > 0) {
+        promises.push(
+          supabase
             .from('lyrics')
             .select('id, tags')
             .eq('user_id', user.id)
+            .then(({ data, error }) => {
+              for (const collection of smartCollections) {
+                if (error) {
+                  counts[collection.id] = 0
+                } else {
+                  const filtered = data?.filter(lyric =>
+                    lyric.tags && lyric.tags.includes(collection.smart_tag)
+                  ) || []
+                  counts[collection.id] = filtered.length
+                }
+              }
+            })
+        )
+      }
 
-          if (error) {
-            counts[collection.id] = 0
-          } else {
-            // Filter client-side for lyrics containing the smart tag
-            const filtered = data?.filter(lyric =>
-              lyric.tags && lyric.tags.includes(collection.smart_tag)
-            ) || []
-            counts[collection.id] = filtered.length
-          }
-        } else {
-          // Manual collection: count from junction table
-          const { data, error } = await supabase
+      // Parallel fetches for manual collections
+      for (const collection of manualCollections) {
+        promises.push(
+          supabase
             .from('lyric_collections')
             .select('id')
             .eq('collection_id', collection.id)
-
-          counts[collection.id] = error ? 0 : (data?.length || 0)
-        }
+            .then(({ data, error }) => {
+              counts[collection.id] = error ? 0 : (data?.length || 0)
+            })
+        )
       }
 
+      await Promise.all(promises)
       setLyricCounts(counts)
       setLoadingCounts(false)
     }
@@ -251,7 +265,26 @@ export default function Collections() {
   if (loading || loadingCounts) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <p className="text-sm text-charcoal-light/60">Loading collections...</p>
+        <div className="mb-8">
+          <div className="skeleton h-6 w-32 mb-3" />
+          <div className="skeleton h-4 w-64" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="p-6 border border-charcoal/10">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="skeleton w-3 h-3 rounded-full flex-shrink-0 mt-1.5" />
+                <div className="flex-1">
+                  <div className="skeleton h-5 w-28 mb-2" />
+                  <div className="skeleton h-4 w-40" />
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-charcoal/10">
+                <div className="skeleton h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -276,7 +309,7 @@ export default function Collections() {
 
       {/* Create/Edit collection form */}
       {showCreateForm && (
-        <form onSubmit={handleCreateCollection} className="mb-8 p-6 border border-charcoal/20 bg-charcoal/5">
+        <form onSubmit={handleCreateCollection} className="mb-8 p-4 sm:p-6 border border-charcoal/20 bg-charcoal/5">
           <h3 className="text-sm font-light text-charcoal mb-4 lowercase">
             {editingCollection ? 'edit collection' : 'create new collection'}
           </h3>
@@ -310,7 +343,7 @@ export default function Collections() {
                     key={colorName}
                     type="button"
                     onClick={() => setNewCollectionColor(colorName)}
-                    className={`w-8 h-8 rounded-full ${colorClass} transition-all ${
+                    className={`w-11 h-11 rounded-full ${colorClass} transition-all ${
                       newCollectionColor === colorName
                         ? 'ring-2 ring-charcoal ring-offset-2 ring-offset-cream'
                         : 'hover:ring-1 hover:ring-charcoal/30'

@@ -116,10 +116,13 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
               <button
                 type="button"
                 onClick={() => removeTag(index)}
-                className="opacity-50 hover:opacity-100 transition-opacity"
+                className="p-1.5 -mr-1 opacity-50 hover:opacity-100 transition-opacity"
                 aria-label={`Remove ${tag} tag`}
               >
-                ×
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </span>
           ))}
@@ -165,7 +168,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], showS
               key={suggestion}
               type="button"
               onClick={() => addTag(suggestion)}
-              className={`w-full px-4 py-2 text-left transition-colors ${
+              className={`w-full px-4 py-3 text-left transition-colors ${
                 index === selectedIndex ? 'bg-charcoal/10' : 'hover:bg-charcoal/5'
               }`}
               style={{

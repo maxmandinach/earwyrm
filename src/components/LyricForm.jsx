@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function LyricForm({ onSubmit, initialValues = {}, isLoading = false, error = null }) {
   const [content, setContent] = useState(initialValues.content || '')
   const [songTitle, setSongTitle] = useState(initialValues.songTitle || '')
   const [artistName, setArtistName] = useState(initialValues.artistName || '')
+  const textareaRef = useRef(null)
+
+  // Auto-expand textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = Math.max(100, textareaRef.current.scrollHeight) + 'px'
+    }
+  }, [content])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -31,11 +40,12 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
       >
         {/* Lyric */}
         <textarea
+          ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Paste or type a lyric"
           rows={4}
-          className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-40"
+          className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-60"
           style={{
             fontFamily: "'Caveat', cursive",
             fontSize: '1.875rem',
@@ -53,10 +63,10 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             value={songTitle}
             onChange={(e) => setSongTitle(e.target.value)}
             placeholder="Song title"
-            className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+            className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
             style={{
-              fontFamily: "'Caveat', cursive",
-              fontSize: '1.25rem',
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: '0.9375rem',
               color: 'var(--text-secondary, #6B635A)',
             }}
           />
@@ -65,10 +75,10 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             value={artistName}
             onChange={(e) => setArtistName(e.target.value)}
             placeholder="Artist"
-            className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+            className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
             style={{
-              fontFamily: "'Caveat', cursive",
-              fontSize: '1.25rem',
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: '0.9375rem',
               color: 'var(--text-secondary, #6B635A)',
             }}
           />

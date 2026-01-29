@@ -247,7 +247,7 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="text-charcoal/30 hover:text-charcoal/50 transition-colors"
+                  className="py-1 px-2 text-charcoal/30 hover:text-charcoal/50 transition-colors"
                 >
                   clear
                 </button>
