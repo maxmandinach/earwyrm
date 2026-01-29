@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import TagInput from './TagInput'
 import CollectionPicker from './CollectionPicker'
+import ModalSheet from './ModalSheet'
 
 export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [] }) {
   const [content, setContent] = useState(lyric.content)
@@ -41,28 +42,18 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
-      <div
-        className="w-full max-w-2xl flex flex-col max-h-[90vh] shadow-lg"
-        style={{
-          backgroundColor: 'var(--surface-card, #F5F2ED)',
-          border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-        }}
-      >
-        <div className="p-6 border-b border-charcoal/10">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium text-charcoal">Edit lyric</h2>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+  // Auto-expand textarea
+  const textareaRef = useRef(null)
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = Math.max(100, textareaRef.current.scrollHeight) + 'px'
+    }
+  }, [content])
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 flex flex-col">
+  return (
+    <ModalSheet onClose={onClose} title="Edit lyric" maxWidth="max-w-lg">
+      <form onSubmit={handleSubmit} className="p-5 sm:p-6 flex flex-col">
           {error && (
             <div className="mb-4 p-3 text-sm text-red-800 bg-red-50 border border-red-200">
               {error}
@@ -77,17 +68,17 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             >
               {/* Lyric */}
               <textarea
+                ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Paste or type a lyric"
                 rows={4}
-                className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-40"
+                className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-60"
                 style={{
                   fontFamily: "'Caveat', cursive",
                   fontSize: '1.875rem',
                   fontWeight: 500,
                   lineHeight: 1.5,
-                  color: 'var(--text-primary, #2C2825)',
                 }}
                 autoFocus
               />
@@ -99,11 +90,10 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
                   value={songTitle}
                   onChange={(e) => setSongTitle(e.target.value)}
                   placeholder="Song title"
-                  className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+                  className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                   style={{
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '1.25rem',
-                    color: 'var(--text-secondary, #6B635A)',
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: '0.9375rem',
                   }}
                 />
                 <input
@@ -111,11 +101,10 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
                   value={artistName}
                   onChange={(e) => setArtistName(e.target.value)}
                   placeholder="Artist"
-                  className="w-full bg-transparent focus:outline-none placeholder:opacity-30"
+                  className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                   style={{
-                    fontFamily: "'Caveat', cursive",
-                    fontSize: '1.25rem',
-                    color: 'var(--text-secondary, #6B635A)',
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: '0.9375rem',
                   }}
                 />
               </div>
@@ -170,7 +159,6 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalSheet>
   )
 }

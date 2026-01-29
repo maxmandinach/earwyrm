@@ -171,13 +171,13 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
             {/* Edit (pencil) - inline editing */}
             <button
               onClick={() => setIsEditingCard(true)}
-              className="p-2 text-charcoal-light/50 hover:text-charcoal transition-colors"
+              className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
               title="Edit"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -192,13 +192,13 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
             {/* New lyric (plus) */}
             <button
               onClick={() => setShowReplaceModal(true)}
-              className="p-2 text-charcoal-light/50 hover:text-charcoal transition-colors"
+              className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
               title="New lyric"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -248,7 +248,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
 
         <button
           onClick={() => setShowShareModal(true)}
-          className="text-charcoal-light hover:text-charcoal transition-colors"
+          className="py-2 px-3 text-charcoal-light hover:text-charcoal transition-colors"
         >
           share
         </button>

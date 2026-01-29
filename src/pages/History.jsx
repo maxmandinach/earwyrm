@@ -259,7 +259,7 @@ function TimelineEntry({ lyric, note, section = 'default' }) {
             </div>
 
             {/* Quiet metadata footer */}
-            <div className="mt-6 pt-4 border-t border-black/5 flex items-center justify-between">
+            <div className="mt-6 pt-4 border-t border-black/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div className="text-xs text-charcoal/30">
                 {formatTimestampForSection(lyric.created_at, section)}
                 {(lyric.song_title || lyric.artist_name) && (
@@ -382,8 +382,19 @@ export default function History() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-charcoal-light text-sm">Loading your history...</div>
+      <div className="flex-1 w-full flex flex-col">
+        <div className="max-w-lg mx-auto px-4 sm:px-6 pt-16 pb-12 w-full">
+          <div className="skeleton h-6 w-32 mb-3" />
+          <div className="skeleton h-3 w-20 mb-12" />
+          {[1, 2, 3].map(i => (
+            <div key={i} className="mb-8 p-6" style={{ backgroundColor: 'var(--surface-card, #F5F2ED)', border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
+              <div className="skeleton h-6 w-full mb-2" />
+              <div className="skeleton h-6 w-3/4 mb-2" />
+              <div className="skeleton h-6 w-1/2 mb-6" />
+              <div className="skeleton h-3 w-32 mt-4" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -415,7 +426,7 @@ export default function History() {
   return (
     <div className="flex-1 w-full flex flex-col overflow-hidden">
       {/* Quiet header */}
-      <div className="max-w-lg mx-auto px-6 pt-16 pb-12 flex-shrink-0">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 pt-16 pb-12 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
             memory lane
@@ -446,7 +457,7 @@ export default function History() {
 
       {/* Timeline - scrollable container */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto px-6 pb-16">
+        <div className="max-w-lg mx-auto px-4 sm:px-6 pb-16">
           {/* No timeline line - just gentle progression */}
           <div className="relative">
             {/* This Week */}

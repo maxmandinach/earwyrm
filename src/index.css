@@ -126,7 +126,7 @@ html {
 
 .text-ui-small {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   color: var(--color-charcoal-muted);
 }
@@ -141,6 +141,61 @@ html {
   animation: breathe 3.5s ease-in-out infinite;
 }
 
+/* Touch target utility - ensures 44px minimum */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bottom-sheet slide-up animation */
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Skeleton loader shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--color-cream-dark) 25%,
+    var(--color-cream) 50%,
+    var(--color-cream-dark) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+html.dark .skeleton {
+  background: linear-gradient(90deg,
+    var(--color-cream-deeper) 25%,
+    var(--color-cream) 50%,
+    var(--color-cream-deeper) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* 100dvh support for iOS keyboard */
+@supports (height: 100dvh) {
+  body, #root {
+    min-height: 100dvh;
+  }
+}
+
+/* Mobile active states */
+@media (hover: none) {
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+}
+
 /* ==========================================
    DARK MODE OVERRIDES
    ========================================== */
@@ -151,8 +206,8 @@ html.dark {
   --color-cream-dark: #1F1D1A;
   --color-cream-deeper: #2D2A27;
   --color-charcoal: #F5F0E8;
-  --color-charcoal-light: #A89F94;
-  --color-charcoal-muted: #6B635A;
+  --color-charcoal-light: #D0C6BC;
+  --color-charcoal-muted: #A89E94;
   --color-accent: #C8B8A8;
   --color-paper: #252220;
   --color-ink: #F5F0E8;
@@ -222,13 +277,19 @@ html.dark .border-b.border-charcoal\/10 {
   border-bottom-color: var(--border-medium) !important;
 }
 
-/* Input/form fields */
+/* Input/form fields in dark mode */
 html.dark input,
 html.dark textarea,
 html.dark select {
-  background-color: var(--surface-elevated) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-medium) !important;
+}
+
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark select {
+  background-color: var(--surface-elevated) !important;
 }
 
 html.dark input::placeholder,
@@ -274,32 +335,44 @@ html.dark .hover\:border-charcoal\/60:hover {
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Opacity classes with text colors */
+/* Opacity classes — solid opaque colors for dark mode readability */
+/* No rgba — thin handwritten fonts need solid colors to stay crisp */
+html.dark .text-charcoal\/20 {
+  color: #7A7268 !important;
+}
+
+html.dark .text-charcoal\/25 {
+  color: #8A8178 !important;
+}
+
 html.dark .text-charcoal\/30 {
-  color: rgba(245, 240, 232, 0.3) !important;
+  color: #9A9088 !important;
 }
 
 html.dark .text-charcoal\/40 {
-  color: rgba(245, 240, 232, 0.4) !important;
+  color: #B0A89E !important;
 }
 
 html.dark .text-charcoal\/50 {
-  color: rgba(245, 240, 232, 0.5) !important;
+  color: #C0B8AE !important;
 }
 
 html.dark .text-charcoal\/60 {
-  color: rgba(245, 240, 232, 0.6) !important;
+  color: #D0C8BE !important;
 }
 
 html.dark .text-charcoal\/70 {
-  color: rgba(245, 240, 232, 0.7) !important;
+  color: #DDD6CE !important;
 }
 
 html.dark .text-charcoal-light\/40,
-html.dark .text-charcoal-light\/50,
+html.dark .text-charcoal-light\/50 {
+  color: #C0B8AE !important;
+}
+
 html.dark .text-charcoal-light\/60,
 html.dark .text-charcoal-light\/70 {
-  color: rgba(168, 159, 148, 0.7) !important;
+  color: #D5CCC2 !important;
 }
 
 /* Border opacity classes */
@@ -343,9 +416,12 @@ html.dark footer {
   border-color: var(--border-subtle) !important;
 }
 
-/* Note editor placeholder */
-html.dark .placeholder\:opacity-30::placeholder {
-  opacity: 0.4 !important;
+/* Placeholder visibility in dark mode */
+html.dark .placeholder\:opacity-30::placeholder,
+html.dark .placeholder\:opacity-40::placeholder,
+html.dark .placeholder\:opacity-50::placeholder,
+html.dark .placeholder\:opacity-60::placeholder {
+  opacity: 0.7 !important;
 }
 
 /* Search/filter dropdowns */
@@ -356,7 +432,7 @@ html.dark .shadow-lg {
 /* Tags */
 html.dark .opacity-50,
 html.dark .opacity-60 {
-  opacity: 0.7 !important;
+  opacity: 0.85 !important;
 }
 
 /* Red/error text (keep visible in dark mode) */
