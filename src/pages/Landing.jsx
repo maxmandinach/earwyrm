@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { isValidUsername } from '../lib/utils'
@@ -115,6 +115,34 @@ export default function Landing() {
     const interval = setInterval(advance, CYCLE_INTERVAL)
     return () => clearInterval(interval)
   }, [advance, lyrics.length])
+
+  // Swipe support for mobile
+  const touchStartX = useRef(null)
+  const swipeTo = useCallback((direction) => {
+    if (lyrics.length <= 1 || fading) return
+    setFading(true)
+    setTimeout(() => {
+      setActiveIndex((prev) =>
+        direction === 'left'
+          ? (prev + 1) % lyrics.length
+          : (prev - 1 + lyrics.length) % lyrics.length
+      )
+      setFading(false)
+    }, FADE_DURATION)
+  }, [lyrics.length, fading])
+
+  const handleTouchStart = useCallback((e) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback((e) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    touchStartX.current = null
+    if (Math.abs(diff) > 50) {
+      swipeTo(diff > 0 ? 'left' : 'right')
+    }
+  }, [swipeTo])
 
   const theme = signatureStyle
   const activeLyric = lyrics[activeIndex]
@@ -509,10 +537,12 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Rotating lyric card */}
+            {/* Rotating lyric card — swipeable on mobile */}
             {!loading && activeLyric && (
               <div
-                className="w-full max-w-md mb-8 transition-all duration-700 ease-out"
+                className="w-full max-w-md mb-8 transition-all duration-700 ease-out touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
                 style={{
                   opacity: revealed ? 1 : 0,
                   transform: revealed ? 'translateY(0)' : 'translateY(16px)',
