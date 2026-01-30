@@ -183,7 +183,7 @@ export default function LyricCard({
                 {lyric.song_title && (
                   linkable ? (
                     <Link
-                      to={`/explore/song/${encodeURIComponent(lyric.song_title)}`}
+                      to={`/song/${encodeURIComponent(lyric.song_title.toLowerCase())}${lyric.artist_name ? `?artist=${encodeURIComponent(lyric.artist_name)}` : ''}`}
                       className="hover:opacity-70 transition-opacity"
                     >
                       {lyric.song_title}
@@ -196,7 +196,7 @@ export default function LyricCard({
                 {lyric.artist_name && (
                   linkable ? (
                     <Link
-                      to={`/explore/artist/${encodeURIComponent(lyric.artist_name)}`}
+                      to={`/artist/${encodeURIComponent(lyric.artist_name.toLowerCase())}`}
                       className="hover:opacity-70 transition-opacity"
                     >
                       {lyric.artist_name}

@@ -1,7 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import Home from './pages/Home'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import History from './pages/History'
@@ -14,6 +15,8 @@ import Collections from './pages/Collections'
 import CollectionDetail from './pages/CollectionDetail'
 import Explore from './pages/Explore'
 import Following from './pages/Following'
+import ArtistPage from './pages/ArtistPage'
+import SongPage from './pages/SongPage'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -38,24 +41,44 @@ function AuthRoute({ children }) {
   }
 
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/home" replace />
   }
 
   return children
 }
 
+function IndexRoute() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  if (user) {
+    return <Navigate to="/home" replace />
+  }
+
+  return <Landing />
+}
+
+function RedirectToArtist() {
+  const { name } = useParams()
+  return <Navigate to={`/artist/${name}`} replace />
+}
+
+function RedirectToSong() {
+  const { name } = useParams()
+  return <Navigate to={`/song/${name}`} replace />
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route
-          index
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
+      {/* Landing page - standalone, no layout */}
+      <Route path="/" element={<IndexRoute />} />
+
+      {/* Layout-wrapped routes */}
+      <Route element={<Layout />}>
         <Route
           path="home"
           element={
@@ -122,9 +145,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="artist/:slug" element={<ArtistPage />} />
+        <Route path="song/:slug" element={<SongPage />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="terms" element={<Terms />} />
+
+        {/* Redirects from old explore filter routes to new dedicated pages */}
+        <Route path="explore/artist/:name" element={<RedirectToArtist />} />
+        <Route path="explore/song/:name" element={<RedirectToSong />} />
       </Route>
+
       {/* Public routes - no layout, accessible to all */}
       <Route path="/s/:token" element={<SharedLyric />} />
       <Route path="/@:username" element={<PublicProfile />} />

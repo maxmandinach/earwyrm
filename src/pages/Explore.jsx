@@ -4,95 +4,9 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
+import ResonateButton from '../components/ResonateButton'
 
 const isDev = import.meta.env.DEV
-
-// Mock public notes for testing
-const MOCK_NOTES = {
-  'mock-1': { content: "This line hits different at 2am when you're questioning everything" },
-  'mock-3': { content: "The way this captures feeling trapped by your own choices..." },
-  'mock-4': { content: "My dad used to play this. Now I get it." },
-  'mock-7': { content: "Wedding song vibes but also just... truth" },
-}
-
-// Mock public lyrics for testing
-const MOCK_LYRICS = [
-  {
-    id: 'mock-1',
-    content: "I'm just a soul whose intentions are good\nOh Lord, please don't let me be misunderstood",
-    song_title: "Don't Let Me Be Misunderstood",
-    artist_name: 'Nina Simone',
-    tags: ['Nostalgia', 'Late Night'],
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-2',
-    content: 'And I find it kind of funny, I find it kind of sad\nThe dreams in which I\'m dying are the best I\'ve ever had',
-    song_title: 'Mad World',
-    artist_name: 'Tears for Fears',
-    tags: ['Melancholy', 'Driving'],
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-3',
-    content: 'We are all just prisoners here, of our own device',
-    song_title: 'Hotel California',
-    artist_name: 'Eagles',
-    tags: ['Late Night', 'Nostalgic'],
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-4',
-    content: "Hello darkness, my old friend\nI've come to talk with you again",
-    song_title: 'The Sound of Silence',
-    artist_name: 'Simon & Garfunkel',
-    tags: ['Melancholy', 'Nostalgia'],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-5',
-    content: 'Is this the real life? Is this just fantasy?',
-    song_title: 'Bohemian Rhapsody',
-    artist_name: 'Queen',
-    tags: ['Driving', 'Hopeful'],
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-6',
-    content: "They tried to make me go to rehab, I said no, no, no",
-    song_title: 'Rehab',
-    artist_name: 'Amy Winehouse',
-    tags: ['Late Night'],
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-7',
-    content: 'Cause all of me loves all of you\nLove your curves and all your edges\nAll your perfect imperfections',
-    song_title: 'All of Me',
-    artist_name: 'John Legend',
-    tags: ['Heartbreak', 'Hopeful'],
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-  {
-    id: 'mock-8',
-    content: "But I'm only human after all\nDon't put the blame on me",
-    song_title: 'Human',
-    artist_name: 'Rag\'n\'Bone Man',
-    tags: ['Driving', 'Summer'],
-    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-    is_public: true,
-  },
-]
-
-// Trending tags for filter chips
-const TRENDING_TAGS = ['Nostalgia', 'Late Night', 'Driving', 'Heartbreak', 'Summer', 'Hopeful']
 
 export default function Explore() {
   const { filterType, filterValue } = useParams()
@@ -100,20 +14,16 @@ export default function Explore() {
   const { user } = useAuth()
   const { isFollowing, follow, unfollow } = useFollow()
   const [lyrics, setLyrics] = useState([])
-  const [notes, setNotes] = useState({}) // Map of lyric_id -> note
+  const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [useMockData, setUseMockData] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
+  const [trendingTags, setTrendingTags] = useState([])
 
-  // Decode filter value for display
   const decodedFilterValue = filterValue ? decodeURIComponent(filterValue) : null
-
-  // Get artist name for song filter (from first matching lyric)
   const songArtist = filterType === 'song' && lyrics.length > 0 ? lyrics[0].artist_name : null
 
-  // Check if currently following this filter
   const currentlyFollowing = filterType && decodedFilterValue
     ? isFollowing(filterType, decodedFilterValue)
     : false
@@ -134,26 +44,43 @@ export default function Explore() {
     }
   }
 
+  // Fetch real trending tags
+  useEffect(() => {
+    async function fetchTrendingTags() {
+      try {
+        const { data } = await supabase
+          .from('lyrics')
+          .select('tags')
+          .eq('is_public', true)
+          .not('tags', 'eq', '{}')
+          .limit(200)
+
+        if (data) {
+          const tagCounts = {}
+          data.forEach(l => {
+            (l.tags || []).forEach(tag => {
+              tagCounts[tag] = (tagCounts[tag] || 0) + 1
+            })
+          })
+          const sorted = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 12)
+            .map(([tag]) => tag)
+          setTrendingTags(sorted)
+        }
+      } catch (err) {
+        console.error('Error fetching trending tags:', err)
+        setTrendingTags(['Nostalgia', 'Late Night', 'Driving', 'Heartbreak', 'Summer', 'Hopeful'])
+      }
+    }
+
+    fetchTrendingTags()
+  }, [])
+
   useEffect(() => {
     async function fetchLyrics() {
       setLoading(true)
       setError(null)
-
-      // Use mock data if toggled
-      if (useMockData) {
-        let filtered = [...MOCK_LYRICS]
-        if (filterType === 'tag' && decodedFilterValue) {
-          filtered = filtered.filter(l => l.tags?.some(t => t.toLowerCase() === decodedFilterValue.toLowerCase()))
-        } else if (filterType === 'artist' && decodedFilterValue) {
-          filtered = filtered.filter(l => l.artist_name?.toLowerCase() === decodedFilterValue.toLowerCase())
-        } else if (filterType === 'song' && decodedFilterValue) {
-          filtered = filtered.filter(l => l.song_title?.toLowerCase() === decodedFilterValue.toLowerCase())
-        }
-        setLyrics(filtered)
-        setNotes(MOCK_NOTES)
-        setLoading(false)
-        return
-      }
 
       try {
         let query = supabase
@@ -163,7 +90,6 @@ export default function Explore() {
           .order('created_at', { ascending: false })
           .limit(50)
 
-        // Apply filters based on route
         if (filterType === 'tag' && decodedFilterValue) {
           query = query.contains('tags', [decodedFilterValue])
         } else if (filterType === 'artist' && decodedFilterValue) {
@@ -177,7 +103,6 @@ export default function Explore() {
         if (fetchError) throw fetchError
         setLyrics(data || [])
 
-        // Fetch public notes for these lyrics
         if (data && data.length > 0) {
           const lyricIds = data.map(l => l.id)
           const { data: notesData } = await supabase
@@ -203,9 +128,8 @@ export default function Explore() {
     }
 
     fetchLyrics()
-  }, [filterType, decodedFilterValue, useMockData])
+  }, [filterType, decodedFilterValue])
 
-  // Build page title
   const getTitle = () => {
     if (!filterType) return 'explore'
     if (filterType === 'tag') return `#${decodedFilterValue}`
@@ -218,7 +142,6 @@ export default function Explore() {
     return 'explore'
   }
 
-  // Filter displayed lyrics by search query
   const displayedLyrics = searchQuery.trim()
     ? lyrics.filter(l =>
         l.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -239,17 +162,7 @@ export default function Explore() {
                 to="/explore"
                 className="text-charcoal-light hover:text-charcoal transition-colors"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5" />
                   <path d="M12 19l-7-7 7-7" />
                 </svg>
@@ -259,7 +172,6 @@ export default function Explore() {
               {getTitle()}
             </h1>
 
-            {/* Follow button - only show on filtered views for logged in users */}
             {filterType && user && (
               <button
                 onClick={handleToggleFollow}
@@ -274,21 +186,17 @@ export default function Explore() {
               </button>
             )}
           </div>
-          {isDev && (
-            <button
-              onClick={() => setUseMockData(!useMockData)}
-              className="text-xs px-3 py-1.5 border border-charcoal/20 hover:border-charcoal/40
-                         transition-colors text-charcoal/30 rounded-sm"
-              title="Toggle mock data for testing"
-            >
-              {useMockData ? '✕ mock' : '+ mock'}
-            </button>
-          )}
         </div>
 
         {filterType && (
           <p className="text-xs text-charcoal/30 mb-4">
             {lyrics.length} {lyrics.length === 1 ? 'lyric' : 'lyrics'} shared
+            {filterType === 'artist' && (
+              <> · <Link to={`/artist/${encodeURIComponent(decodedFilterValue.toLowerCase())}`} className="underline hover:text-charcoal/50">View artist page</Link></>
+            )}
+            {filterType === 'song' && (
+              <> · <Link to={`/song/${encodeURIComponent(decodedFilterValue.toLowerCase())}`} className="underline hover:text-charcoal/50">View song page</Link></>
+            )}
           </p>
         )}
 
@@ -312,7 +220,6 @@ export default function Explore() {
             </button>
           )}
 
-          {/* Search suggestions - show when typing */}
           {searchQuery.trim() && (
             <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-charcoal/10 shadow-lg z-10">
               <div className="p-2 text-xs text-charcoal/40 border-b border-charcoal/5">
@@ -326,14 +233,14 @@ export default function Explore() {
                 #{searchQuery.trim()} <span className="text-charcoal/30">— tag</span>
               </Link>
               <Link
-                to={`/explore/artist/${encodeURIComponent(searchQuery.trim())}`}
+                to={`/artist/${encodeURIComponent(searchQuery.trim().toLowerCase())}`}
                 onClick={() => setSearchQuery('')}
                 className="block px-4 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
               >
                 {searchQuery.trim()} <span className="text-charcoal/30">— artist</span>
               </Link>
               <Link
-                to={`/explore/song/${encodeURIComponent(searchQuery.trim())}`}
+                to={`/song/${encodeURIComponent(searchQuery.trim().toLowerCase())}`}
                 onClick={() => setSearchQuery('')}
                 className="block px-4 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
               >
@@ -344,9 +251,9 @@ export default function Explore() {
         </div>
 
         {/* Trending tags - only show on main explore page */}
-        {!filterType && (
+        {!filterType && trendingTags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {TRENDING_TAGS.map((tag) => (
+            {trendingTags.map((tag) => (
               <Link
                 key={tag}
                 to={`/explore/tag/${encodeURIComponent(tag)}`}
@@ -390,33 +297,82 @@ export default function Explore() {
         </div>
       ) : (
         <div className="space-y-6 max-w-lg mx-auto w-full">
-          {displayedLyrics.map((lyric) => (
-            <div key={lyric.id}>
-              <LyricCard
-                lyric={lyric}
-                showTimestamp
-                linkable
-                className="border border-charcoal/10"
-              />
-              {/* Public note if available */}
-              {notes[lyric.id] && (
-                <div
-                  className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
-                  style={{
-                    transform: 'rotate(-0.5deg)',
-                    transformOrigin: 'left top',
-                  }}
-                >
-                  <p
-                    className="text-charcoal/50 leading-relaxed"
-                    style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+          {(() => {
+            // Cluster by canonical in filtered views; flat in unfiltered
+            if (filterType && (filterType === 'song' || filterType === 'artist')) {
+              const clusters = {}
+              displayedLyrics.forEach(l => {
+                const key = l.canonical_lyric_id || l.id
+                if (!clusters[key]) clusters[key] = []
+                clusters[key].push(l)
+              })
+              return Object.entries(clusters).map(([key, group]) => {
+                const representative = group.reduce((best, l) =>
+                  (l.reaction_count || 0) > (best.reaction_count || 0) ? l : best
+                , group[0])
+                const totalReactions = group.reduce((sum, l) => sum + (l.reaction_count || 0), 0)
+                return (
+                  <div key={key}>
+                    <LyricCard
+                      lyric={representative}
+                      showTimestamp
+                      linkable
+                      className="border border-charcoal/10"
+                    />
+                    {group.length > 1 && (
+                      <p className="text-xs text-charcoal/30 mt-1 max-w-lg mx-auto">
+                        {group.length} people saved this
+                      </p>
+                    )}
+                    {notes[representative.id] && (
+                      <div
+                        className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
+                        style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
+                      >
+                        <p
+                          className="text-charcoal/50 leading-relaxed"
+                          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+                        >
+                          {notes[representative.id].content}
+                        </p>
+                      </div>
+                    )}
+                    <div className="mt-2 max-w-lg mx-auto">
+                      <ResonateButton lyricId={representative.id} initialCount={totalReactions} />
+                    </div>
+                  </div>
+                )
+              })
+            }
+
+            // Flat rendering for unfiltered/tag views
+            return displayedLyrics.map((lyric) => (
+              <div key={lyric.id}>
+                <LyricCard
+                  lyric={lyric}
+                  showTimestamp
+                  linkable
+                  className="border border-charcoal/10"
+                />
+                {notes[lyric.id] && (
+                  <div
+                    className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
+                    style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
                   >
-                    {notes[lyric.id].content}
-                  </p>
+                    <p
+                      className="text-charcoal/50 leading-relaxed"
+                      style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
+                    >
+                      {notes[lyric.id].content}
+                    </p>
+                  </div>
+                )}
+                <div className="mt-2 max-w-lg mx-auto">
+                  <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ))
+          })()}
         </div>
       )}
     </div>

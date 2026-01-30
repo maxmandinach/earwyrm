@@ -51,7 +51,7 @@ export function LyricProvider({ children }) {
     fetchCurrentLyric()
   }, [fetchCurrentLyric])
 
-  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature' }) {
+  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature', canonicalLyricId = null }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
 
     try {
@@ -69,17 +69,19 @@ export function LyricProvider({ children }) {
       }
 
       // Create new lyric - inherit visibility from profile
+      // Normalize artist/song names: lowercase + trim
       const { data, error } = await supabase
         .from('lyrics')
         .insert({
           user_id: user.id,
           content,
-          song_title: songTitle || null,
-          artist_name: artistName || null,
+          song_title: songTitle?.trim() || null,
+          artist_name: artistName?.trim() || null,
           tags: tags || [],
           theme,
           is_current: true,
           is_public: profile?.is_public || false,
+          canonical_lyric_id: canonicalLyricId || null,
         })
         .select()
         .single()
@@ -127,14 +129,13 @@ export function LyricProvider({ children }) {
     return updateLyric({ is_public: isPublic })
   }
 
-  async function replaceLyric({ content, songTitle, artistName, tags }) {
-    // Always update in place - preserves note, handles typo fixes
-    // For a brand new lyric, use setLyric directly (e.g., from empty state)
+  async function replaceLyric({ content, songTitle, artistName, tags, canonicalLyricId }) {
     return updateLyric({
       content,
-      song_title: songTitle || null,
-      artist_name: artistName || null,
+      song_title: songTitle?.trim() || null,
+      artist_name: artistName?.trim() || null,
       tags: tags || [],
+      canonical_lyric_id: canonicalLyricId || null,
     })
   }
 
@@ -156,14 +157,12 @@ export function LyricProvider({ children }) {
     return data
   }
 
-  async function saveNote(lyricId, content, isPublic = false) {
+  async function saveNote(lyricId, content, isPublic = false, noteTypes = []) {
     if (!user) throw new Error('Must be logged in to save notes')
     if (!content || !content.trim()) {
-      // If content is empty, delete the note instead
       return deleteNote(lyricId)
     }
 
-    // Upsert (insert or update) - specify conflict columns for the unique constraint
     const { data, error } = await supabase
       .from('lyric_notes')
       .upsert({
@@ -171,6 +170,7 @@ export function LyricProvider({ children }) {
         user_id: user.id,
         content: content.trim(),
         is_public: isPublic,
+        note_types: noteTypes,
       }, { onConflict: 'lyric_id,user_id' })
       .select()
       .single()

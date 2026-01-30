@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import LyricCard from '../components/LyricCard'
@@ -7,8 +8,39 @@ import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import VisibilityToggle from '../components/VisibilityToggle'
 import NoteEditor from '../components/NoteEditor'
+import OnboardingFlow from '../components/OnboardingFlow'
+import ActivityFeed from '../components/ActivityFeed'
+import TrendingSection from '../components/TrendingSection'
+import FollowFeed from '../components/FollowFeed'
 import { getRandomPrompt } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
+
+function CompactPostPrompt() {
+  const [dismissed, setDismissed] = useState(false)
+
+  if (dismissed) return null
+
+  return (
+    <div className="w-full max-w-lg mx-auto mb-8 flex items-center gap-3">
+      <input
+        type="text"
+        placeholder="What lyric is stuck in your head?"
+        className="flex-1 px-4 py-3 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/30"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: '1.125rem' }}
+        onFocus={() => {
+          // Navigate to full form - for now just expand
+        }}
+        readOnly
+      />
+      <button
+        onClick={() => setDismissed(true)}
+        className="text-charcoal/20 hover:text-charcoal/40 text-sm"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
 
 function EmptyState({ onSetLyric, revealed }) {
   const [prompt] = useState(() => getRandomPrompt())
@@ -102,7 +134,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
 
         if (error) throw error
 
-        // Extract all tags and get unique values
         const allTags = data
           .flatMap(lyric => lyric.tags || [])
           .filter((tag, index, self) => self.indexOf(tag) === index)
@@ -123,7 +154,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
   const handleVisibilityChange = async (isPublic) => {
     try {
       await onVisibilityChange(isPublic)
-      // Also update note visibility if there's a note
       if (currentNote?.content) {
         await saveNote(lyric.id, currentNote.content, isPublic)
         setCurrentNote(prev => prev ? { ...prev, is_public: isPublic } : null)
@@ -136,16 +166,15 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
   const [isEditingNote, setIsEditingNote] = useState(false)
 
   const handleCardSave = async (data) => {
-    // Preserve existing tags when doing inline edit
     await onUpdate({ ...data, tags: lyric.tags || [] })
     setIsEditingCard(false)
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-      {/* Lyric card with inline editing - main reveal */}
+    <>
+      {/* Your current lyric - hero position */}
       <div
-        className="relative w-full max-w-lg transition-all duration-1000 ease-out"
+        className="relative w-full max-w-lg mx-auto transition-all duration-1000 ease-out"
         style={{
           opacity: revealed ? 1 : 0,
           transform: revealed ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
@@ -159,7 +188,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
           linkable={!isEditingCard}
         />
 
-        {/* Edit & New buttons - hidden when editing */}
         {!isEditingNote && !isEditingCard && (
           <div
             className="absolute bottom-4 right-4 flex gap-2 transition-opacity duration-500"
@@ -168,44 +196,21 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
               transitionDelay: '400ms',
             }}
           >
-            {/* Edit (pencil) - inline editing */}
             <button
               onClick={() => setIsEditingCard(true)}
               className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
               title="Edit"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
               </svg>
             </button>
-
-            {/* New lyric (plus) */}
             <button
               onClick={() => setShowReplaceModal(true)}
               className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
               title="New lyric"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 5v14" />
                 <path d="M5 12h14" />
               </svg>
@@ -214,9 +219,9 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
         )}
       </div>
 
-      {/* Note - separated zone with clear clickable area */}
+      {/* Note */}
       <div
-        className="w-full max-w-lg mt-8 transition-all duration-700 ease-out"
+        className="w-full max-w-lg mx-auto mt-8 transition-all duration-700 ease-out"
         style={{
           opacity: revealed ? 1 : 0,
           transform: revealed ? 'translateY(0)' : 'translateY(16px)',
@@ -233,7 +238,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
 
       {/* Actions */}
       <div
-        className="mt-8 flex items-center gap-6 text-sm transition-all duration-600 ease-out"
+        className="mt-8 flex items-center justify-center gap-6 text-sm transition-all duration-600 ease-out"
         style={{
           opacity: revealed ? 1 : 0,
           transform: revealed ? 'translateY(0)' : 'translateY(10px)',
@@ -245,7 +250,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
           profileIsPublic={profile?.is_public}
           onChange={handleVisibilityChange}
         />
-
         <button
           onClick={() => setShowShareModal(true)}
           className="py-2 px-3 text-charcoal-light hover:text-charcoal transition-colors"
@@ -272,25 +276,56 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
           onClose={() => setShowShareModal(false)}
         />
       )}
-    </div>
+    </>
   )
 }
 
 export default function Home() {
+  const { profile } = useAuth()
   const { currentLyric, loading, setLyric, replaceLyric, setVisibility } = useLyric()
   const [revealed, setRevealed] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [draftSaved, setDraftSaved] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  // The slow reveal - content appears like ink on paper
-  // This is the first impression. It sets the tone.
+  // Consume draft lyric from localStorage after signup
+  useEffect(() => {
+    if (loading) return
+    const params = new URLSearchParams(location.search)
+    if (params.get('saveDraft') !== 'true') return
+    const raw = localStorage.getItem('earwyrm_draft_lyric')
+    if (!raw) return
+
+    async function saveDraft() {
+      try {
+        const data = JSON.parse(raw)
+        await setLyric({ content: data.content, songTitle: data.songTitle, artistName: data.artistName, canonicalLyricId: data.canonicalLyricId || null })
+        localStorage.removeItem('earwyrm_draft_lyric')
+        setDraftSaved(true)
+      } catch (err) {
+        console.error('Error saving draft lyric:', err)
+      } finally {
+        navigate('/home', { replace: true })
+      }
+    }
+    saveDraft()
+  }, [loading, location.search])
+
   useEffect(() => {
     if (!loading) {
-      // Longer pause to let paper texture settle, then reveal
       const timer = setTimeout(() => setRevealed(true), 400)
       return () => clearTimeout(timer)
     }
   }, [loading])
 
-  // Edit in place - keeps note attached
+  // Check if user needs onboarding (skip if draft was just saved)
+  useEffect(() => {
+    if (!loading && profile && !profile.onboarded_at && !draftSaved) {
+      setShowOnboarding(true)
+    }
+  }, [loading, profile?.onboarded_at, draftSaved])
+
   const handleUpdate = async (data) => {
     await replaceLyric({
       content: data.content,
@@ -300,32 +335,53 @@ export default function Home() {
     })
   }
 
-  // Create new lyric - archives current one to Memory Lane
   const handleReplace = async (data) => {
     await setLyric({
       content: data.content,
       songTitle: data.songTitle,
       artistName: data.artistName,
       tags: data.tags,
+      canonicalLyricId: data.canonicalLyricId || null,
     })
   }
 
-  // During loading, show just the warm paper texture - no spinner
   if (loading) {
     return <div className="flex-1" />
   }
 
+  // Onboarding flow for first-time users
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
+  }
+
+  // No current lyric
   if (!currentLyric) {
     return <EmptyState onSetLyric={setLyric} revealed={revealed} />
   }
 
+  // Poster view with social sections
   return (
-    <LyricView
-      lyric={currentLyric}
-      onUpdate={handleUpdate}
-      onReplace={handleReplace}
-      onVisibilityChange={setVisibility}
-      revealed={revealed}
-    />
+    <div className="flex-1 flex flex-col items-center px-4 py-8 space-y-10">
+      <LyricView
+        lyric={currentLyric}
+        onUpdate={handleUpdate}
+        onReplace={handleReplace}
+        onVisibilityChange={setVisibility}
+        revealed={revealed}
+      />
+
+      {/* Social sections - fade in after hero */}
+      <div
+        className="w-full space-y-10 transition-all duration-700 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transitionDelay: '800ms',
+        }}
+      >
+        <ActivityFeed />
+        <FollowFeed />
+        <TrendingSection />
+      </div>
+    </div>
   )
 }
