@@ -3,6 +3,8 @@ import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
+import ResonateButton from '../components/ResonateButton'
+import CommentSection from '../components/CommentSection'
 
 function AnonymousFooter({ username }) {
   return (
@@ -108,7 +110,7 @@ export default function SharedLyric() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-4">
         <p className="text-charcoal mb-4">{error}</p>
         <Link
-          to={user ? "/home" : "/explore"}
+          to={user ? "/home" : "/"}
           className="text-sm text-charcoal-light underline hover:no-underline"
         >
           {user ? 'Go to your page' : 'Explore lyrics'}
@@ -122,8 +124,9 @@ export default function SharedLyric() {
       {/* Header */}
       <header className="px-4 py-4 flex justify-between items-center">
         <Link
-          to={user ? "/home" : "/explore"}
-          className="text-charcoal font-medium tracking-tight hover:opacity-70 transition-opacity"
+          to={user ? "/home" : "/"}
+          className="hover:opacity-70 transition-opacity"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary, #2C2825)' }}
         >
           earwyrm
         </Link>
@@ -169,6 +172,16 @@ export default function SharedLyric() {
               >
                 {note.content}
               </p>
+            </div>
+          )}
+
+          {/* Reactions + Comments */}
+          {lyric && (
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-center gap-4">
+                <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
+              </div>
+              <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} />
             </div>
           )}
         </div>
