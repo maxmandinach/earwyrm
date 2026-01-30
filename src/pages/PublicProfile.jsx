@@ -113,7 +113,7 @@ export default function PublicProfile({ showHistory = false }) {
       <div className="min-h-screen flex flex-col items-center justify-center bg-transparent px-4">
         <p className="text-charcoal mb-4">{error}</p>
         <Link
-          to={user ? "/home" : "/explore"}
+          to={user ? "/home" : "/"}
           className="text-sm text-charcoal-light underline hover:no-underline"
         >
           {user ? 'Go to your page' : 'Explore lyrics'}
@@ -127,8 +127,9 @@ export default function PublicProfile({ showHistory = false }) {
       {/* Minimal header */}
       <header className="px-4 py-4 flex justify-between items-center">
         <Link
-          to={user ? "/home" : "/explore"}
-          className="text-charcoal font-medium tracking-tight hover:opacity-70 transition-opacity"
+          to={user ? "/home" : "/"}
+          className="hover:opacity-70 transition-opacity"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary, #2C2825)' }}
         >
           earwyrm
         </Link>

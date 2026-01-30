@@ -1,14 +1,44 @@
 import { useState, useRef, useEffect } from 'react'
 import TagInput from './TagInput'
 import ModalSheet from './ModalSheet'
+import SuggestMatches from './SuggestMatches'
 
 export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [content, setContent] = useState('')
   const [songTitle, setSongTitle] = useState('')
   const [artistName, setArtistName] = useState('')
   const [tags, setTags] = useState([])
+  const [canonicalLyricId, setCanonicalLyricId] = useState(null)
+  const [isLocked, setIsLocked] = useState(false)
+  const [preMatchContent, setPreMatchContent] = useState('')
   const [saveState, setSaveState] = useState('idle') // idle | saving | saved
   const [error, setError] = useState(null)
+
+  const handleMatchSelect = (match) => {
+    if (match) {
+      setPreMatchContent(content)
+      setContent(match.content)
+      if (match.artistName) setArtistName(match.artistName)
+      if (match.songTitle) setSongTitle(match.songTitle)
+      setCanonicalLyricId(match.id)
+      setIsLocked(true)
+    } else if (isLocked) {
+      setContent(preMatchContent)
+      setArtistName('')
+      setCanonicalLyricId(null)
+      setIsLocked(false)
+    } else {
+      setCanonicalLyricId(null)
+    }
+  }
+
+  const handleClearLock = () => {
+    setContent('')
+    setSongTitle('')
+    setArtistName('')
+    setCanonicalLyricId(null)
+    setIsLocked(false)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -22,6 +52,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
         songTitle: songTitle.trim() || null,
         artistName: artistName.trim() || null,
         tags: tags,
+        canonicalLyricId,
       })
 
       setSaveState('saved')
@@ -72,21 +103,39 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
               style={{ backgroundColor: 'var(--surface-elevated, #F5F0E8)' }}
             >
               {/* Lyric */}
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="What's stuck in your head?"
-                rows={4}
-                className="w-full bg-transparent focus:outline-none resize-none placeholder:opacity-60"
-                style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: '1.875rem',
-                  fontWeight: 500,
-                  lineHeight: 1.5,
-                }}
-                autoFocus
-              />
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(e) => { if (!isLocked) setContent(e.target.value) }}
+                  readOnly={isLocked}
+                  placeholder="What's stuck in your head?"
+                  rows={4}
+                  className={`w-full bg-transparent focus:outline-none resize-none placeholder:opacity-60 ${isLocked ? 'opacity-70' : ''}`}
+                  style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '1.875rem',
+                    fontWeight: 500,
+                    lineHeight: 1.5,
+                  }}
+                  autoFocus={!isLocked}
+                />
+                {isLocked && (
+                  <button
+                    type="button"
+                    onClick={handleClearLock}
+                    className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center rounded-full bg-charcoal/10 hover:bg-charcoal/20 text-charcoal/60 hover:text-charcoal transition-colors"
+                    aria-label="Clear matched lyric"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Suggest matches — searches as user types lyric or song title */}
+              {!isLocked && (
+                <SuggestMatches content={content} songTitle={songTitle} onSelect={handleMatchSelect} />
+              )}
 
               {/* Song & Artist */}
               <div className="mt-4 pt-4 border-t border-charcoal/10 space-y-2">
