@@ -1,23 +1,66 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
+import { useAuth } from '../contexts/AuthContext'
+import LyricCard from '../components/LyricCard'
+import ResonateButton from '../components/ResonateButton'
 
 export default function Following() {
-  const { follows, loading, unfollow } = useFollow()
+  const { follows, loading: followsLoading, unfollow } = useFollow()
+  const { user } = useAuth()
+  const [lyrics, setLyrics] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const PAGE_SIZE = 20
 
-  // Group follows by type
-  const tags = follows.filter(f => f.filter_type === 'tag')
-  const artists = follows.filter(f => f.filter_type === 'artist')
-  const songs = follows.filter(f => f.filter_type === 'song')
-
-  async function handleUnfollow(filterType, filterValue) {
-    try {
-      await unfollow(filterType, filterValue)
-    } catch (err) {
-      console.error('Error unfollowing:', err)
+  useEffect(() => {
+    if (followsLoading) return
+    if (follows.length === 0) {
+      setLyrics([])
+      setLoading(false)
+      return
     }
-  }
 
-  if (loading) {
+    async function fetchFeed() {
+      setLoading(true)
+      try {
+        const artistFollows = follows.filter(f => f.filter_type === 'artist').map(f => f.filter_value)
+        const songFollows = follows.filter(f => f.filter_type === 'song').map(f => f.filter_value)
+        const tagFollows = follows.filter(f => f.filter_type === 'tag').map(f => f.filter_value)
+
+        // Fetch recent public lyrics
+        const { data } = await supabase
+          .from('lyrics')
+          .select('*')
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        if (data) {
+          // Filter client-side for all follow types
+          const matched = data.filter(l => {
+            if (artistFollows.some(a => l.artist_name?.toLowerCase() === a.toLowerCase())) return true
+            if (songFollows.some(s => l.song_title?.toLowerCase() === s.toLowerCase())) return true
+            if (tagFollows.some(t => l.tags?.some(lt => lt.toLowerCase() === t.toLowerCase()))) return true
+            return false
+          })
+
+          setLyrics(matched.slice(0, PAGE_SIZE))
+          setHasMore(matched.length > PAGE_SIZE)
+        }
+      } catch (err) {
+        console.error('Error fetching feed:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeed()
+  }, [follows, followsLoading])
+
+  if (followsLoading || loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12">
         <p className="text-sm text-charcoal-light/60">Loading...</p>
@@ -26,18 +69,25 @@ export default function Following() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
-      <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase mb-8">
-        following
-      </h1>
+    <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
+          feed
+        </h1>
+        {follows.length > 0 && (
+          <Link
+            to="/settings"
+            className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+          >
+            Manage follows
+          </Link>
+        )}
+      </div>
 
       {follows.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-charcoal-light/60 mb-2">
-            You're not following anything yet
-          </p>
-          <p className="text-sm text-charcoal-light/40 mb-6">
-            Follow tags, artists, or songs on Explore to see them here
+            Follow artists and tags on Explore to build your feed
           </p>
           <Link
             to="/explore"
@@ -46,93 +96,46 @@ export default function Following() {
             Go to Explore →
           </Link>
         </div>
+      ) : lyrics.length === 0 ? (
+        <div className="text-center py-12">
+          <p
+            className="text-xl mb-2"
+            style={{ fontFamily: "'Caveat', cursive", color: '#6B635A' }}
+          >
+            Nothing new yet
+          </p>
+          <p className="text-sm text-charcoal-light">
+            New public lyrics from your follows will appear here
+          </p>
+        </div>
       ) : (
-        <div className="space-y-8">
-          {/* Tags */}
-          {tags.length > 0 && (
-            <section>
-              <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Tags</h2>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((f) => (
-                  <div
-                    key={f.id}
-                    className="group flex items-center gap-2 px-3 py-2 border border-charcoal/10 hover:border-charcoal/20 transition-colors"
-                  >
-                    <Link
-                      to={`/explore/tag/${encodeURIComponent(f.filter_value)}`}
-                      className="text-sm text-charcoal/70 hover:text-charcoal transition-colors"
-                    >
-                      #{f.filter_value}
-                    </Link>
-                    <button
-                      onClick={() => handleUnfollow(f.filter_type, f.filter_value)}
-                      className="text-charcoal/20 hover:text-charcoal/50 transition-colors opacity-0 group-hover:opacity-100"
-                      title="Unfollow"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+        <div className="space-y-6">
+          {lyrics.map((lyric) => (
+            <div key={lyric.id}>
+              <LyricCard
+                lyric={lyric}
+                showTimestamp
+                linkable
+                className="border border-charcoal/10"
+              />
+              <div className="mt-2">
+                <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
               </div>
-            </section>
-          )}
+            </div>
+          ))}
 
-          {/* Artists */}
-          {artists.length > 0 && (
-            <section>
-              <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Artists</h2>
-              <div className="space-y-2">
-                {artists.map((f) => (
-                  <div
-                    key={f.id}
-                    className="group flex items-center justify-between px-4 py-3 border border-charcoal/10 hover:border-charcoal/20 transition-colors"
-                  >
-                    <Link
-                      to={`/explore/artist/${encodeURIComponent(f.filter_value)}`}
-                      className="text-sm text-charcoal/70 hover:text-charcoal transition-colors"
-                    >
-                      {f.filter_value}
-                    </Link>
-                    <button
-                      onClick={() => handleUnfollow(f.filter_type, f.filter_value)}
-                      className="text-charcoal/20 hover:text-charcoal/50 transition-colors opacity-0 group-hover:opacity-100"
-                      title="Unfollow"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Songs */}
-          {songs.length > 0 && (
-            <section>
-              <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Songs</h2>
-              <div className="space-y-2">
-                {songs.map((f) => (
-                  <div
-                    key={f.id}
-                    className="group flex items-center justify-between px-4 py-3 border border-charcoal/10 hover:border-charcoal/20 transition-colors"
-                  >
-                    <Link
-                      to={`/explore/song/${encodeURIComponent(f.filter_value)}`}
-                      className="text-sm text-charcoal/70 hover:text-charcoal transition-colors"
-                    >
-                      "{f.filter_value}"
-                    </Link>
-                    <button
-                      onClick={() => handleUnfollow(f.filter_type, f.filter_value)}
-                      className="text-charcoal/20 hover:text-charcoal/50 transition-colors opacity-0 group-hover:opacity-100"
-                      title="Unfollow"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
+          {hasMore && (
+            <div className="text-center pt-4">
+              <button
+                onClick={() => {
+                  // Load more logic - extend the displayed slice
+                  setPage(prev => prev + 1)
+                }}
+                className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
+              >
+                Load more
+              </button>
+            </div>
           )}
         </div>
       )}

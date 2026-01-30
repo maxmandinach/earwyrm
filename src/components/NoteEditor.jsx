@@ -14,11 +14,14 @@ const GENTLE_PROMPTS = [
   "what made this resonate?",
 ]
 
+const NOTE_TYPES = ['interpretation', 'personal', 'backstory']
+
 export default function NoteEditor({ lyricId, initialNote, className = '', onEditStateChange, onNoteChange, showVisibilityToggle = false }) {
   const { saveNote } = useLyric()
   const [note, setNote] = useState(initialNote?.content || '')
   const [savedNote, setSavedNote] = useState(initialNote?.content || '')
   const [isPublic, setIsPublic] = useState(initialNote?.is_public || false)
+  const [noteTypes, setNoteTypes] = useState(initialNote?.note_types || [])
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const textareaRef = useRef(null)
@@ -37,9 +40,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     setNote(content)
   }, [lyricId])
 
-  // Sync isPublic only on initial mount or when lyricId changes (different lyric)
+  // Sync isPublic and noteTypes only on initial mount or when lyricId changes
   useEffect(() => {
     setIsPublic(initialNote?.is_public ?? false)
+    setNoteTypes(initialNote?.note_types || [])
   }, [lyricId])
 
   useEffect(() => {
@@ -63,6 +67,12 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     }
   }, [isEditing])
 
+  function toggleNoteType(type) {
+    setNoteTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    )
+  }
+
   async function handleSave() {
     if (isSaving) return
     if (note.trim() === savedNote) {
@@ -73,11 +83,10 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
     isSavingRef.current = true
     setIsSaving(true)
     try {
-      await saveNote(lyricId, note.trim(), isPublic)
+      await saveNote(lyricId, note.trim(), isPublic, noteTypes)
       setSavedNote(note.trim())
-      // Notify parent of the change
       if (onNoteChange) {
-        onNoteChange(note.trim() ? { content: note.trim(), is_public: isPublic } : null)
+        onNoteChange(note.trim() ? { content: note.trim(), is_public: isPublic, note_types: noteTypes } : null)
       }
     } catch (err) {
       console.error('Error saving note:', err)
@@ -237,6 +246,23 @@ export default function NoteEditor({ lyricId, initialNote, className = '', onEdi
               minHeight: '60px',
             }}
           />
+          {/* Note type chips */}
+          <div className="flex gap-2 mt-2 mb-1">
+            {NOTE_TYPES.map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => toggleNoteType(type)}
+                className={`text-xs px-2 py-0.5 border transition-colors ${
+                  noteTypes.includes(type)
+                    ? 'border-charcoal/30 text-charcoal/60 bg-charcoal/5'
+                    : 'border-charcoal/10 text-charcoal/25 hover:border-charcoal/20'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-charcoal/30">
             <span>{isSaving ? 'saving...' : 'auto-saves'}</span>
             <span className="text-charcoal/20">·</span>
