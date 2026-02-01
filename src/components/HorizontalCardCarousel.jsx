@@ -2,15 +2,19 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
+import CompactCommentModal from './CompactCommentModal'
+import SavePopover from './SavePopover'
 
 /**
  * Compact lyric card for horizontal carousels.
- * Shows lyric snippet, song/artist, username, resonate + share.
+ * Shows lyric snippet, song/artist, username, resonate + comments + save + share.
  */
 function CompactCard({ lyric }) {
   const { user } = useAuth()
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [shareCopied, setShareCopied] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+  const [showSave, setShowSave] = useState(false)
   const isAnon = !user
 
   const linkTo = lyric.share_token
@@ -33,6 +37,18 @@ function CompactCard({ lyric }) {
     e.preventDefault()
     e.stopPropagation()
     if (!isAnon) toggle()
+  }
+
+  function handleCommentClick(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowComments(true)
+  }
+
+  function handleSaveClick(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAnon) setShowSave(true)
   }
 
   const username = lyric.profiles?.username
@@ -112,15 +128,30 @@ function CompactCard({ lyric }) {
             {count > 0 && <span>{count}</span>}
           </button>
 
-          {/* Comment count (read-only indicator) */}
-          {(lyric.comment_count || 0) > 0 && (
-            <span className="flex items-center gap-1 text-xs text-charcoal/25 py-1 px-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg>
-              {lyric.comment_count}
-            </span>
-          )}
+          {/* Comment */}
+          <button
+            onClick={handleCommentClick}
+            className="flex items-center gap-1 text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors py-1 px-1.5"
+            title="Comments"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            {(lyric.comment_count || 0) > 0 && <span>{lyric.comment_count}</span>}
+          </button>
+
+          {/* Save / Bookmark */}
+          <button
+            onClick={handleSaveClick}
+            className={`text-xs py-1 px-1.5 transition-colors ${
+              isAnon ? 'text-charcoal/25 cursor-default' : 'text-charcoal/25 hover:text-charcoal/40'
+            }`}
+            title={isAnon ? 'Sign in to save' : 'Save to collection'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
 
           <div className="flex-1" />
 
@@ -142,6 +173,22 @@ function CompactCard({ lyric }) {
           </button>
         </div>
       </Link>
+
+      {/* Portal-based modals */}
+      {showComments && (
+        <CompactCommentModal
+          lyricId={lyric.id}
+          shareToken={lyric.share_token}
+          onClose={() => setShowComments(false)}
+        />
+      )}
+      {showSave && (
+        <SavePopover
+          lyricId={lyric.id}
+          onClose={() => setShowSave(false)}
+          portal
+        />
+      )}
     </div>
   )
 }

@@ -4,51 +4,27 @@ import { useCollection } from '../contexts/CollectionContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 
-// Collection color mapping
-const collectionColors = {
-  charcoal: 'bg-charcoal',
-  coral: 'bg-[#FF6B6B]',
-  sage: 'bg-[#51B695]',
-  lavender: 'bg-[#9B89B3]',
-  amber: 'bg-[#F0A500]',
-  ocean: 'bg-[#4A90E2]',
-}
-
 function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
-  const colorClass = collectionColors[collection.color] || collectionColors.charcoal
   const [showMenu, setShowMenu] = useState(false)
-
-  const handleEdit = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowMenu(false)
-    onEdit(collection)
-  }
-
-  const handleDelete = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowMenu(false)
-    if (confirm(`Delete "${collection.name}"? This cannot be undone.`)) {
-      onDelete(collection.id)
-    }
-  }
 
   return (
     <div className="relative">
       <Link
         to={`/collections/${collection.id}`}
-        className="block p-6 border border-charcoal/10 hover:border-charcoal/30
-                   transition-all hover:shadow-sm group"
+        className="block p-5 transition-all group"
+        style={{
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+          border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+        }}
       >
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-1.5`} />
+        <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-medium text-charcoal group-hover:opacity-70 transition-opacity">
+            <h3 className="text-base text-charcoal/70 group-hover:text-charcoal transition-colors">
               {collection.name}
             </h3>
             {collection.description && (
-              <p className="text-sm text-charcoal-light/70 mt-1 line-clamp-2">
+              <p className="text-sm text-charcoal/40 mt-1 line-clamp-2">
                 {collection.description}
               </p>
             )}
@@ -59,18 +35,25 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
               e.stopPropagation()
               setShowMenu(!showMenu)
             }}
-            className="text-charcoal-light/40 hover:text-charcoal transition-colors p-2"
+            className="text-charcoal/20 hover:text-charcoal/50 transition-colors p-1 ml-2"
           >
-            ⋯
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="19" r="1.5" />
+            </svg>
           </button>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-charcoal/10">
-          <span className="text-xs text-charcoal-light/60">
+        <div
+          className="flex items-center justify-between pt-3 mt-3"
+          style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
+        >
+          <span className="text-xs text-charcoal/30">
             {lyricCount} {lyricCount === 1 ? 'lyric' : 'lyrics'}
           </span>
           {collection.is_smart && (
-            <span className="text-xs text-charcoal-light/50 italic">
+            <span className="text-xs text-charcoal/30 italic">
               #{collection.smart_tag}
             </span>
           )}
@@ -80,26 +63,36 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
       {/* Dropdown menu */}
       {showMenu && (
         <>
+          <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
           <div
-            className="fixed inset-0 z-10"
-            onClick={() => setShowMenu(false)}
-          />
-          <div
-            className="absolute right-6 top-6 z-20 shadow-lg min-w-[120px]"
+            className="absolute right-4 top-12 z-20 min-w-[100px] py-1"
             style={{
               backgroundColor: 'var(--surface-elevated, #FAF8F5)',
-              border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
             }}
           >
             <button
-              onClick={handleEdit}
-              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors lowercase"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowMenu(false)
+                onEdit(collection)
+              }}
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal/50 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
             >
               edit
             </button>
             <button
-              onClick={handleDelete}
-              className="block w-full text-left px-4 py-2 text-xs text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors lowercase"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowMenu(false)
+                if (confirm(`Delete "${collection.name}"? This cannot be undone.`)) {
+                  onDelete(collection.id)
+                }
+              }}
+              className="block w-full text-left px-4 py-2 text-xs text-charcoal/50 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
             >
               delete
             </button>
@@ -119,7 +112,6 @@ export default function Collections() {
   const [editingCollection, setEditingCollection] = useState(null)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [newCollectionDescription, setNewCollectionDescription] = useState('')
-  const [newCollectionColor, setNewCollectionColor] = useState('charcoal')
   const [isSmart, setIsSmart] = useState(false)
   const [smartTag, setSmartTag] = useState('')
   const [allTags, setAllTags] = useState([])
@@ -135,13 +127,11 @@ export default function Collections() {
       setLoadingCounts(true)
       const counts = {}
 
-      // Fetch all user lyrics once for smart collections
       const smartCollections = collections.filter(c => c.is_smart)
       const manualCollections = collections.filter(c => !c.is_smart)
 
       const promises = []
 
-      // Single fetch for all smart collections
       if (smartCollections.length > 0) {
         promises.push(
           supabase
@@ -163,7 +153,6 @@ export default function Collections() {
         )
       }
 
-      // Parallel fetches for manual collections
       for (const collection of manualCollections) {
         promises.push(
           supabase
@@ -196,7 +185,6 @@ export default function Collections() {
     setEditingCollection(collection)
     setNewCollectionName(collection.name)
     setNewCollectionDescription(collection.description || '')
-    setNewCollectionColor(collection.color || 'charcoal')
     setIsSmart(collection.is_smart || false)
     setSmartTag(collection.smart_tag || '')
     setShowCreateForm(true)
@@ -219,28 +207,23 @@ export default function Collections() {
     setIsCreating(true)
     try {
       if (editingCollection) {
-        // Update existing collection
         await updateCollection(editingCollection.id, {
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim(),
-          color: newCollectionColor,
           is_smart: isSmart,
           smart_tag: isSmart ? smartTag.trim() : null,
         })
         setEditingCollection(null)
       } else {
-        // Create new collection
         await createCollection({
           name: newCollectionName.trim(),
           description: newCollectionDescription.trim(),
-          color: newCollectionColor,
           isSmart: isSmart,
           smartTag: isSmart ? smartTag.trim() : null,
         })
       }
       setNewCollectionName('')
       setNewCollectionDescription('')
-      setNewCollectionColor('charcoal')
       setIsSmart(false)
       setSmartTag('')
       setShowCreateForm(false)
@@ -257,31 +240,30 @@ export default function Collections() {
     setEditingCollection(null)
     setNewCollectionName('')
     setNewCollectionDescription('')
-    setNewCollectionColor('charcoal')
     setIsSmart(false)
     setSmartTag('')
   }
 
   if (loading || loadingCounts) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-lg mx-auto px-4 py-12">
         <div className="mb-8">
           <div className="skeleton h-6 w-32 mb-3" />
           <div className="skeleton h-4 w-64" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="p-6 border border-charcoal/10">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="skeleton w-3 h-3 rounded-full flex-shrink-0 mt-1.5" />
-                <div className="flex-1">
-                  <div className="skeleton h-5 w-28 mb-2" />
-                  <div className="skeleton h-4 w-40" />
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-charcoal/10">
-                <div className="skeleton h-3 w-16" />
-              </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div
+              key={i}
+              className="p-5"
+              style={{
+                backgroundColor: 'var(--surface-card, #F5F2ED)',
+                border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+              }}
+            >
+              <div className="skeleton h-5 w-28 mb-2" />
+              <div className="skeleton h-4 w-40 mb-4" />
+              <div className="skeleton h-3 w-16" />
             </div>
           ))}
         </div>
@@ -290,38 +272,46 @@ export default function Collections() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-lg mx-auto px-4 py-12">
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-2">
           <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">collections</h1>
           <button
             onClick={() => showCreateForm ? handleCancelForm() : setShowCreateForm(true)}
-            className="text-xs text-charcoal-light hover:text-charcoal transition-colors"
+            className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors"
           >
-            {showCreateForm ? '✕ Cancel' : '+ New'}
+            {showCreateForm ? 'cancel' : '+ new'}
           </button>
         </div>
-        <p className="text-sm text-charcoal-light/70">
+        <p className="text-sm text-charcoal/40">
           Organize your lyrics by theme, mood, or any way you like
         </p>
       </div>
 
       {/* Create/Edit collection form */}
       {showCreateForm && (
-        <form onSubmit={handleCreateCollection} className="mb-8 p-4 sm:p-6 border border-charcoal/20 bg-charcoal/5">
-          <h3 className="text-sm font-light text-charcoal mb-4 lowercase">
-            {editingCollection ? 'edit collection' : 'create new collection'}
+        <form
+          onSubmit={handleCreateCollection}
+          className="mb-8 p-5"
+          style={{
+            backgroundColor: 'var(--surface-card, #F5F2ED)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+            border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+          }}
+        >
+          <h3 className="text-sm text-charcoal/40 mb-4 lowercase">
+            {editingCollection ? 'edit collection' : 'new collection'}
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <input
               type="text"
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               placeholder="Collection name"
-              className="w-full px-4 py-2 text-sm bg-cream border border-charcoal/20
-                         focus:border-charcoal/40 focus:outline-none
-                         placeholder:text-charcoal-light/50 text-charcoal"
+              className="w-full px-3 py-2 text-sm bg-transparent border border-charcoal/10
+                         focus:border-charcoal/30 focus:outline-none
+                         placeholder:text-charcoal/25 text-charcoal"
               autoFocus
             />
             <textarea
@@ -329,54 +319,36 @@ export default function Collections() {
               onChange={(e) => setNewCollectionDescription(e.target.value)}
               placeholder="Description (optional)"
               rows={2}
-              className="w-full px-4 py-2 text-sm bg-cream border border-charcoal/20
-                         focus:border-charcoal/40 focus:outline-none resize-none
-                         placeholder:text-charcoal-light/50 text-charcoal"
+              className="w-full px-3 py-2 text-sm bg-transparent border border-charcoal/10
+                         focus:border-charcoal/30 focus:outline-none resize-none
+                         placeholder:text-charcoal/25 text-charcoal"
             />
 
-            {/* Color picker */}
-            <div>
-              <label className="text-xs text-charcoal-light/70 mb-2 block">Color</label>
-              <div className="flex gap-2">
-                {Object.entries(collectionColors).map(([colorName, colorClass]) => (
-                  <button
-                    key={colorName}
-                    type="button"
-                    onClick={() => setNewCollectionColor(colorName)}
-                    className={`w-11 h-11 rounded-full ${colorClass} transition-all ${
-                      newCollectionColor === colorName
-                        ? 'ring-2 ring-charcoal ring-offset-2 ring-offset-cream'
-                        : 'hover:ring-1 hover:ring-charcoal/30'
-                    }`}
-                    title={colorName}
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* Smart collection toggle */}
-            <div className="pt-3 border-t border-charcoal/10">
+            <div className="pt-2">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isSmart}
-                  onChange={(e) => setIsSmart(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm text-charcoal">Smart collection (auto-populate from tag)</span>
+                <span
+                  onClick={() => setIsSmart(!isSmart)}
+                  className={`w-4 h-4 border flex items-center justify-center transition-colors cursor-pointer ${
+                    isSmart ? 'border-charcoal/40 bg-charcoal/10' : 'border-charcoal/15'
+                  }`}
+                >
+                  {isSmart && <span className="text-charcoal/60 text-xs">✓</span>}
+                </span>
+                <span className="text-xs text-charcoal/40">Smart collection (auto-populate from tag)</span>
               </label>
             </div>
 
             {/* Tag selector for smart collections */}
             {isSmart && (
               <div>
-                <label className="text-xs text-charcoal-light/70 mb-2 block">Tag to filter by</label>
+                <label className="text-xs text-charcoal/30 mb-1.5 block">Tag to filter by</label>
                 {allTags.length > 0 ? (
                   <select
                     value={smartTag}
                     onChange={(e) => setSmartTag(e.target.value)}
-                    className="w-full px-4 py-2 text-sm bg-cream border border-charcoal/20
-                               focus:border-charcoal/40 focus:outline-none text-charcoal"
+                    className="w-full px-3 py-2 text-sm bg-transparent border border-charcoal/10
+                               focus:border-charcoal/30 focus:outline-none text-charcoal"
                   >
                     <option value="">Select a tag...</option>
                     {allTags.map((tag) => (
@@ -384,7 +356,7 @@ export default function Collections() {
                     ))}
                   </select>
                 ) : (
-                  <p className="text-xs text-charcoal-light/60 italic">
+                  <p className="text-xs text-charcoal/30 italic">
                     No tags found. Add tags to your lyrics first.
                   </p>
                 )}
@@ -394,27 +366,25 @@ export default function Collections() {
             <button
               type="submit"
               disabled={!newCollectionName.trim() || (isSmart && !smartTag.trim()) || isCreating}
-              className="px-4 py-2 text-sm text-charcoal border border-charcoal/30 hover:border-charcoal/60
-                         disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-xs text-charcoal/50 border border-charcoal/15 hover:border-charcoal/40 hover:text-charcoal/70
+                         disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              {isCreating ? 'saving...' : (editingCollection ? 'update collection' : 'create collection')}
+              {isCreating ? 'saving...' : (editingCollection ? 'update' : 'create')}
             </button>
           </div>
         </form>
       )}
 
-      {/* Collections grid */}
+      {/* Collections list */}
       {collections.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-charcoal-light/60 mb-4">
-            You haven't created any collections yet
-          </p>
-          <p className="text-sm text-charcoal-light/50">
+          <p className="text-charcoal/40 mb-2">No collections yet</p>
+          <p className="text-sm text-charcoal/25">
             Collections help you organize your lyrics by theme, mood, or any way you like.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-4">
           {collections.map((collection) => (
             <CollectionCard
               key={collection.id}

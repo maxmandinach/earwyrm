@@ -39,9 +39,9 @@ export function CollectionProvider({ children }) {
             .from('collections')
             .insert({
               user_id: user.id,
-              name: 'Favorites',
-              description: 'Your favorite lyrics',
-              color: 'coral',
+              name: 'My Keepsakes',
+              description: 'Lyrics you want to hold onto',
+              color: 'charcoal',
             })
             .select()
             .single()

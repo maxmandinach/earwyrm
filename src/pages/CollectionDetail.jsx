@@ -1,123 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useCollection } from '../contexts/CollectionContext'
-import { useLyric } from '../contexts/LyricContext'
 import { useAuth } from '../contexts/AuthContext'
-import { signatureStyle } from '../lib/themes'
-import NoteEditor from '../components/NoteEditor'
+import LyricCard from '../components/LyricCard'
 import { supabase } from '../lib/supabase-wrapper'
-
-// Collection color mapping
-const collectionColors = {
-  charcoal: 'bg-charcoal',
-  coral: 'bg-[#FF6B6B]',
-  sage: 'bg-[#51B695]',
-  lavender: 'bg-[#9B89B3]',
-  amber: 'bg-[#F0A500]',
-  ocean: 'bg-[#4A90E2]',
-}
-
-function LyricEntry({ lyric, note, onRemove, showRemove }) {
-  const theme = signatureStyle
-
-  // Unified card styling - matches LyricCard
-  const cardStyle = {
-    // Surface color from CSS variables
-    backgroundColor: 'var(--surface-card, #F5F2ED)',
-    // Typography
-    color: 'var(--text-primary, #2C2825)',
-    fontFamily: theme.fontFamily,
-    fontSize: '1.5rem',
-    fontWeight: theme.fontWeight,
-    lineHeight: theme.lineHeight,
-    fontStyle: theme.fontStyle,
-    letterSpacing: theme.letterSpacing,
-    textAlign: theme.textAlign,
-    // Depth - card floats above background
-    boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-    border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-  }
-
-  const secondaryStyle = {
-    color: theme.secondaryColor,
-    fontFamily: theme.fontFamily,
-  }
-
-  // Format date
-  const date = new Date(lyric.created_at)
-  const formattedDate = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-
-  return (
-    <div className="py-6 border-b border-charcoal/10 last:border-b-0 group">
-      <div className="p-6 mb-3" style={cardStyle}>
-        <blockquote className="mb-2">
-          {lyric.content}
-        </blockquote>
-
-        {(lyric.song_title || lyric.artist_name) && (
-          <p className="text-sm mt-2" style={secondaryStyle}>
-            {lyric.song_title && <span>{lyric.song_title}</span>}
-            {lyric.song_title && lyric.artist_name && <span> — </span>}
-            {lyric.artist_name && <span>{lyric.artist_name}</span>}
-          </p>
-        )}
-
-        {/* Tags - if present */}
-        {lyric.tags && lyric.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {lyric.tags.map((tag, index) => (
-              <span key={index} className="text-xs opacity-60" style={secondaryStyle}>
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Note - where interpretation lives */}
-      <NoteEditor lyricId={lyric.id} initialNote={note} />
-
-      {/* Date and Remove button */}
-      <div className="flex items-center justify-between mt-2">
-        <p className="text-xs text-charcoal-light/50">
-          {formattedDate}
-        </p>
-        {showRemove && onRemove && (
-          <button
-            onClick={() => onRemove(lyric.id)}
-            className="text-xs text-charcoal-light/40 hover:text-charcoal transition-colors opacity-0 group-hover:opacity-100"
-          >
-            remove
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 
 export default function CollectionDetail() {
   const { id } = useParams()
   const { collections, getLyricsInCollection, addLyricToCollection, removeLyricFromCollection } = useCollection()
-  const { fetchNoteForLyric } = useLyric()
   const { user } = useAuth()
   const [collection, setCollection] = useState(null)
   const [lyrics, setLyrics] = useState([])
-  const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
   const [showAddLyrics, setShowAddLyrics] = useState(false)
   const [availableLyrics, setAvailableLyrics] = useState([])
-  const [selectedLyrics, setSelectedLyrics] = useState([])
   const [loadingAvailable, setLoadingAvailable] = useState(false)
 
   useEffect(() => {
     async function loadCollection() {
       setLoading(true)
 
-      // Find the collection
       const foundCollection = collections.find(c => c.id === id)
       setCollection(foundCollection)
 
@@ -127,29 +29,11 @@ export default function CollectionDetail() {
       }
 
       try {
-        // Get lyrics in this collection
         const lyricsData = await getLyricsInCollection(id)
-
-        // Sort by created_at descending (newest first)
         const sortedLyrics = [...lyricsData].sort((a, b) =>
           new Date(b.created_at) - new Date(a.created_at)
         )
-
         setLyrics(sortedLyrics)
-
-        // Fetch notes for all lyrics
-        const notesData = {}
-        for (const lyric of sortedLyrics) {
-          try {
-            const note = await fetchNoteForLyric(lyric.id)
-            if (note) {
-              notesData[lyric.id] = note
-            }
-          } catch (err) {
-            console.error('Error fetching note:', err)
-          }
-        }
-        setNotes(notesData)
       } catch (err) {
         console.error('Error loading collection:', err)
       } finally {
@@ -160,14 +44,13 @@ export default function CollectionDetail() {
     if (collections.length > 0) {
       loadCollection()
     }
-  }, [id, collections, getLyricsInCollection, fetchNoteForLyric])
+  }, [id, collections, getLyricsInCollection])
 
   async function fetchAvailableLyrics() {
     if (!collection || collection.is_smart) return
 
     setLoadingAvailable(true)
     try {
-      // Fetch all user's lyrics
       const { data: allLyrics, error } = await supabase
         .from('lyrics')
         .select('*')
@@ -175,11 +58,8 @@ export default function CollectionDetail() {
 
       if (error) throw error
 
-      // Filter out lyrics already in this collection
       const lyricIdsInCollection = new Set(lyrics.map(l => l.id))
       const available = allLyrics?.filter(l => !lyricIdsInCollection.has(l.id)) || []
-
-      // Sort by created_at descending
       const sorted = available.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       setAvailableLyrics(sorted)
     } catch (err) {
@@ -189,28 +69,17 @@ export default function CollectionDetail() {
     }
   }
 
-  async function handleAddLyrics() {
-    if (selectedLyrics.length === 0) return
-
+  async function handleAddLyric(lyricId) {
     try {
-      for (const lyricId of selectedLyrics) {
-        await addLyricToCollection(lyricId, collection.id)
+      await addLyricToCollection(lyricId, collection.id)
+      // Move from available to collection list
+      const added = availableLyrics.find(l => l.id === lyricId)
+      if (added) {
+        setLyrics(prev => [added, ...prev])
+        setAvailableLyrics(prev => prev.filter(l => l.id !== lyricId))
       }
-
-      // Refresh the collection
-      const lyricsData = await getLyricsInCollection(id)
-      const sortedLyrics = [...lyricsData].sort((a, b) =>
-        new Date(b.created_at) - new Date(a.created_at)
-      )
-      setLyrics(sortedLyrics)
-
-      // Close modal and reset
-      setShowAddLyrics(false)
-      setSelectedLyrics([])
-      setAvailableLyrics([])
     } catch (err) {
-      console.error('Error adding lyrics:', err)
-      alert('Failed to add lyrics. Please try again.')
+      console.error('Error adding lyric:', err)
     }
   }
 
@@ -219,8 +88,6 @@ export default function CollectionDetail() {
 
     try {
       await removeLyricFromCollection(lyricId, collection.id)
-
-      // Update local state
       setLyrics(lyrics.filter(l => l.id !== lyricId))
     } catch (err) {
       console.error('Error removing lyric:', err)
@@ -236,7 +103,7 @@ export default function CollectionDetail() {
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12">
-        <p className="text-sm text-charcoal-light/60">Loading...</p>
+        <p className="text-sm text-charcoal/30">Loading...</p>
       </div>
     )
   }
@@ -244,174 +111,141 @@ export default function CollectionDetail() {
   if (!collection) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12">
-        <p className="text-charcoal-light/60 mb-4">Collection not found</p>
-        <Link to="/collections" className="text-sm text-charcoal hover:opacity-70 transition-opacity">
-          ← Back to collections
+        <p className="text-charcoal/40 mb-4">Collection not found</p>
+        <Link to="/collections" className="text-sm text-charcoal/50 hover:text-charcoal transition-colors">
+          ← back to collections
         </Link>
       </div>
     )
   }
-
-  const colorClass = collectionColors[collection.color] || collectionColors.charcoal
 
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
       {/* Back link */}
       <Link
         to="/collections"
-        className="inline-flex items-center text-sm text-charcoal-light hover:text-charcoal transition-colors mb-6"
+        className="inline-flex items-center text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors mb-6"
       >
-        ← Back to collections
+        ← back to collections
       </Link>
 
       {/* Collection header */}
       <div className="mb-8">
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-3 h-3 rounded-full ${colorClass} flex-shrink-0 mt-2`} />
-          <div className="flex-1">
-            <div className="flex justify-between items-start mb-2">
-              <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
-                {collection.name}
-              </h1>
-              {!collection.is_smart && (
-                <button
-                  onClick={handleOpenAddLyrics}
-                  className="text-xs text-charcoal-light hover:text-charcoal transition-colors"
-                >
-                  + add lyrics
-                </button>
-              )}
-            </div>
-            {collection.description && (
-              <p className="text-sm text-charcoal-light/70">
-                {collection.description}
-              </p>
-            )}
-          </div>
+        <div className="flex justify-between items-start mb-2">
+          <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
+            {collection.name}
+          </h1>
+          {!collection.is_smart && (
+            <button
+              onClick={handleOpenAddLyrics}
+              className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors"
+            >
+              + add lyrics
+            </button>
+          )}
         </div>
-
+        {collection.description && (
+          <p className="text-sm text-charcoal/40">
+            {collection.description}
+          </p>
+        )}
         {collection.is_smart && (
-          <div className="mt-4 p-3 bg-charcoal/5 border-l-2 border-charcoal/20">
-            <p className="text-xs text-charcoal-light/70">
-              Smart collection: Automatically includes lyrics tagged with <span className="font-medium">#{collection.smart_tag}</span>
-            </p>
-          </div>
+          <p className="text-xs text-charcoal/25 italic mt-2">
+            auto-populated from #{collection.smart_tag}
+          </p>
         )}
       </div>
 
       {/* Lyrics list */}
       {lyrics.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-charcoal-light/60 mb-2">
+          <p className="text-charcoal/40 mb-2">
             No lyrics in this collection yet
           </p>
-          <p className="text-sm text-charcoal-light/50">
+          <p className="text-sm text-charcoal/25">
             {collection.is_smart
-              ? `Tag lyrics with #${collection.smart_tag} to add them to this collection`
-              : 'Click "+ Add lyrics" above to add lyrics to this collection'
+              ? `Tag lyrics with #${collection.smart_tag} to add them here`
+              : 'Tap "+ add lyrics" above, or save lyrics from anywhere in the app'
             }
           </p>
         </div>
       ) : (
-        <div>
+        <div className="space-y-6">
           {lyrics.map((lyric) => (
-            <LyricEntry
-              key={lyric.id}
-              lyric={lyric}
-              note={notes[lyric.id]}
-              onRemove={handleRemoveLyric}
-              showRemove={!collection.is_smart}
-            />
+            <div key={lyric.id} className="relative group">
+              <LyricCard lyric={lyric} skipReveal />
+              {!collection.is_smart && (
+                <button
+                  onClick={() => handleRemoveLyric(lyric.id)}
+                  className="absolute top-3 right-3 text-xs text-charcoal/20 hover:text-charcoal/50 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  remove
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}
 
-      {/* Add lyrics modal */}
+      {/* Add lyrics modal — tap to add, no checkboxes */}
       {showAddLyrics && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/15">
           <div
-            className="w-full max-w-2xl flex flex-col max-h-[80vh] shadow-lg"
+            className="w-full max-w-md flex flex-col max-h-[80vh]"
             style={{
               backgroundColor: 'var(--surface-card, #F5F2ED)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
               border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
             }}
           >
-            <div className="p-6 border-b border-charcoal/10 flex justify-between items-center">
-              <h2 className="text-lg font-light text-charcoal lowercase">add lyrics to collection</h2>
+            <div className="p-5 flex justify-between items-center"
+              style={{ borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
+            >
+              <h2 className="text-sm text-charcoal/50 lowercase">add lyrics</h2>
               <button
                 onClick={() => {
                   setShowAddLyrics(false)
-                  setSelectedLyrics([])
                   setAvailableLyrics([])
                 }}
-                className="px-4 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
               >
-                Cancel
+                done
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-5">
               {loadingAvailable ? (
-                <p className="text-sm text-charcoal-light/60">Loading lyrics...</p>
+                <p className="text-xs text-charcoal/30 text-center py-8">loading...</p>
               ) : availableLyrics.length === 0 ? (
-                <p className="text-sm text-charcoal-light/60">All your lyrics are already in this collection</p>
+                <p className="text-xs text-charcoal/30 text-center py-8">all your lyrics are already here</p>
               ) : (
-                <div className="space-y-4">
-                  {availableLyrics.map((lyric) => {
-                    const isSelected = selectedLyrics.includes(lyric.id)
-
-                    return (
-                      <label
-                        key={lyric.id}
-                        className={`block p-4 border cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'border-charcoal/60 bg-charcoal/5'
-                            : 'border-charcoal/10 hover:border-charcoal/30'
-                        }`}
+                <div className="space-y-3">
+                  {availableLyrics.map((lyric) => (
+                    <button
+                      key={lyric.id}
+                      onClick={() => handleAddLyric(lyric.id)}
+                      className="w-full text-left p-4 transition-colors hover:bg-charcoal/5"
+                      style={{
+                        border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+                      }}
+                    >
+                      <p
+                        className="text-sm text-charcoal/70 line-clamp-2 mb-1"
+                        style={{ fontFamily: "'Caveat', cursive" }}
                       >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedLyrics([...selectedLyrics, lyric.id])
-                              } else {
-                                setSelectedLyrics(selectedLyrics.filter(id => id !== lyric.id))
-                              }
-                            }}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-charcoal line-clamp-2">
-                              {lyric.content}
-                            </p>
-                            {(lyric.song_title || lyric.artist_name) && (
-                              <p className="text-xs text-charcoal-light/60 mt-1">
-                                {lyric.song_title && <span>{lyric.song_title}</span>}
-                                {lyric.song_title && lyric.artist_name && <span> — </span>}
-                                {lyric.artist_name && <span>{lyric.artist_name}</span>}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </label>
-                    )
-                  })}
+                        {lyric.content}
+                      </p>
+                      {(lyric.song_title || lyric.artist_name) && (
+                        <p className="text-xs text-charcoal/30 italic">
+                          {lyric.song_title}
+                          {lyric.song_title && lyric.artist_name && ' — '}
+                          {lyric.artist_name}
+                        </p>
+                      )}
+                    </button>
+                  ))}
                 </div>
               )}
-            </div>
-
-            <div className="p-6 border-t border-charcoal/10">
-              <button
-                onClick={handleAddLyrics}
-                disabled={selectedLyrics.length === 0}
-                className="w-full py-3 text-sm font-medium text-charcoal border border-charcoal/30 hover:border-charcoal/60
-                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                add {selectedLyrics.length > 0 && `${selectedLyrics.length} `}
-                {selectedLyrics.length === 1 ? 'lyric' : 'lyrics'}
-              </button>
             </div>
           </div>
         </div>
