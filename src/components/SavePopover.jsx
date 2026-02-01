@@ -112,7 +112,7 @@ export default function SavePopover({ lyricId, onClose }) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-full mb-2 left-0 bg-white border border-charcoal/10 shadow-lg z-20 min-w-[200px] py-1"
+      className="absolute bottom-full mb-2 left-0 bg-white border border-charcoal/10 shadow-lg z-50 min-w-[200px] py-1"
     >
       {loading ? (
         <div className="px-4 py-2 text-xs text-charcoal/40">Loading...</div>
