@@ -41,11 +41,14 @@ export function LyricProvider({ children }) {
       if (data) {
         setCurrentLyric(data)
       } else {
-        // No is_current lyric — fallback to most recent lyric and restore it
+        // No is_current lyric — fallback to most recent non-copy lyric and restore it
+        // Exclude lyrics that were saved copies from other users (have canonical_lyric_id
+        // pointing to someone else's lyric)
         const { data: fallback } = await supabase
           .from('lyrics')
           .select('*')
           .eq('user_id', user.id)
+          .is('canonical_lyric_id', null)
           .order('created_at', { ascending: false })
           .limit(1)
           .single()

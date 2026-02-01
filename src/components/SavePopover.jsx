@@ -1,12 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase-wrapper'
-import { useAuth } from '../contexts/AuthContext'
+import { useCollection } from '../contexts/CollectionContext'
 
 export default function SavePopover({ lyricId, onClose }) {
-  const { user } = useAuth()
-  const [collections, setCollections] = useState([])
+  const { collections, addLyricToCollection, removeLyricFromCollection, getCollectionsForLyric } = useCollection()
   const [savedCollections, setSavedCollections] = useState([])
-  const [savedToProfile, setSavedToProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const ref = useRef(null)
 
@@ -19,38 +16,10 @@ export default function SavePopover({ lyricId, onClose }) {
   }, [onClose])
 
   useEffect(() => {
-    if (!user) return
     async function load() {
       try {
-        // Fetch user's collections
-        const { data: cols } = await supabase
-          .from('collections')
-          .select('id, name, color')
-          .eq('user_id', user.id)
-          .order('name')
-
-        setCollections(cols || [])
-
-        // Check if lyric is already in any collections
-        if (cols && cols.length > 0) {
-          const { data: items } = await supabase
-            .from('collection_items')
-            .select('collection_id')
-            .eq('lyric_id', lyricId)
-            .in('collection_id', cols.map(c => c.id))
-
-          setSavedCollections((items || []).map(i => i.collection_id))
-        }
-
-        // Check if saved to profile (user has their own copy)
-        const { data: own } = await supabase
-          .from('lyrics')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('canonical_lyric_id', lyricId)
-          .single()
-
-        setSavedToProfile(!!own)
+        const lyricCollections = await getCollectionsForLyric(lyricId)
+        setSavedCollections(lyricCollections.map(c => c.id))
       } catch (err) {
         console.error('Error loading save data:', err)
       } finally {
@@ -58,56 +27,26 @@ export default function SavePopover({ lyricId, onClose }) {
       }
     }
     load()
-  }, [user, lyricId])
+  }, [lyricId])
 
-  async function handleSaveToProfile() {
-    if (savedToProfile) return
-    try {
-      // Fetch the original lyric to copy
-      const { data: original } = await supabase
-        .from('lyrics')
-        .select('content, song_title, artist_name, tags')
-        .eq('id', lyricId)
-        .single()
-
-      if (!original) return
-
-      await supabase.from('lyrics').insert({
-        user_id: user.id,
-        content: original.content,
-        song_title: original.song_title,
-        artist_name: original.artist_name,
-        tags: original.tags,
-        canonical_lyric_id: lyricId,
-        is_public: false,
-      })
-
-      setSavedToProfile(true)
-    } catch (err) {
-      console.error('Error saving to profile:', err)
-    }
-  }
-
-  async function handleToggleCollection(collectionId) {
+  async function handleToggle(collectionId) {
     const isSaved = savedCollections.includes(collectionId)
     try {
       if (isSaved) {
-        await supabase
-          .from('collection_items')
-          .delete()
-          .eq('lyric_id', lyricId)
-          .eq('collection_id', collectionId)
+        await removeLyricFromCollection(lyricId, collectionId)
         setSavedCollections(prev => prev.filter(id => id !== collectionId))
       } else {
-        await supabase
-          .from('collection_items')
-          .insert({ lyric_id: lyricId, collection_id: collectionId })
+        await addLyricToCollection(lyricId, collectionId)
         setSavedCollections(prev => [...prev, collectionId])
       }
     } catch (err) {
       console.error('Error toggling collection:', err)
     }
   }
+
+  // Find the default "Saved" / "Favorites" collection (first one created)
+  const defaultCollection = collections[0]
+  const otherCollections = collections.slice(1).filter(c => !c.is_smart)
 
   return (
     <div
@@ -118,26 +57,32 @@ export default function SavePopover({ lyricId, onClose }) {
         <div className="px-4 py-2 text-xs text-charcoal/40">Loading...</div>
       ) : (
         <>
-          <button
-            onClick={handleSaveToProfile}
-            className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-              savedToProfile
-                ? 'text-charcoal/40 cursor-default'
-                : 'text-charcoal/70 hover:bg-charcoal/5'
-            }`}
-          >
-            {savedToProfile ? '✓ Saved to profile' : 'Save to profile'}
-          </button>
-          {collections.length > 0 && (
+          {/* Default collection — quick save */}
+          {defaultCollection && (
+            <button
+              onClick={() => handleToggle(defaultCollection.id)}
+              className="w-full text-left px-4 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors flex items-center gap-2"
+            >
+              <span className={`w-2 h-2 rounded-full transition-colors ${
+                savedCollections.includes(defaultCollection.id) ? 'bg-charcoal' : 'bg-charcoal/20'
+              }`} />
+              {savedCollections.includes(defaultCollection.id)
+                ? `✓ In ${defaultCollection.name}`
+                : `Save to ${defaultCollection.name}`
+              }
+            </button>
+          )}
+
+          {/* Other collections */}
+          {otherCollections.length > 0 && (
             <div className="border-t border-charcoal/5 mt-1 pt-1">
-              <div className="px-4 py-1 text-xs text-charcoal/30">Collections</div>
-              {collections.map(col => (
+              {otherCollections.map(col => (
                 <button
                   key={col.id}
-                  onClick={() => handleToggleCollection(col.id)}
+                  onClick={() => handleToggle(col.id)}
                   className="w-full text-left px-4 py-1.5 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors flex items-center gap-2"
                 >
-                  <span className={`w-2 h-2 rounded-full ${
+                  <span className={`w-2 h-2 rounded-full transition-colors ${
                     savedCollections.includes(col.id) ? 'bg-charcoal' : 'bg-charcoal/20'
                   }`} />
                   {col.name}
