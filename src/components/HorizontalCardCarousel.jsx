@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
+import { supabase } from '../lib/supabase-wrapper'
+import { generateShareToken } from '../lib/utils'
 import CompactCommentModal from './CompactCommentModal'
 import SavePopover from './SavePopover'
 
@@ -19,19 +21,28 @@ function CompactCard({ lyric }) {
   const isAnon = !user
 
   const linkTo = lyric.share_token
-    ? `/l/${lyric.share_token}`
+    ? `/s/${lyric.share_token}`
     : `/song/${encodeURIComponent((lyric.song_title || '').toLowerCase())}`
 
-  function handleShare(e) {
+  async function handleShare(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (lyric.share_token) {
-      const url = `${window.location.origin}/l/${lyric.share_token}`
-      navigator.clipboard.writeText(url).then(() => {
-        setShareCopied(true)
-        setTimeout(() => setShareCopied(false), 2000)
-      }).catch(() => {})
+    let token = lyric.share_token
+    if (!token) {
+      // Generate a share token on the fly
+      token = generateShareToken()
+      const { error } = await supabase
+        .from('lyrics')
+        .update({ share_token: token })
+        .eq('id', lyric.id)
+      if (error) return
+      lyric.share_token = token
     }
+    const url = `${window.location.origin}/s/${token}`
+    navigator.clipboard.writeText(url).then(() => {
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    }).catch(() => {})
   }
 
   function handleResonate(e) {

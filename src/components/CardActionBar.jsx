@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
+import { supabase } from '../lib/supabase-wrapper'
+import { generateShareToken } from '../lib/utils'
 import OverflowMenu from './OverflowMenu'
 import SavePopover from './SavePopover'
 import VisibilityToggle from './VisibilityToggle'
@@ -62,19 +64,28 @@ export default function CardActionBar({
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
 
-  function handleShare() {
+  async function handleShare() {
     setShareNudge(true)
     setTimeout(() => setShareNudge(false), 300)
     if (onShare) {
       onShare()
-    } else if (lyric.share_token) {
-      // Default: copy share link
-      const url = `${window.location.origin}/l/${lyric.share_token}`
-      navigator.clipboard.writeText(url).then(() => {
-        setShareCopied(true)
-        setTimeout(() => setShareCopied(false), 2000)
-      }).catch(() => {})
+      return
     }
+    let token = lyric.share_token
+    if (!token) {
+      token = generateShareToken()
+      const { error } = await supabase
+        .from('lyrics')
+        .update({ share_token: token })
+        .eq('id', lyric.id)
+      if (error) return
+      lyric.share_token = token
+    }
+    const url = `${window.location.origin}/s/${token}`
+    navigator.clipboard.writeText(url).then(() => {
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    }).catch(() => {})
   }
 
   function handleToggleComments() {
