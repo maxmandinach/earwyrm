@@ -58,6 +58,7 @@ export default function SavePopover({ lyricId, onClose, portal = false }) {
 
   // All non-smart collections shown, default (first) gets visual emphasis
   const manualCollections = collections.filter(c => !c.is_smart)
+  const smartCollections = collections.filter(c => c.is_smart)
   const defaultCollection = manualCollections[0]
   const otherCollections = manualCollections.slice(1)
 
@@ -141,6 +142,14 @@ export default function SavePopover({ lyricId, onClose, portal = false }) {
 
           {manualCollections.length === 0 && (
             <div className="px-3 py-2 text-xs text-charcoal/25">no collections yet</div>
+          )}
+
+          {smartCollections.length > 0 && (
+            <div className="px-3 pt-2 mt-1 text-[11px] text-charcoal/25 italic"
+              style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
+            >
+              smart collections update via tags on your own lyrics
+            </div>
           )}
         </>
       )}
