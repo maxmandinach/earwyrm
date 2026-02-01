@@ -98,12 +98,40 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
 
   return (
     <div className="w-full mt-3 max-w-lg mx-auto">
-      <button
-        onClick={() => setIsOpen(false)}
-        className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors mb-3"
-      >
-        hide thoughts
-      </button>
+      {/* Input first — what you came here to do */}
+      {user ? (
+        <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value.slice(0, 280))}
+            placeholder={replyTo ? 'Reply...' : 'Share a thought...'}
+            autoFocus
+            className="flex-1 px-3 py-2 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
+          />
+          <button
+            type="submit"
+            disabled={!newComment.trim() || submitting}
+            className="px-3 py-2 text-xs text-charcoal/50 hover:text-charcoal transition-colors disabled:opacity-30"
+          >
+            {submitting ? '...' : 'post'}
+          </button>
+          {replyTo && (
+            <button
+              type="button"
+              onClick={() => { setReplyTo(null); setNewComment('') }}
+              className="text-xs text-charcoal/20 hover:text-charcoal/40"
+            >
+              ✕
+            </button>
+          )}
+        </form>
+      ) : (
+        <p className="mb-4 text-xs text-charcoal/30 text-center">
+          <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link> to share your thoughts
+        </p>
+      )}
 
       <div className="space-y-3">
         {topLevel.map((comment) => (
@@ -193,41 +221,12 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
         ))}
       </div>
 
-      {/* Input */}
-      {user ? (
-        <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value.slice(0, 280))}
-            placeholder={replyTo ? 'Reply...' : 'Share a thought...'}
-            className="flex-1 px-3 py-2 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
-            style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
-          />
-          <button
-            type="submit"
-            disabled={!newComment.trim() || submitting}
-            className="px-3 py-2 text-xs text-charcoal/50 hover:text-charcoal transition-colors disabled:opacity-30"
-          >
-            {submitting ? '...' : 'post'}
-          </button>
-          {replyTo && (
-            <button
-              type="button"
-              onClick={() => { setReplyTo(null); setNewComment('') }}
-              className="text-xs text-charcoal/20 hover:text-charcoal/40"
-            >
-              ✕
-            </button>
-          )}
-        </form>
-      ) : (
-        <p className="mt-4 text-xs text-charcoal/30 text-center">
-          <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link> to share your thoughts
-        </p>
-      )}
-
-      <p className="text-xs text-charcoal/15 mt-2 text-right">{newComment.length}/280</p>
+      <button
+        onClick={() => setIsOpen(false)}
+        className="text-xs text-charcoal/20 hover:text-charcoal/40 transition-colors mt-3"
+      >
+        hide thoughts
+      </button>
     </div>
   )
 }
