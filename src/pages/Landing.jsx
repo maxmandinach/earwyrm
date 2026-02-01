@@ -211,24 +211,16 @@ export default function Landing() {
         <Link
           to="/"
           className="hover:opacity-70 transition-opacity"
-          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary, #2C2825)' }}
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 600, color: 'var(--text-primary, #2C2825)' }}
         >
           earwyrm
         </Link>
-        <div className="flex items-center gap-4">
-          <Link
-            to="/explore"
-            className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
-          >
-            Explore
-          </Link>
-          <Link
-            to="/login"
-            className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
-          >
-            Sign in
-          </Link>
-        </div>
+        <Link
+          to="/login"
+          className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
+        >
+          Sign in
+        </Link>
       </header>
 
       {/* Hero section */}
@@ -521,19 +513,17 @@ export default function Landing() {
           <>
             {/* Tagline */}
             <div
-              className="text-center mb-8 transition-all duration-700 ease-out"
+              className="text-center mb-6 transition-all duration-700 ease-out"
               style={{
                 opacity: revealed ? 1 : 0,
                 transform: revealed ? 'translateY(0)' : 'translateY(12px)',
               }}
             >
               <p
-                className="text-lg sm:text-xl text-charcoal/50 max-w-sm mx-auto leading-relaxed"
+                className="text-sm sm:text-base text-charcoal/40 max-w-xs mx-auto leading-relaxed"
                 style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
               >
                 Save the lines that stay with you.
-                <br />
-                See what resonates with others.
               </p>
             </div>
 
@@ -683,8 +673,8 @@ export default function Landing() {
 
       {/* Feature tour — below the fold, hidden during compose/signup */}
       {step === STEPS.browse && <div
-        className="border-t border-charcoal/8 py-16 px-4"
-        style={{ backgroundColor: 'var(--surface-bg, #FAF8F5)' }}
+        className="border-t border-charcoal/8 py-16 px-4 transition-opacity duration-700 ease-out"
+        style={{ backgroundColor: 'var(--surface-bg, #FAF8F5)', opacity: revealed ? 1 : 0 }}
       >
         <div className="max-w-2xl mx-auto">
           <h2
