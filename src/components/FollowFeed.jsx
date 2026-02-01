@@ -25,7 +25,7 @@ export default function FollowFeed({ limit = 8 }) {
         // Fetch recent public lyrics matching any follow
         let query = supabase
           .from('lyrics')
-          .select('*')
+          .select('*, profiles:user_id(username)')
           .eq('is_public', true)
           .order('created_at', { ascending: false })
           .limit(limit)
@@ -56,7 +56,7 @@ export default function FollowFeed({ limit = 8 }) {
           // If only tag follows, fetch recent and filter
           const { data: allData } = await supabase
             .from('lyrics')
-            .select('*')
+            .select('*, profiles:user_id(username)')
             .eq('is_public', true)
             .order('created_at', { ascending: false })
             .limit(50)
@@ -70,7 +70,7 @@ export default function FollowFeed({ limit = 8 }) {
           // Also check tags for combined results
           const { data: tagData } = await supabase
             .from('lyrics')
-            .select('*')
+            .select('*, profiles:user_id(username)')
             .eq('is_public', true)
             .order('created_at', { ascending: false })
             .limit(50)
