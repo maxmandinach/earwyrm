@@ -6,8 +6,6 @@ import LyricCard from '../components/LyricCard'
 import LyricForm from '../components/LyricForm'
 import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
-import VisibilityToggle from '../components/VisibilityToggle'
-import NoteEditor from '../components/NoteEditor'
 import OnboardingFlow from '../components/OnboardingFlow'
 import ActivityFeed from '../components/ActivityFeed'
 import TrendingSection from '../components/TrendingSection'
@@ -27,9 +25,7 @@ function CompactPostPrompt() {
         placeholder="What lyric is stuck in your head?"
         className="flex-1 px-4 py-3 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/30"
         style={{ fontFamily: "'Caveat', cursive", fontSize: '1.125rem' }}
-        onFocus={() => {
-          // Navigate to full form - for now just expand
-        }}
+        onFocus={() => {}}
         readOnly
       />
       <button
@@ -109,7 +105,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
   useEffect(() => {
     async function fetchNote() {
       if (!lyric?.id) return
-
       try {
         const note = await fetchNoteForLyric(lyric.id)
         setCurrentNote(note)
@@ -117,7 +112,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
         console.error('Error fetching note:', err)
       }
     }
-
     fetchNote()
   }, [lyric?.id, fetchNoteForLyric])
 
@@ -125,7 +119,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
   useEffect(() => {
     async function fetchUserTags() {
       if (!user) return
-
       try {
         const { data, error } = await supabase
           .from('lyrics')
@@ -143,13 +136,8 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
         console.error('Error fetching user tags:', err)
       }
     }
-
     fetchUserTags()
   }, [user?.id])
-
-  const handleUpdate = async (data) => {
-    await onUpdate(data)
-  }
 
   const handleVisibilityChange = async (isPublic) => {
     try {
@@ -162,8 +150,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
       console.error('Error changing visibility:', err)
     }
   }
-
-  const [isEditingNote, setIsEditingNote] = useState(false)
 
   const handleCardSave = async (data) => {
     await onUpdate({ ...data, tags: lyric.tags || [] })
@@ -186,76 +172,18 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
           onSave={handleCardSave}
           onCancel={() => setIsEditingCard(false)}
           linkable={!isEditingCard}
-        />
-
-        {!isEditingNote && !isEditingCard && (
-          <div
-            className="absolute bottom-4 right-4 flex gap-2 transition-opacity duration-500"
-            style={{
-              opacity: revealed ? 1 : 0,
-              transitionDelay: '400ms',
-            }}
-          >
-            <button
-              onClick={() => setIsEditingCard(true)}
-              className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
-              title="Edit"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setShowReplaceModal(true)}
-              className="p-3 text-charcoal-light/50 hover:text-charcoal transition-colors"
-              title="New lyric"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Note */}
-      <div
-        className="w-full max-w-lg mx-auto mt-8 transition-all duration-700 ease-out"
-        style={{
-          opacity: revealed ? 1 : 0,
-          transform: revealed ? 'translateY(0)' : 'translateY(16px)',
-          transitionDelay: '400ms',
-        }}
-      >
-        <NoteEditor
-          lyricId={lyric.id}
-          initialNote={currentNote}
-          onEditStateChange={setIsEditingNote}
-          onNoteChange={setCurrentNote}
-        />
-      </div>
-
-      {/* Actions */}
-      <div
-        className="mt-8 flex items-center justify-center gap-6 text-sm transition-all duration-600 ease-out"
-        style={{
-          opacity: revealed ? 1 : 0,
-          transform: revealed ? 'translateY(0)' : 'translateY(10px)',
-          transitionDelay: '600ms',
-        }}
-      >
-        <VisibilityToggle
+          showActions
+          isOwn
           isPublic={lyric.is_public}
           profileIsPublic={profile?.is_public}
-          onChange={handleVisibilityChange}
+          onShare={() => setShowShareModal(true)}
+          onVisibilityChange={handleVisibilityChange}
+          onEdit={() => setIsEditingCard(true)}
+          onReplace={() => setShowReplaceModal(true)}
+          initialNote={currentNote}
+          onNoteChange={setCurrentNote}
+          username={profile?.username}
         />
-        <button
-          onClick={() => setShowShareModal(true)}
-          className="py-2 px-3 text-charcoal-light hover:text-charcoal transition-colors"
-        >
-          share
-        </button>
       </div>
 
       {showReplaceModal && (

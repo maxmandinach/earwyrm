@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
-import ResonateButton from '../components/ResonateButton'
 
 export default function Following() {
   const { follows, loading: followsLoading, unfollow } = useFollow()
@@ -111,24 +110,22 @@ export default function Following() {
       ) : (
         <div className="space-y-6">
           {lyrics.map((lyric) => (
-            <div key={lyric.id}>
-              <LyricCard
-                lyric={lyric}
-                showTimestamp
-                linkable
-                className="border border-charcoal/10"
-              />
-              <div className="mt-2">
-                <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
-              </div>
-            </div>
+            <LyricCard
+              key={lyric.id}
+              lyric={lyric}
+              showTimestamp
+              linkable
+              className="border border-charcoal/10"
+              showActions
+              isAnon={!user}
+              isOwn={user?.id === lyric.user_id}
+            />
           ))}
 
           {hasMore && (
             <div className="text-center pt-4">
               <button
                 onClick={() => {
-                  // Load more logic - extend the displayed slice
                   setPage(prev => prev + 1)
                 }}
                 className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"

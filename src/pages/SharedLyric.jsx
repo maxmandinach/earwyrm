@@ -3,8 +3,6 @@ import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
-import ResonateButton from '../components/ResonateButton'
-import CommentSection from '../components/CommentSection'
 
 function AnonymousFooter({ username }) {
   return (
@@ -62,7 +60,7 @@ export default function SharedLyric() {
         // Fetch profile info for attribution
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('username')
+          .select('username, is_public')
           .eq('id', lyricData.user_id)
           .single()
 
@@ -155,34 +153,18 @@ export default function SharedLyric() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 pb-24">
         <div className="w-full max-w-lg">
-          {lyric && <LyricCard lyric={lyric} showTimestamp={false} linkable />}
-
-          {/* Note displayed like marginalia */}
-          {note && (
-            <div
-              className="mt-8 pl-4 border-l-2 border-charcoal/10"
-              style={{
-                transform: 'rotate(-0.5deg)',
-                transformOrigin: 'left top',
-              }}
-            >
-              <p
-                className="text-charcoal/50 leading-relaxed"
-                style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
-              >
-                {note.content}
-              </p>
-            </div>
-          )}
-
-          {/* Reactions + Comments */}
           {lyric && (
-            <div className="mt-6 flex flex-col gap-3">
-              <div className="flex items-center gap-4">
-                <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
-              </div>
-              <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} />
-            </div>
+            <LyricCard
+              lyric={lyric}
+              showTimestamp={false}
+              linkable
+              showActions
+              isAnon={isAnonymous}
+              isOwn={user?.id === lyric.user_id}
+              notes={note ? [note] : undefined}
+              username={profile?.username}
+              profileIsPublic={profile?.is_public}
+            />
           )}
         </div>
       </main>

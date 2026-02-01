@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import LyricCard from './LyricCard'
+import ResonateButton from './ResonateButton'
 
 export default function FollowFeed({ limit = 5 }) {
   const { follows, loading: followsLoading } = useFollow()
@@ -110,13 +111,16 @@ export default function FollowFeed({ limit = 5 }) {
       </div>
       <div className="space-y-4">
         {lyrics.map((lyric) => (
-          <LyricCard
-            key={lyric.id}
-            lyric={lyric}
-            showTimestamp
-            linkable
-            className="border border-charcoal/10"
-          />
+          <div key={lyric.id}>
+            <LyricCard
+              lyric={lyric}
+              showTimestamp
+              linkable
+              className="border border-charcoal/10"
+              showActions
+              isAnon={false}
+            />
+          </div>
         ))}
       </div>
     </div>

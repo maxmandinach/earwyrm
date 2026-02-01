@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import LyricCard from './LyricCard'
+import ResonateButton from './ResonateButton'
 
 export default function TrendingSection() {
   const [lyrics, setLyrics] = useState([])
@@ -44,6 +45,8 @@ export default function TrendingSection() {
             showTimestamp={false}
             linkable
             className="border border-charcoal/10"
+            showActions
+            isAnon={false}
           />
         ))}
       </div>

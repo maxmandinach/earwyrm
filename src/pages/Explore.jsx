@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
-import ResonateButton from '../components/ResonateButton'
 
 const isDev = import.meta.env.DEV
 
@@ -114,7 +113,8 @@ export default function Explore() {
           if (notesData) {
             const notesMap = {}
             notesData.forEach(note => {
-              notesMap[note.lyric_id] = note
+              if (!notesMap[note.lyric_id]) notesMap[note.lyric_id] = []
+              notesMap[note.lyric_id].push(note)
             })
             setNotes(notesMap)
           }
@@ -150,6 +150,8 @@ export default function Explore() {
         l.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : lyrics
+
+  const isAnon = !user
 
   return (
     <div className="flex-1 flex flex-col px-4 py-8">
@@ -314,32 +316,20 @@ export default function Explore() {
                 return (
                   <div key={key}>
                     <LyricCard
-                      lyric={representative}
+                      lyric={{ ...representative, reaction_count: totalReactions }}
                       showTimestamp
                       linkable
                       className="border border-charcoal/10"
+                      showActions
+                      isAnon={isAnon}
+                      isOwn={user?.id === representative.user_id}
+                      notes={notes[representative.id]}
                     />
                     {group.length > 1 && (
                       <p className="text-xs text-charcoal/30 mt-1 max-w-lg mx-auto">
                         {group.length} people saved this
                       </p>
                     )}
-                    {notes[representative.id] && (
-                      <div
-                        className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
-                        style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
-                      >
-                        <p
-                          className="text-charcoal/50 leading-relaxed"
-                          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
-                        >
-                          {notes[representative.id].content}
-                        </p>
-                      </div>
-                    )}
-                    <div className="mt-2 max-w-lg mx-auto">
-                      <ResonateButton lyricId={representative.id} initialCount={totalReactions} />
-                    </div>
                   </div>
                 )
               })
@@ -347,30 +337,17 @@ export default function Explore() {
 
             // Flat rendering for unfiltered/tag views
             return displayedLyrics.map((lyric) => (
-              <div key={lyric.id}>
-                <LyricCard
-                  lyric={lyric}
-                  showTimestamp
-                  linkable
-                  className="border border-charcoal/10"
-                />
-                {notes[lyric.id] && (
-                  <div
-                    className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
-                    style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
-                  >
-                    <p
-                      className="text-charcoal/50 leading-relaxed"
-                      style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
-                    >
-                      {notes[lyric.id].content}
-                    </p>
-                  </div>
-                )}
-                <div className="mt-2 max-w-lg mx-auto">
-                  <ResonateButton lyricId={lyric.id} initialCount={lyric.reaction_count || 0} />
-                </div>
-              </div>
+              <LyricCard
+                key={lyric.id}
+                lyric={lyric}
+                showTimestamp
+                linkable
+                className="border border-charcoal/10"
+                showActions
+                isAnon={isAnon}
+                isOwn={user?.id === lyric.user_id}
+                notes={notes[lyric.id]}
+              />
             ))
           })()}
         </div>

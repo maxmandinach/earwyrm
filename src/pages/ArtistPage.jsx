@@ -4,8 +4,6 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
-import ResonateButton from '../components/ResonateButton'
-import CommentSection from '../components/CommentSection'
 
 export default function ArtistPage() {
   const { slug } = useParams()
@@ -147,6 +145,8 @@ export default function ArtistPage() {
     )
   }
 
+  const isAnon = !user
+
   return (
     <div className="flex-1 flex flex-col px-4 py-8">
       <div className="max-w-lg mx-auto w-full">
@@ -234,44 +234,20 @@ export default function ArtistPage() {
                 return (
                   <div key={key}>
                     <LyricCard
-                      lyric={representative}
+                      lyric={{ ...representative, reaction_count: totalReactions }}
                       showTimestamp
                       linkable
                       className="border border-charcoal/10"
+                      showActions
+                      isAnon={isAnon}
+                      isOwn={user?.id === representative.user_id}
+                      notes={notes[representative.id]}
                     />
                     {group.length > 1 && (
                       <p className="text-xs text-charcoal/30 mt-1 max-w-lg mx-auto">
                         {group.length} people saved this
                       </p>
                     )}
-                    {/* Public notes */}
-                    {notes[representative.id] && notes[representative.id].map((note) => (
-                      <div
-                        key={note.id}
-                        className="mt-4 pl-4 border-l-2 border-charcoal/10 max-w-lg mx-auto"
-                        style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
-                      >
-                        <p
-                          className="text-charcoal/50 leading-relaxed"
-                          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
-                        >
-                          {note.content}
-                        </p>
-                        {note.note_types && note.note_types.length > 0 && (
-                          <div className="flex gap-2 mt-1">
-                            {note.note_types.map(t => (
-                              <span key={t} className="text-xs text-charcoal/30 border border-charcoal/10 px-1.5 py-0.5">
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    <div className="mt-3 max-w-lg mx-auto flex items-center gap-4">
-                      <ResonateButton lyricId={representative.id} initialCount={totalReactions} />
-                      <CommentSection lyricId={representative.id} initialCount={representative.comment_count || 0} />
-                    </div>
                   </div>
                 )
               })
