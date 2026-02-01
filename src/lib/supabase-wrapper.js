@@ -25,7 +25,8 @@ supabaseAuth.auth.onAuthStateChange((event, session) => {
 // Custom fetch-based wrapper for database queries
 async function dbQuery(table, {
   select, insert, update, upsert, delete: doDelete,
-  eq, single, limit, order, contains, ilike, inFilter
+  eq, single, limit, order, contains, ilike, inFilter,
+  isFilter, neqFilter, orFilter, notFilter, rangeFilter, textSearchFilter
 } = {}) {
   const headers = {
     'apikey': supabaseAnonKey,
@@ -67,6 +68,37 @@ async function dbQuery(table, {
         params.append(key, `in.(${values.join(',')})`)
       }
     }
+    // Support .is() for null checks
+    if (isFilter) {
+      for (const [key, value] of Object.entries(isFilter)) {
+        params.append(key, `is.${value}`)
+      }
+    }
+    // Support .neq() for not-equal
+    if (neqFilter) {
+      for (const [key, value] of Object.entries(neqFilter)) {
+        params.append(key, `neq.${value}`)
+      }
+    }
+    // Support .or() for OR conditions
+    if (orFilter) {
+      params.append('or', `(${orFilter})`)
+    }
+    // Support .not() for negation
+    if (notFilter) {
+      for (const { column, operator, value } of notFilter) {
+        params.append(column, `not.${operator}.${value}`)
+      }
+    }
+    // Support .textSearch() for full-text search
+    if (textSearchFilter) {
+      const { column, query, type } = textSearchFilter
+      if (type === 'websearch') {
+        params.append(column, `wfts.${query}`)
+      } else {
+        params.append(column, `fts.${query}`)
+      }
+    }
     // Support .order() for sorting
     if (order) {
       const orderStr = order.map(o => `${o.column}.${o.ascending ? 'asc' : 'desc'}`).join(',')
@@ -74,6 +106,10 @@ async function dbQuery(table, {
     }
     if (limit) {
       params.append('limit', limit)
+    }
+    if (rangeFilter) {
+      headers['Range-Unit'] = 'items'
+      headers['Range'] = `${rangeFilter.from}-${rangeFilter.to}`
     }
     if (single) {
       headers['Accept'] = 'application/vnd.pgrst.object+json'
@@ -142,7 +178,7 @@ export const supabase = {
     select: (columns = '*') => {
       // Build a chainable query object with all filter options
       const buildQuery = (filters = {}) => {
-        const { eqFilters = {}, containsFilters = {}, ilikeFilters = {}, inFilters = {}, orderBy = [], limitVal = null } = filters
+        const { eqFilters = {}, containsFilters = {}, ilikeFilters = {}, inFilters = {}, isFilters = {}, neqFilters = {}, orFilterVal = null, notFilters = [], rangeVal = null, textSearchVal = null, orderBy = [], limitVal = null } = filters
 
         const queryObj = {
           eq: (key, value) => buildQuery({
@@ -161,6 +197,30 @@ export const supabase = {
             ...filters,
             inFilters: { ...inFilters, [key]: values }
           }),
+          is: (key, value) => buildQuery({
+            ...filters,
+            isFilters: { ...isFilters, [key]: value }
+          }),
+          neq: (key, value) => buildQuery({
+            ...filters,
+            neqFilters: { ...neqFilters, [key]: value }
+          }),
+          or: (conditions) => buildQuery({
+            ...filters,
+            orFilterVal: conditions
+          }),
+          not: (column, operator, value) => buildQuery({
+            ...filters,
+            notFilters: [...notFilters, { column, operator, value }]
+          }),
+          range: (from, to) => buildQuery({
+            ...filters,
+            rangeVal: { from, to }
+          }),
+          textSearch: (column, query, options = {}) => buildQuery({
+            ...filters,
+            textSearchVal: { column, query, type: options.type }
+          }),
           order: (column, { ascending = true } = {}) => buildQuery({
             ...filters,
             orderBy: [...orderBy, { column, ascending }]
@@ -169,26 +229,42 @@ export const supabase = {
             ...filters,
             limitVal: n
           }),
-          single: () => dbQuery(table, {
-            select: columns,
-            eq: Object.keys(eqFilters).length ? eqFilters : undefined,
-            contains: Object.keys(containsFilters).length ? containsFilters : undefined,
-            ilike: Object.keys(ilikeFilters).length ? ilikeFilters : undefined,
-            inFilter: Object.keys(inFilters).length ? inFilters : undefined,
-            order: orderBy.length ? orderBy : undefined,
-            limit: limitVal,
-            single: true
-          }),
-          then: (resolve, reject) => {
-            return dbQuery(table, {
+          single: () => {
+            const opts = {
               select: columns,
               eq: Object.keys(eqFilters).length ? eqFilters : undefined,
               contains: Object.keys(containsFilters).length ? containsFilters : undefined,
               ilike: Object.keys(ilikeFilters).length ? ilikeFilters : undefined,
               inFilter: Object.keys(inFilters).length ? inFilters : undefined,
+              isFilter: Object.keys(isFilters).length ? isFilters : undefined,
+              neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              orFilter: orFilterVal || undefined,
+              notFilter: notFilters.length ? notFilters : undefined,
+              rangeFilter: rangeVal || undefined,
+              textSearchFilter: textSearchVal || undefined,
+              order: orderBy.length ? orderBy : undefined,
+              limit: limitVal,
+              single: true
+            }
+            return dbQuery(table, opts)
+          },
+          then: (resolve, reject) => {
+            const opts = {
+              select: columns,
+              eq: Object.keys(eqFilters).length ? eqFilters : undefined,
+              contains: Object.keys(containsFilters).length ? containsFilters : undefined,
+              ilike: Object.keys(ilikeFilters).length ? ilikeFilters : undefined,
+              inFilter: Object.keys(inFilters).length ? inFilters : undefined,
+              isFilter: Object.keys(isFilters).length ? isFilters : undefined,
+              neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              orFilter: orFilterVal || undefined,
+              notFilter: notFilters.length ? notFilters : undefined,
+              rangeFilter: rangeVal || undefined,
+              textSearchFilter: textSearchVal || undefined,
               order: orderBy.length ? orderBy : undefined,
               limit: limitVal
-            }).then(resolve).catch(reject)
+            }
+            return dbQuery(table, opts).then(resolve).catch(reject)
           }
         }
         return queryObj
