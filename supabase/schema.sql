@@ -63,10 +63,10 @@ CREATE POLICY "Users can view their own lyrics"
   ON lyrics FOR SELECT
   USING (auth.uid() = user_id);
 
--- Anyone can view public current lyrics (for public profiles)
-CREATE POLICY "Anyone can view public current lyrics"
+-- Anyone can view public lyrics (song/artist pages, explore, feeds)
+CREATE POLICY "Anyone can view public lyrics"
   ON lyrics FOR SELECT
-  USING (is_public = true AND is_current = true);
+  USING (is_public = true);
 
 -- Users can insert their own lyrics
 CREATE POLICY "Users can insert their own lyrics"
