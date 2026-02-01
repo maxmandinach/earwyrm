@@ -174,6 +174,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
           linkable={!isEditingCard}
           showActions
           isOwn
+          skipReveal
           isPublic={lyric.is_public}
           profileIsPublic={profile?.is_public}
           onShare={() => setShowShareModal(true)}
