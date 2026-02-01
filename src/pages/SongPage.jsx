@@ -178,6 +178,7 @@ export default function SongPage() {
                   showActions
                   isAnon={isAnon}
                   isOwn={user?.id === canonical.user_id}
+                  isPublic={canonical.is_public}
                   notes={allNotes.length > 0 ? allNotes : undefined}
                 />
               )

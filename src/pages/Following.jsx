@@ -119,6 +119,7 @@ export default function Following() {
               showActions
               isAnon={!user}
               isOwn={user?.id === lyric.user_id}
+              isPublic={lyric.is_public}
             />
           ))}
 

@@ -323,6 +323,7 @@ export default function Explore() {
                       showActions
                       isAnon={isAnon}
                       isOwn={user?.id === representative.user_id}
+                      isPublic={representative.is_public}
                       notes={notes[representative.id]}
                     />
                     {group.length > 1 && (
@@ -346,6 +347,7 @@ export default function Explore() {
                 showActions
                 isAnon={isAnon}
                 isOwn={user?.id === lyric.user_id}
+                isPublic={lyric.is_public}
                 notes={notes[lyric.id]}
               />
             ))

@@ -241,6 +241,7 @@ export default function ArtistPage() {
                       showActions
                       isAnon={isAnon}
                       isOwn={user?.id === representative.user_id}
+                      isPublic={representative.is_public}
                       notes={notes[representative.id]}
                     />
                     {group.length > 1 && (
