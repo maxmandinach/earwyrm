@@ -160,15 +160,38 @@ function breakIntoPoetryLines(text, ctx, maxWidth) {
   return result
 }
 
+function getInitialDarkMode() {
+  const stored = localStorage.getItem('earwyrm-theme')
+  if (stored === 'dark') return true
+  if (stored === 'light') return false
+  // auto: follow system
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+}
+
 export default function ShareModal({ lyric, onClose }) {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedFormat, setSelectedFormat] = useState('square')
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode)
   const [visible, setVisible] = useState(false)
+  const [username, setUsername] = useState(lyric.profiles?.username || null)
   const canvasRef = useRef(null)
+
+  // Fetch username if not available from joined data
+  useEffect(() => {
+    if (username) return
+    async function fetchUsername() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', lyric.user_id)
+        .single()
+      if (data?.username) setUsername(data.username)
+    }
+    fetchUsername()
+  }, [lyric.user_id, username])
 
   // Animate in
   useEffect(() => {
@@ -327,12 +350,20 @@ export default function ShareModal({ lyric, onClose }) {
       ctx.globalAlpha = 1.0
     }
 
-    // Brand signature
+    // Brand signature + username
     const brandY = height - 70
 
     ctx.textAlign = 'center'
-    ctx.font = `600 ${brandFontSize}px "DM Sans", system-ui, sans-serif`
 
+    // Username attribution
+    if (username) {
+      ctx.font = `400 ${brandFontSize * 0.8}px "DM Sans", system-ui, sans-serif`
+      ctx.fillStyle = colors.secondaryColor
+      ctx.globalAlpha = isDarkMode ? 0.6 : 0.4
+      ctx.fillText(`@${username}`, width / 2, brandY - 22)
+    }
+
+    ctx.font = `600 ${brandFontSize}px "DM Sans", system-ui, sans-serif`
     ctx.fillStyle = colors.secondaryColor
     ctx.globalAlpha = isDarkMode ? 0.85 : 0.65
     ctx.fillText('earwyrm', width / 2, brandY + 5)
@@ -397,7 +428,7 @@ export default function ShareModal({ lyric, onClose }) {
 
   useEffect(() => {
     generateImage(selectedFormat)
-  }, [lyric, selectedFormat, isDarkMode])
+  }, [lyric, selectedFormat, isDarkMode, username])
 
   useEffect(() => {
     async function ensureShareToken() {
