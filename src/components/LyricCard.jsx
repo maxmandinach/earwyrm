@@ -5,6 +5,7 @@ import { formatRelativeTime } from '../lib/utils'
 import CardActionBar from './CardActionBar'
 import NotePeek from './NotePeek'
 import CommentSection from './CommentSection'
+import useRevealOnScroll from '../hooks/useRevealOnScroll'
 
 export default function LyricCard({
   lyric,
@@ -29,8 +30,13 @@ export default function LyricCard({
   notes,
   initialNote,
   onNoteChange,
+  // Animation
+  skipReveal = false,
 }) {
   const theme = signatureStyle
+  const { ref: revealRef, revealed } = useRevealOnScroll()
+  const shouldAnimate = !skipReveal && showActions
+  const isVisible = skipReveal || !showActions || revealed
 
   // Local edit state
   const [content, setContent] = useState(lyric.content)
@@ -93,7 +99,18 @@ export default function LyricCard({
   }
 
   return (
-    <>
+    <div
+      ref={revealRef}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible
+          ? 'translateY(0) rotate(0deg)'
+          : 'translateY(18px) rotate(-0.3deg)',
+        transition: shouldAnimate
+          ? 'opacity 0.7s ease-out, transform 0.7s ease-out'
+          : 'none',
+      }}
+    >
       <div
         className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 relative ${className}`}
         style={{
@@ -301,6 +318,6 @@ export default function LyricCard({
           <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} startOpen />
         </div>
       )}
-    </>
+    </div>
   )
 }
