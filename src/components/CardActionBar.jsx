@@ -43,9 +43,7 @@ export default function CardActionBar({
           title={isAnon ? 'Sign in to resonate' : hasReacted ? 'Remove resonance' : 'Resonate'}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill={hasReacted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 12c2-3 5-5 10-5s8 2 10 5" />
-            <path d="M5 12c1.5-2 3.5-3 7-3s5.5 1 7 3" />
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
           {count > 0 && <span>{count}</span>}
         </button>
@@ -57,8 +55,8 @@ export default function CardActionBar({
             className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
             title="Thoughts"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
             </svg>
             {commentCount > 0 && <span>{commentCount}</span>}
           </button>
@@ -100,11 +98,9 @@ export default function CardActionBar({
           title="Share"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
           </svg>
         </button>
 
