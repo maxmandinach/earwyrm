@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
@@ -24,22 +24,17 @@ function AnonymousFooter({ username }) {
 
 export default function SharedLyric() {
   const { token } = useParams()
-  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [lyric, setLyric] = useState(null)
-  const [note, setNote] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const isAnonymous = !user
-  // Only show note if sharer opted in via ?n=1 parameter
-  const showNote = searchParams.get('n') === '1'
 
   useEffect(() => {
     async function fetchSharedLyric() {
       try {
-        // Fetch lyric by share token
         const { data: lyricData, error: lyricError } = await supabase
           .from('lyrics')
           .select('*')
@@ -57,7 +52,6 @@ export default function SharedLyric() {
 
         setLyric(lyricData)
 
-        // Fetch profile info for attribution
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('username, is_public')
@@ -69,21 +63,6 @@ export default function SharedLyric() {
         } else {
           setProfile(profileData)
         }
-
-        // Only fetch note if sharer included it
-        if (showNote) {
-          const { data: noteData, error: noteError } = await supabase
-            .from('lyric_notes')
-            .select('*')
-            .eq('lyric_id', lyricData.id)
-            .single()
-
-          if (noteError && noteError.code !== 'PGRST116') {
-            console.error('Error fetching note:', noteError)
-          } else if (noteData) {
-            setNote(noteData)
-          }
-        }
       } catch (err) {
         console.error('Error fetching shared lyric:', err)
         setError('Something went wrong')
@@ -93,7 +72,7 @@ export default function SharedLyric() {
     }
 
     fetchSharedLyric()
-  }, [token, showNote])
+  }, [token])
 
   if (loading) {
     return (
@@ -161,7 +140,6 @@ export default function SharedLyric() {
               showActions
               isAnon={isAnonymous}
               isOwn={user?.id === lyric.user_id}
-              notes={note ? [note] : undefined}
               username={profile?.username}
               profileIsPublic={profile?.is_public}
             />

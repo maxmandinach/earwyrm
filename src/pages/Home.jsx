@@ -199,10 +199,6 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
       {showShareModal && (
         <ShareModal
           lyric={lyric}
-          note={currentNote}
-          username={profile?.username}
-          isPublic={lyric.is_public}
-          onVisibilityChange={handleVisibilityChange}
           onClose={() => setShowShareModal(false)}
         />
       )}

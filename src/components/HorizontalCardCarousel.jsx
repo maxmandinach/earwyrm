@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
-import { supabase } from '../lib/supabase-wrapper'
-import { generateShareToken } from '../lib/utils'
 import CompactCommentModal from './CompactCommentModal'
 import SavePopover from './SavePopover'
+import ShareModal from './ShareModal'
 
 /**
  * Compact lyric card for horizontal carousels.
@@ -14,9 +13,9 @@ import SavePopover from './SavePopover'
 function CompactCard({ lyric }) {
   const { user } = useAuth()
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
-  const [shareCopied, setShareCopied] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [showSave, setShowSave] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [commentCount, setCommentCount] = useState(lyric.comment_count || 0)
   const isAnon = !user
 
@@ -24,25 +23,10 @@ function CompactCard({ lyric }) {
     ? `/s/${lyric.share_token}`
     : `/song/${encodeURIComponent((lyric.song_title || '').toLowerCase())}`
 
-  async function handleShare(e) {
+  function handleShare(e) {
     e.preventDefault()
     e.stopPropagation()
-    let token = lyric.share_token
-    if (!token) {
-      // Generate a share token on the fly
-      token = generateShareToken()
-      const { error } = await supabase
-        .from('lyrics')
-        .update({ share_token: token })
-        .eq('id', lyric.id)
-      if (error) return
-      lyric.share_token = token
-    }
-    const url = `${window.location.origin}/s/${token}`
-    navigator.clipboard.writeText(url).then(() => {
-      setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
-    }).catch(() => {})
+    setShowShareModal(true)
   }
 
   function handleResonate(e) {
@@ -173,15 +157,11 @@ function CompactCard({ lyric }) {
             className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors py-1 px-1.5"
             title="Share"
           >
-            {shareCopied ? (
-              <span className="text-xs text-charcoal/40">copied</span>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                <polyline points="16 6 12 2 8 6" />
-                <line x1="12" y1="2" x2="12" y2="15" />
-              </svg>
-            )}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
           </button>
         </div>
       </Link>
@@ -200,6 +180,12 @@ function CompactCard({ lyric }) {
           lyricId={lyric.id}
           onClose={() => setShowSave(false)}
           portal
+        />
+      )}
+      {showShareModal && (
+        <ShareModal
+          lyric={lyric}
+          onClose={() => setShowShareModal(false)}
         />
       )}
     </div>
