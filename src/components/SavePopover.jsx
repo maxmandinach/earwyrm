@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useCollection } from '../contexts/CollectionContext'
 
-export default function SavePopover({ lyricId, onClose }) {
+export default function SavePopover({ lyricId, onClose, portal = false }) {
   const { collections, addLyricToCollection, removeLyricFromCollection, getCollectionsForLyric } = useCollection()
   const [savedCollections, setSavedCollections] = useState([])
   const [loading, setLoading] = useState(true)
@@ -44,20 +45,33 @@ export default function SavePopover({ lyricId, onClose }) {
     }
   }
 
-  // Find the default "Saved" / "Favorites" collection (first one created)
   const defaultCollection = collections[0]
   const otherCollections = collections.slice(1).filter(c => !c.is_smart)
 
-  return (
+  const popoverContent = (
     <div
       ref={ref}
-      className="absolute bottom-full mb-2 left-0 bg-white border border-charcoal/10 shadow-lg z-50 min-w-[200px] py-1"
+      className={portal
+        ? 'fixed z-[9999] min-w-[220px] py-1'
+        : 'absolute bottom-full mb-2 left-0 z-50 min-w-[200px] py-1'
+      }
+      style={portal ? {
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: 'var(--surface-card, #F5F2ED)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+      } : {
+        backgroundColor: 'white',
+        border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+      }}
     >
       {loading ? (
         <div className="px-4 py-2 text-xs text-charcoal/40">Loading...</div>
       ) : (
         <>
-          {/* Default collection — quick save */}
           {defaultCollection && (
             <button
               onClick={() => handleToggle(defaultCollection.id)}
@@ -73,7 +87,6 @@ export default function SavePopover({ lyricId, onClose }) {
             </button>
           )}
 
-          {/* Other collections */}
           {otherCollections.length > 0 && (
             <div className="border-t border-charcoal/5 mt-1 pt-1">
               {otherCollections.map(col => (
@@ -94,4 +107,16 @@ export default function SavePopover({ lyricId, onClose }) {
       )}
     </div>
   )
+
+  if (portal) {
+    return createPortal(
+      <div className="fixed inset-0 z-[9998]">
+        <div className="absolute inset-0 bg-charcoal/10" onClick={onClose} />
+        {popoverContent}
+      </div>,
+      document.body
+    )
+  }
+
+  return popoverContent
 }
