@@ -95,10 +95,11 @@ export default function LyricCard({
   return (
     <>
       <div
-        className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 transition-all duration-300 ${className}`}
+        className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 relative ${className}`}
         style={{
           ...cardStyle,
-          transform: justSaved ? 'scale(1.01)' : 'scale(1)',
+          overflow: 'visible',
+          ...(justSaved ? { transform: 'scale(1.01)', transition: 'transform 0.3s ease' } : {}),
         }}
       >
         {isEditing ? (
@@ -297,7 +298,7 @@ export default function LyricCard({
       {/* Comment section - after notes */}
       {showActions && showComments && !isEditing && (
         <div className="w-full max-w-lg mx-auto mt-2">
-          <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} />
+          <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} startOpen />
         </div>
       )}
     </>

@@ -58,13 +58,23 @@ export default function CardActionBar({
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [showSave, setShowSave] = useState(false)
   const [shareNudge, setShareNudge] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
 
   function handleShare() {
     setShareNudge(true)
     setTimeout(() => setShareNudge(false), 300)
-    onShare?.()
+    if (onShare) {
+      onShare()
+    } else if (lyric.share_token) {
+      // Default: copy share link
+      const url = `${window.location.origin}/l/${lyric.share_token}`
+      navigator.clipboard.writeText(url).then(() => {
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2000)
+      }).catch(() => {})
+    }
   }
 
   function handleToggleComments() {
@@ -184,11 +194,15 @@ export default function CardActionBar({
               transition: 'transform 0.2s ease',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
+            {shareCopied ? (
+              <span className="text-xs text-charcoal/50">copied</span>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            )}
           </button>
 
           {/* Overflow */}

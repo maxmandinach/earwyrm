@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { formatRelativeTime } from '../lib/utils'
 
-export default function CommentSection({ lyricId, initialCount = 0 }) {
+export default function CommentSection({ lyricId, initialCount = 0, startOpen = false }) {
   const { user } = useAuth()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(startOpen)
   const [comments, setComments] = useState([])
   const [count, setCount] = useState(initialCount)
   const [newComment, setNewComment] = useState('')
