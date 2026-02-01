@@ -108,7 +108,7 @@ export default function CompactCommentModal({ lyricId, shareToken, onClose, onCo
     }
   }
 
-  const linkTo = shareToken ? `/l/${shareToken}` : null
+  const linkTo = shareToken ? `/s/${shareToken}` : null
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
