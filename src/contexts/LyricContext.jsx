@@ -37,7 +37,29 @@ export function LyricProvider({ children }) {
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching current lyric:', error)
       }
-      setCurrentLyric(data || null)
+
+      if (data) {
+        setCurrentLyric(data)
+      } else {
+        // No is_current lyric — fallback to most recent lyric and restore it
+        const { data: fallback } = await supabase
+          .from('lyrics')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (fallback) {
+          await supabase
+            .from('lyrics')
+            .update({ is_current: true })
+            .eq('id', fallback.id)
+          setCurrentLyric({ ...fallback, is_current: true })
+        } else {
+          setCurrentLyric(null)
+        }
+      }
     } catch (err) {
       console.error('Error fetching current lyric:', err)
     } finally {
