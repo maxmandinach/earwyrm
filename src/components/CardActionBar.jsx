@@ -5,52 +5,38 @@ import OverflowMenu from './OverflowMenu'
 import SavePopover from './SavePopover'
 import VisibilityToggle from './VisibilityToggle'
 
-// Concentric arcs radiating from a center point — "resonance spreading"
-// Oriented upward (not sideways like wifi). Three arcs + center dot.
+// Audio waveform — five vertical bars at different heights, like a sound pulse.
+// Active state: bars are taller/bolder. Animation: bars bounce up in sequence.
 function ResonateIcon({ active, animating }) {
+  const bars = [
+    { x: 4, rest: 6, active: 10, delay: 0 },
+    { x: 8, rest: 10, active: 16, delay: 50 },
+    { x: 12, rest: 14, active: 20, delay: 100 },
+    { x: 16, rest: 10, active: 16, delay: 150 },
+    { x: 20, rest: 6, active: 10, delay: 200 },
+  ]
+
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      {/* Center dot */}
-      <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none" />
-      {/* Inner arc */}
-      <path
-        d="M8.5 16a5 5 0 0 1 7 0"
-        strokeWidth={active ? '2.5' : '2'}
-        style={{
-          opacity: active ? 1 : 0.8,
-          transition: 'all 0.3s ease',
-          ...(animating ? {
-            animation: 'resonate-ripple 0.6s ease-out',
-            animationDelay: '0ms',
-          } : {}),
-        }}
-      />
-      {/* Middle arc */}
-      <path
-        d="M5.5 12.5a9 9 0 0 1 13 0"
-        strokeWidth={active ? '2' : '1.75'}
-        style={{
-          opacity: active ? 0.7 : 0.5,
-          transition: 'all 0.3s ease',
-          ...(animating ? {
-            animation: 'resonate-ripple 0.6s ease-out',
-            animationDelay: '100ms',
-          } : {}),
-        }}
-      />
-      {/* Outer arc */}
-      <path
-        d="M2.5 9a14 14 0 0 1 19 0"
-        strokeWidth={active ? '1.75' : '1.5'}
-        style={{
-          opacity: active ? 0.45 : 0.25,
-          transition: 'all 0.3s ease',
-          ...(animating ? {
-            animation: 'resonate-ripple 0.6s ease-out',
-            animationDelay: '200ms',
-          } : {}),
-        }}
-      />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+      {bars.map((bar, i) => {
+        const h = active ? bar.active : bar.rest
+        const y = 12 - h / 2
+        return (
+          <line
+            key={i}
+            x1={bar.x} y1={y}
+            x2={bar.x} y2={y + h}
+            stroke="currentColor"
+            strokeWidth={active ? '2.5' : '2'}
+            style={{
+              transition: 'all 0.3s ease',
+              ...(animating ? {
+                animation: `waveform-bounce 0.5s ease-out ${bar.delay}ms`,
+              } : {}),
+            }}
+          />
+        )
+      })}
     </svg>
   )
 }
@@ -97,12 +83,12 @@ export default function CardActionBar({
 
   return (
     <>
-      {/* Keyframes for resonate ripple */}
+      {/* Keyframes for waveform bounce */}
       <style>{`
-        @keyframes resonate-ripple {
-          0% { opacity: 0; transform: translateY(3px); }
-          50% { opacity: 1; }
-          100% { opacity: inherit; transform: translateY(0); }
+        @keyframes waveform-bounce {
+          0% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1.3); }
+          100% { transform: scaleY(1); }
         }
       `}</style>
 
