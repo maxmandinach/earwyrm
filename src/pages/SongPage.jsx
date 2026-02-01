@@ -4,8 +4,6 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
-import ResonateButton from '../components/ResonateButton'
-import CommentSection from '../components/CommentSection'
 
 export default function SongPage() {
   const { slug } = useParams()
@@ -92,6 +90,8 @@ export default function SongPage() {
   })
   const clusterEntries = Object.entries(clusters)
 
+  const isAnon = !user
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -165,63 +165,21 @@ export default function SongPage() {
         ) : (
           <div className="space-y-8">
             {clusterEntries.map(([clusterId, clusterLyrics]) => {
-              // Use the first lyric as the canonical display
               const canonical = clusterLyrics[0]
               const allNotes = clusterLyrics.flatMap(l => notes[l.id] || [])
 
               return (
-                <div key={clusterId} className="space-y-4">
-                  <LyricCard
-                    lyric={canonical}
-                    showTimestamp
-                    linkable
-                    className="border border-charcoal/10"
-                  />
-
-                  {/* All public notes from all users */}
-                  {allNotes.length > 0 && (
-                    <div className="space-y-3 pl-2">
-                      {allNotes.map((note) => (
-                        <div
-                          key={note.id}
-                          className="pl-4 border-l-2 border-charcoal/10"
-                          style={{ transform: 'rotate(-0.5deg)', transformOrigin: 'left top' }}
-                        >
-                          <p
-                            className="text-charcoal/50 leading-relaxed"
-                            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem' }}
-                          >
-                            {note.content}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {note.profiles?.username && (
-                              <Link
-                                to={`/@${note.profiles.username}`}
-                                className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
-                              >
-                                @{note.profiles.username}
-                              </Link>
-                            )}
-                            {note.note_types && note.note_types.length > 0 && (
-                              <div className="flex gap-1">
-                                {note.note_types.map(t => (
-                                  <span key={t} className="text-xs text-charcoal/25 border border-charcoal/10 px-1.5 py-0.5">
-                                    {t}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-4 max-w-lg mx-auto">
-                    <ResonateButton lyricId={canonical.id} initialCount={canonical.reaction_count || 0} />
-                    <CommentSection lyricId={canonical.id} initialCount={canonical.comment_count || 0} />
-                  </div>
-                </div>
+                <LyricCard
+                  key={clusterId}
+                  lyric={canonical}
+                  showTimestamp
+                  linkable
+                  className="border border-charcoal/10"
+                  showActions
+                  isAnon={isAnon}
+                  isOwn={user?.id === canonical.user_id}
+                  notes={allNotes.length > 0 ? allNotes : undefined}
+                />
               )
             })}
           </div>

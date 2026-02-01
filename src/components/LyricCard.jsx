@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { signatureStyle } from '../lib/themes'
 import { formatRelativeTime } from '../lib/utils'
+import CardActionBar from './CardActionBar'
+import NotePeek from './NotePeek'
+import CommentSection from './CommentSection'
 
 export default function LyricCard({
   lyric,
@@ -11,6 +14,21 @@ export default function LyricCard({
   onSave,
   onCancel,
   linkable = false,
+  // Action bar props
+  showActions = false,
+  isOwn = false,
+  isAnon = false,
+  onShare,
+  onVisibilityChange,
+  onEdit,
+  onReplace,
+  isPublic,
+  profileIsPublic,
+  username,
+  // Notes props
+  notes,
+  initialNote,
+  onNoteChange,
 }) {
   const theme = signatureStyle
 
@@ -20,6 +38,7 @@ export default function LyricCard({
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
   const [isSaving, setIsSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
+  const [showComments, setShowComments] = useState(false)
 
   // Reset local state when lyric changes or editing starts
   useEffect(() => {
@@ -60,9 +79,7 @@ export default function LyricCard({
 
   // Card styling - clean surface with depth
   const cardStyle = {
-    // Surface color from CSS variables
     backgroundColor: 'var(--surface-card, #F5F2ED)',
-    // Typography
     color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
     fontSize: theme.fontSize,
@@ -71,182 +88,218 @@ export default function LyricCard({
     fontStyle: theme.fontStyle,
     letterSpacing: theme.letterSpacing,
     textAlign: theme.textAlign,
-    // Depth - card floats above the background
     boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-    // Subtle border
     border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
   return (
-    <div
-      className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 transition-all duration-300 ${className}`}
-      style={{
-        ...cardStyle,
-        transform: justSaved ? 'scale(1.01)' : 'scale(1)',
-      }}
-    >
-      {isEditing ? (
-        // Edit mode
-        <>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full bg-transparent focus:outline-none resize-none mb-3"
-            style={{
-              fontFamily: theme.fontFamily,
-              fontSize: theme.fontSize,
-              fontWeight: theme.fontWeight,
-              lineHeight: theme.lineHeight,
-              color: 'var(--text-primary, #2C2825)',
-            }}
-            rows={4}
-            autoFocus
-          />
-
-          <div className="space-y-2 mt-4 pt-4 border-t border-charcoal/10">
-            <input
-              type="text"
-              value={songTitle}
-              onChange={(e) => setSongTitle(e.target.value)}
-              placeholder="Song title"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+    <>
+      <div
+        className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 transition-all duration-300 ${className}`}
+        style={{
+          ...cardStyle,
+          transform: justSaved ? 'scale(1.01)' : 'scale(1)',
+        }}
+      >
+        {isEditing ? (
+          // Edit mode
+          <>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full bg-transparent focus:outline-none resize-none mb-3"
               style={{
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-                fontSize: '0.875rem',
-                fontStyle: 'italic',
-                color: 'var(--text-secondary, #6B635A)',
-              }}
-            />
-            <input
-              type="text"
-              value={artistName}
-              onChange={(e) => setArtistName(e.target.value)}
-              placeholder="Artist"
-              className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-              style={{
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-                fontSize: '0.875rem',
-                fontStyle: 'italic',
-                color: 'var(--text-secondary, #6B635A)',
-              }}
-            />
-          </div>
-
-          <div className="flex gap-3 mt-6 pt-4 border-t border-charcoal/10">
-            <button
-              onClick={handleSave}
-              disabled={!content.trim() || isSaving}
-              className="text-sm font-medium transition-all duration-200"
-              style={{
+                fontFamily: theme.fontFamily,
+                fontSize: theme.fontSize,
+                fontWeight: theme.fontWeight,
+                lineHeight: theme.lineHeight,
                 color: 'var(--text-primary, #2C2825)',
-                opacity: !content.trim() ? 0.4 : 1,
-                transform: isSaving ? 'scale(0.98)' : 'scale(1)',
               }}
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="text-sm transition-colors opacity-60 hover:opacity-100"
-              style={{ color: 'var(--text-secondary, #6B635A)' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </>
-      ) : (
-        // View mode
-        <>
-          <blockquote className="mb-4 leading-relaxed">
-            {lyric.content}
-          </blockquote>
+              rows={4}
+              autoFocus
+            />
 
-          {(lyric.song_title || lyric.artist_name) && (
-            <>
-              {/* Signature element: thin rule - matches share card */}
-              <div
-                className="w-20 mt-5 mb-4"
-                style={{
-                  height: '1.5px',
-                  backgroundColor: 'var(--color-accent, #B8A99A)',
-                  opacity: 0.5
-                }}
-              />
-              <p
+            <div className="space-y-2 mt-4 pt-4 border-t border-charcoal/10">
+              <input
+                type="text"
+                value={songTitle}
+                onChange={(e) => setSongTitle(e.target.value)}
+                placeholder="Song title"
+                className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                 style={{
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                   fontSize: '0.875rem',
                   fontStyle: 'italic',
                   color: 'var(--text-secondary, #6B635A)',
                 }}
-              >
-                {lyric.song_title && (
-                  linkable ? (
-                    <Link
-                      to={`/song/${encodeURIComponent(lyric.song_title.toLowerCase())}${lyric.artist_name ? `?artist=${encodeURIComponent(lyric.artist_name)}` : ''}`}
-                      className="hover:opacity-70 transition-opacity"
-                    >
-                      {lyric.song_title}
-                    </Link>
-                  ) : (
-                    <span>{lyric.song_title}</span>
-                  )
-                )}
-                {lyric.song_title && lyric.artist_name && <span> — </span>}
-                {lyric.artist_name && (
-                  linkable ? (
-                    <Link
-                      to={`/artist/${encodeURIComponent(lyric.artist_name.toLowerCase())}`}
-                      className="hover:opacity-70 transition-opacity"
-                    >
-                      {lyric.artist_name}
-                    </Link>
-                  ) : (
-                    <span>{lyric.artist_name}</span>
-                  )
-                )}
-              </p>
-            </>
-          )}
-
-          {lyric.tags && lyric.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {lyric.tags.map((tag, index) => (
-                linkable ? (
-                  <Link
-                    key={index}
-                    to={`/explore/tag/${encodeURIComponent(tag)}`}
-                    className="text-xs opacity-50 hover:opacity-80 transition-opacity"
-                    style={secondaryStyle}
-                  >
-                    #{tag}
-                  </Link>
-                ) : (
-                  <span
-                    key={index}
-                    className="text-xs opacity-50"
-                    style={secondaryStyle}
-                  >
-                    #{tag}
-                  </span>
-                )
-              ))}
+              />
+              <input
+                type="text"
+                value={artistName}
+                onChange={(e) => setArtistName(e.target.value)}
+                placeholder="Artist"
+                className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: '0.875rem',
+                  fontStyle: 'italic',
+                  color: 'var(--text-secondary, #6B635A)',
+                }}
+              />
             </div>
-          )}
 
-          {showTimestamp && lyric.created_at && (
-            <p
-              className="text-xs mt-5 opacity-40"
-              style={{
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-                color: 'var(--text-muted, #9C948A)',
-              }}
-            >
-              {formatRelativeTime(lyric.created_at)}
-            </p>
-          )}
-        </>
+            <div className="flex gap-3 mt-6 pt-4 border-t border-charcoal/10">
+              <button
+                onClick={handleSave}
+                disabled={!content.trim() || isSaving}
+                className="text-sm font-medium transition-all duration-200"
+                style={{
+                  color: 'var(--text-primary, #2C2825)',
+                  opacity: !content.trim() ? 0.4 : 1,
+                  transform: isSaving ? 'scale(0.98)' : 'scale(1)',
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="text-sm transition-colors opacity-60 hover:opacity-100"
+                style={{ color: 'var(--text-secondary, #6B635A)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        ) : (
+          // View mode
+          <>
+            <blockquote className="mb-4 leading-relaxed">
+              {lyric.content}
+            </blockquote>
+
+            {(lyric.song_title || lyric.artist_name) && (
+              <>
+                {/* Signature element: thin rule - matches share card */}
+                <div
+                  className="w-20 mt-5 mb-4"
+                  style={{
+                    height: '1.5px',
+                    backgroundColor: 'var(--color-accent, #B8A99A)',
+                    opacity: 0.5
+                  }}
+                />
+                <p
+                  style={{
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: '0.875rem',
+                    fontStyle: 'italic',
+                    color: 'var(--text-secondary, #6B635A)',
+                  }}
+                >
+                  {lyric.song_title && (
+                    linkable ? (
+                      <Link
+                        to={`/song/${encodeURIComponent(lyric.song_title.toLowerCase())}${lyric.artist_name ? `?artist=${encodeURIComponent(lyric.artist_name)}` : ''}`}
+                        className="hover:opacity-70 transition-opacity"
+                      >
+                        {lyric.song_title}
+                      </Link>
+                    ) : (
+                      <span>{lyric.song_title}</span>
+                    )
+                  )}
+                  {lyric.song_title && lyric.artist_name && <span> — </span>}
+                  {lyric.artist_name && (
+                    linkable ? (
+                      <Link
+                        to={`/artist/${encodeURIComponent(lyric.artist_name.toLowerCase())}`}
+                        className="hover:opacity-70 transition-opacity"
+                      >
+                        {lyric.artist_name}
+                      </Link>
+                    ) : (
+                      <span>{lyric.artist_name}</span>
+                    )
+                  )}
+                </p>
+              </>
+            )}
+
+            {lyric.tags && lyric.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {lyric.tags.map((tag, index) => (
+                  linkable ? (
+                    <Link
+                      key={index}
+                      to={`/explore/tag/${encodeURIComponent(tag)}`}
+                      className="text-xs opacity-50 hover:opacity-80 transition-opacity"
+                      style={secondaryStyle}
+                    >
+                      #{tag}
+                    </Link>
+                  ) : (
+                    <span
+                      key={index}
+                      className="text-xs opacity-50"
+                      style={secondaryStyle}
+                    >
+                      #{tag}
+                    </span>
+                  )
+                ))}
+              </div>
+            )}
+
+            {showTimestamp && lyric.created_at && (
+              <p
+                className="text-xs mt-5 opacity-40"
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  color: 'var(--text-muted, #9C948A)',
+                }}
+              >
+                {formatRelativeTime(lyric.created_at)}
+              </p>
+            )}
+
+            {/* Action bar */}
+            {showActions && !isEditing && (
+              <CardActionBar
+                lyric={lyric}
+                isOwn={isOwn}
+                isAnon={isAnon}
+                commentCount={lyric.comment_count || 0}
+                isPublic={isPublic}
+                profileIsPublic={profileIsPublic}
+                onShare={onShare}
+                onVisibilityChange={onVisibilityChange}
+                onEdit={onEdit}
+                onReplace={onReplace}
+                onToggleComments={() => setShowComments(!showComments)}
+                username={username}
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Note peek - after card */}
+      {showActions && !isEditing && (notes || isOwn) && (
+        <NotePeek
+          notes={notes}
+          isOwn={isOwn}
+          lyricId={lyric.id}
+          initialNote={initialNote}
+          onNoteChange={onNoteChange}
+        />
       )}
-    </div>
+
+      {/* Comment section - after notes */}
+      {showActions && showComments && !isEditing && (
+        <div className="w-full max-w-lg mx-auto mt-2">
+          <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} />
+        </div>
+      )}
+    </>
   )
 }
