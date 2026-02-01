@@ -33,7 +33,7 @@ export default function OverflowMenu({ isOwn, lyric, username, profileIsPublic, 
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-charcoal/10 shadow-lg z-20 min-w-[180px] py-1">
+        <div className="absolute right-0 top-full mt-1 bg-white border border-charcoal/10 shadow-lg z-50 min-w-[180px] py-1">
           {isOwn ? (
             <>
               <button
