@@ -141,6 +141,11 @@ html {
   animation: breathe 3.5s ease-in-out infinite;
 }
 
+/* Hide scrollbar for horizontal carousels */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Touch target utility - ensures 44px minimum */
 .touch-target {
   min-width: 44px;

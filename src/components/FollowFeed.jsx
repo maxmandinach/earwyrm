@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
-import LyricCard from './LyricCard'
-import ResonateButton from './ResonateButton'
+import HorizontalCardCarousel from './HorizontalCardCarousel'
 
-export default function FollowFeed({ limit = 5 }) {
+export default function FollowFeed({ limit = 8 }) {
   const { follows, loading: followsLoading } = useFollow()
   const [lyrics, setLyrics] = useState([])
   const [loading, setLoading] = useState(true)
@@ -102,27 +100,11 @@ export default function FollowFeed({ limit = 5 }) {
   if (loading || lyrics.length === 0) return null
 
   return (
-    <div className="w-full max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs text-charcoal/30 uppercase tracking-wider">From your follows</h2>
-        <Link to="/following" className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors">
-          See all →
-        </Link>
-      </div>
-      <div className="space-y-4">
-        {lyrics.map((lyric) => (
-          <div key={lyric.id}>
-            <LyricCard
-              lyric={lyric}
-              showTimestamp
-              linkable
-              className="border border-charcoal/10"
-              showActions
-              isAnon={false}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
+    <HorizontalCardCarousel
+      title="From Your Follows"
+      lyrics={lyrics}
+      linkTo="/following"
+      linkLabel="See all →"
+    />
   )
 }

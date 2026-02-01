@@ -32,6 +32,8 @@ export default function LyricCard({
   onNoteChange,
   // Animation
   skipReveal = false,
+  // Visual variant
+  hero = false,
 }) {
   const theme = signatureStyle
   const { ref: revealRef, revealed } = useRevealOnScroll()
@@ -88,14 +90,16 @@ export default function LyricCard({
     backgroundColor: 'var(--surface-card, #F5F2ED)',
     color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
-    fontSize: theme.fontSize,
+    fontSize: hero ? 'clamp(1.4rem, 4vw, 1.8rem)' : theme.fontSize,
     fontWeight: theme.fontWeight,
-    lineHeight: theme.lineHeight,
+    lineHeight: hero ? '1.7' : theme.lineHeight,
     fontStyle: theme.fontStyle,
-    letterSpacing: theme.letterSpacing,
+    letterSpacing: hero ? '0.01em' : theme.letterSpacing,
     textAlign: theme.textAlign,
-    boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-    border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+    boxShadow: hero
+      ? '0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.1)'
+      : 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+    border: hero ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
   return (
@@ -112,7 +116,7 @@ export default function LyricCard({
       }}
     >
       <div
-        className={`w-full max-w-lg mx-auto p-5 sm:p-8 md:p-10 relative ${className}`}
+        className={`w-full max-w-lg mx-auto relative ${hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${className}`}
         style={{
           ...cardStyle,
           overflow: 'visible',
