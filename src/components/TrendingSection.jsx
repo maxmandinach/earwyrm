@@ -11,7 +11,7 @@ export default function TrendingSection() {
       try {
         const { data, error } = await supabase
           .from('lyrics')
-          .select('*')
+          .select('*, profiles:user_id(username)')
           .eq('is_public', true)
           .order('reaction_count', { ascending: false })
           .limit(8)

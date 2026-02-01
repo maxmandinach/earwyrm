@@ -1,25 +1,46 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import useRevealOnScroll from '../hooks/useRevealOnScroll'
+import { useAuth } from '../contexts/AuthContext'
+import useResonate from '../hooks/useResonate'
 
 /**
  * Compact lyric card for horizontal carousels.
- * Shows lyric snippet, song/artist, and reaction count.
+ * Shows lyric snippet, song/artist, username, resonate + share.
  */
 function CompactCard({ lyric }) {
-  const { ref, revealed } = useRevealOnScroll({ threshold: 0.1 })
+  const { user } = useAuth()
+  const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
+  const [shareCopied, setShareCopied] = useState(false)
+  const isAnon = !user
+
+  const linkTo = lyric.share_token
+    ? `/l/${lyric.share_token}`
+    : `/song/${encodeURIComponent((lyric.song_title || '').toLowerCase())}`
+
+  function handleShare(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (lyric.share_token) {
+      const url = `${window.location.origin}/l/${lyric.share_token}`
+      navigator.clipboard.writeText(url).then(() => {
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2000)
+      }).catch(() => {})
+    }
+  }
+
+  function handleResonate(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAnon) toggle()
+  }
+
+  const username = lyric.profiles?.username
 
   return (
-    <div
-      ref={ref}
-      className="flex-shrink-0 w-[260px] sm:w-[280px]"
-      style={{
-        opacity: revealed ? 1 : 0,
-        transform: revealed ? 'translateY(0)' : 'translateY(10px)',
-        transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-      }}
-    >
+    <div className="flex-shrink-0 w-[260px] sm:w-[280px]">
       <Link
-        to={lyric.share_token ? `/l/${lyric.share_token}` : `/song/${encodeURIComponent((lyric.song_title || '').toLowerCase())}`}
+        to={linkTo}
         className="block p-5 h-full"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
@@ -27,6 +48,11 @@ function CompactCard({ lyric }) {
           border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
         }}
       >
+        {/* Username */}
+        {username && (
+          <p className="text-xs text-charcoal/30 mb-2 truncate">@{username}</p>
+        )}
+
         {/* Lyric snippet — 3 lines max */}
         <p
           className="text-charcoal/80 leading-relaxed mb-3 line-clamp-3"
@@ -44,19 +70,77 @@ function CompactCard({ lyric }) {
           </p>
         )}
 
-        {/* Reaction count */}
-        {(lyric.reaction_count || 0) > 0 && (
-          <div className="flex items-center gap-1 mt-2 text-charcoal/25">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
-              <line x1="4" y1="15" x2="4" y2="9" stroke="currentColor" strokeWidth="2" />
-              <line x1="8" y1="17" x2="8" y2="7" stroke="currentColor" strokeWidth="2" />
-              <line x1="12" y1="19" x2="12" y2="5" stroke="currentColor" strokeWidth="2" />
-              <line x1="16" y1="17" x2="16" y2="7" stroke="currentColor" strokeWidth="2" />
-              <line x1="20" y1="15" x2="20" y2="9" stroke="currentColor" strokeWidth="2" />
+        {/* Compact action row */}
+        <div
+          className="flex items-center gap-1 mt-3 pt-2"
+          style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
+        >
+          {/* Resonate */}
+          <button
+            onClick={handleResonate}
+            className={`flex items-center gap-1 text-xs py-1 px-1.5 transition-all duration-200 ${
+              isAnon
+                ? 'text-charcoal/25 cursor-default'
+                : hasReacted
+                  ? 'text-charcoal/60'
+                  : 'text-charcoal/25 hover:text-charcoal/40'
+            }`}
+            style={{
+              transform: animating ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.3s ease',
+            }}
+            title={isAnon ? 'Sign in to resonate' : hasReacted ? 'Remove resonance' : 'Resonate'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+              {[
+                { x: 4, h: hasReacted ? 10 : 6 },
+                { x: 8, h: hasReacted ? 16 : 10 },
+                { x: 12, h: hasReacted ? 20 : 14 },
+                { x: 16, h: hasReacted ? 16 : 10 },
+                { x: 20, h: hasReacted ? 10 : 6 },
+              ].map((bar, i) => (
+                <line
+                  key={i}
+                  x1={bar.x} y1={12 - bar.h / 2}
+                  x2={bar.x} y2={12 + bar.h / 2}
+                  stroke="currentColor"
+                  strokeWidth={hasReacted ? '2.5' : '2'}
+                  style={{ transition: 'all 0.3s ease' }}
+                />
+              ))}
             </svg>
-            <span className="text-xs">{lyric.reaction_count}</span>
-          </div>
-        )}
+            {count > 0 && <span>{count}</span>}
+          </button>
+
+          {/* Comment count (read-only indicator) */}
+          {(lyric.comment_count || 0) > 0 && (
+            <span className="flex items-center gap-1 text-xs text-charcoal/25 py-1 px-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              {lyric.comment_count}
+            </span>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors py-1 px-1.5"
+            title="Share"
+          >
+            {shareCopied ? (
+              <span className="text-xs text-charcoal/40">copied</span>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            )}
+          </button>
+        </div>
       </Link>
     </div>
   )
