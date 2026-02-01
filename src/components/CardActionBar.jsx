@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
-import { supabase } from '../lib/supabase-wrapper'
-import { generateShareToken } from '../lib/utils'
 import OverflowMenu from './OverflowMenu'
 import SavePopover from './SavePopover'
+import ShareModal from './ShareModal'
 import VisibilityToggle from './VisibilityToggle'
 
 // Audio waveform — five vertical bars at different heights, like a sound pulse.
@@ -59,33 +58,20 @@ export default function CardActionBar({
 }) {
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [showSave, setShowSave] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [shareNudge, setShareNudge] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
 
-  async function handleShare() {
+  function handleShare() {
     setShareNudge(true)
     setTimeout(() => setShareNudge(false), 300)
     if (onShare) {
       onShare()
-      return
+    } else {
+      setShowShareModal(true)
     }
-    let token = lyric.share_token
-    if (!token) {
-      token = generateShareToken()
-      const { error } = await supabase
-        .from('lyrics')
-        .update({ share_token: token })
-        .eq('id', lyric.id)
-      if (error) return
-      lyric.share_token = token
-    }
-    const url = `${window.location.origin}/s/${token}`
-    navigator.clipboard.writeText(url).then(() => {
-      setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
-    }).catch(() => {})
   }
 
   function handleToggleComments() {
@@ -229,6 +215,12 @@ export default function CardActionBar({
           )}
         </div>
       </div>
+      {showShareModal && (
+        <ShareModal
+          lyric={lyric}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </>
   )
 }
