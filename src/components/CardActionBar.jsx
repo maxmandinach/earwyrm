@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
 import OverflowMenu from './OverflowMenu'
 import SavePopover from './SavePopover'
 import ShareModal from './ShareModal'
+import SignupOverlay from './SignupOverlay'
 import VisibilityToggle from './VisibilityToggle'
 
 // Audio waveform — five vertical bars at different heights, like a sound pulse.
@@ -57,7 +57,6 @@ export default function CardActionBar({
   onToggleComments,
   username,
 }) {
-  const navigate = useNavigate()
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [showSave, setShowSave] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -65,10 +64,7 @@ export default function CardActionBar({
   const [shareCopied, setShareCopied] = useState(false)
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
-
-  function promptSignup() {
-    navigate('/signup')
-  }
+  const [signupIntent, setSignupIntent] = useState(null)
 
   function handleShare() {
     setShareNudge(true)
@@ -113,7 +109,7 @@ export default function CardActionBar({
         <div className="flex items-center gap-1 flex-1">
           {/* Resonate */}
           <button
-            onClick={isAnon ? promptSignup : toggle}
+            onClick={isAnon ? () => setSignupIntent('resonate') : toggle}
             className={`flex items-center gap-1.5 text-xs transition-all duration-200 py-1 px-2 ${
               isAnon
                 ? 'text-charcoal/30 hover:text-charcoal/50 cursor-pointer'
@@ -162,7 +158,7 @@ export default function CardActionBar({
           ) : (
             <div className="relative">
               <button
-                onClick={isAnon ? promptSignup : handleSaveToggle}
+                onClick={isAnon ? () => setSignupIntent('save') : handleSaveToggle}
                 className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
                 title={isAnon ? 'Sign up to save' : 'Save'}
                 style={{
@@ -221,6 +217,12 @@ export default function CardActionBar({
         <ShareModal
           lyric={lyric}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+      {signupIntent && (
+        <SignupOverlay
+          intent={signupIntent}
+          onClose={() => setSignupIntent(null)}
         />
       )}
     </>

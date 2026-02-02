@@ -5,6 +5,7 @@ import { formatRelativeTime } from '../lib/utils'
 import CardActionBar from './CardActionBar'
 import NotePeek from './NotePeek'
 import CommentSection from './CommentSection'
+import SignupOverlay from './SignupOverlay'
 import useRevealOnScroll from '../hooks/useRevealOnScroll'
 
 export default function LyricCard({
@@ -47,6 +48,7 @@ export default function LyricCard({
   const [isSaving, setIsSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
   const [showComments, setShowComments] = useState(false)
+  const [showSignup, setShowSignup] = useState(false)
 
   // Reset local state when lyric changes or editing starts
   useEffect(() => {
@@ -319,8 +321,16 @@ export default function LyricCard({
       {/* Comment section - after notes */}
       {showActions && showComments && !isEditing && (
         <div className="w-full max-w-lg mx-auto mt-2">
-          <CommentSection lyricId={lyric.id} initialCount={lyric.comment_count || 0} startOpen />
+          <CommentSection
+            lyricId={lyric.id}
+            initialCount={lyric.comment_count || 0}
+            startOpen
+            onSignupPrompt={isAnon ? () => setShowSignup(true) : undefined}
+          />
         </div>
+      )}
+      {showSignup && (
+        <SignupOverlay intent="comment" onClose={() => setShowSignup(false)} />
       )}
     </div>
   )
