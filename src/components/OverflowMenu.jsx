@@ -79,7 +79,7 @@ export default function OverflowMenu({ isOwn, lyric, username, profileIsPublic, 
               )}
               {hasProfile ? (
                 <Link
-                  to={`/@${username}`}
+                  to={`/u/${username}`}
                   onClick={() => setOpen(false)}
                   className="block px-4 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
                 >

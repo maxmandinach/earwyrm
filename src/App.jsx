@@ -61,6 +61,15 @@ function IndexRoute() {
   return <Landing />
 }
 
+function AtUsernameRedirect() {
+  const path = window.location.pathname
+  if (path.startsWith('/@')) {
+    const username = path.slice(2)
+    return <Navigate to={`/u/${username}`} replace />
+  }
+  return <Navigate to="/" replace />
+}
+
 function RedirectToArtist() {
   const { name } = useParams()
   return <Navigate to={`/artist/${name}`} replace />
@@ -157,7 +166,8 @@ export default function App() {
 
       {/* Public routes - no layout, accessible to all */}
       <Route path="/s/:token" element={<SharedLyric />} />
-      <Route path="@:username" element={<PublicProfile />} />
+      <Route path="u/:username" element={<PublicProfile />} />
+      <Route path="*" element={<AtUsernameRedirect />} />
     </Routes>
   )
 }

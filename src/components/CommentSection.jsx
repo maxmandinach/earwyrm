@@ -141,7 +141,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                 <div className="flex items-center gap-2">
                   {comment.profiles?.username && (
                     <Link
-                      to={`/@${comment.profiles.username}`}
+                      to={`/u/${comment.profiles.username}`}
                       className="text-xs text-charcoal/50 hover:text-charcoal transition-colors font-medium"
                     >
                       @{comment.profiles.username}
@@ -189,7 +189,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                     <div className="flex items-center gap-2">
                       {reply.profiles?.username && (
                         <Link
-                          to={`/@${reply.profiles.username}`}
+                          to={`/u/${reply.profiles.username}`}
                           className="text-xs text-charcoal/50 hover:text-charcoal transition-colors font-medium"
                         >
                           @{reply.profiles.username}

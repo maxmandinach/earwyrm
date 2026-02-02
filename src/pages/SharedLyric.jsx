@@ -111,7 +111,7 @@ export default function SharedLyric() {
         <div className="flex items-center gap-4">
           {profile && (
             <Link
-              to={`/@${profile.username}`}
+              to={`/u/${profile.username}`}
               className="text-sm text-charcoal/40 hover:text-charcoal/60 transition-colors"
             >
               @{profile.username}
