@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { signatureStyle, darkVariant } from '../lib/themes'
-import { generateShareToken, getShareableUrl } from '../lib/utils'
+import { generateShareToken, getShareableUrl, getPublicProfileUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 import { applyPaperTextureToCanvas, applyDarkPaperTexture } from '../lib/paperTexture'
 
@@ -169,6 +170,9 @@ function getInitialDarkMode() {
 }
 
 export default function ShareModal({ lyric, onClose }) {
+  const { user, profile: authProfile } = useAuth()
+  const isOwn = user?.id === lyric.user_id
+  const [tab, setTab] = useState('lyric') // 'lyric' | 'page'
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
@@ -178,6 +182,8 @@ export default function ShareModal({ lyric, onClose }) {
   const [visible, setVisible] = useState(false)
   const [username, setUsername] = useState(lyric.profiles?.username || null)
   const canvasRef = useRef(null)
+
+  const profileUrl = authProfile?.username ? getPublicProfileUrl(authProfile.username) : ''
 
   // Fetch username if not available from joined data
   useEffect(() => {
@@ -203,17 +209,18 @@ export default function ShareModal({ lyric, onClose }) {
     setTimeout(onClose, 250)
   }
 
-  const copyLink = async () => {
-    if (!shareUrl) return
+  const copyLink = async (url) => {
+    const linkToCopy = url || (tab === 'page' ? profileUrl : shareUrl)
+    if (!linkToCopy) return
 
     try {
-      await navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(linkToCopy)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       try {
         const input = document.createElement('input')
-        input.value = shareUrl
+        input.value = linkToCopy
         input.style.position = 'fixed'
         input.style.opacity = '0'
         document.body.appendChild(input)
@@ -500,7 +507,7 @@ export default function ShareModal({ lyric, onClose }) {
               color: 'var(--text-secondary, #6B635A)',
             }}
           >
-            Share this moment
+            Share
           </h2>
           <button
             onClick={handleClose}
@@ -511,109 +518,193 @@ export default function ShareModal({ lyric, onClose }) {
           </button>
         </div>
 
-        <div style={{ flex: 1, overflow: 'auto', padding: '0 1.5rem 1.5rem' }}>
-          {/* Preview */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <canvas
-              ref={canvasRef}
-              style={{
-                height: selectedFormat === 'tall' ? '20rem' : '14rem',
-                aspectRatio: selectedFormat === 'tall' ? '9/16' : '1/1',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                transition: 'all 0.3s ease-out',
-              }}
-            />
+        {/* Tab toggle — only show if this is the user's own lyric */}
+        {isOwn && (
+          <div style={{ padding: '0 1.5rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+              <button
+                onClick={() => { setTab('lyric'); setCopied(false) }}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '0.8rem',
+                  backgroundColor: tab === 'lyric' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                  color: tab === 'lyric' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                This lyric
+              </button>
+              <button
+                onClick={() => { setTab('page'); setCopied(false) }}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '0.8rem',
+                  backgroundColor: tab === 'page' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                  color: tab === 'page' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Your page
+              </button>
+            </div>
           </div>
+        )}
 
-          {/* Controls */}
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
-                <button
-                  onClick={() => setSelectedFormat('square')}
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 1.5rem 1.5rem' }}>
+          {tab === 'page' ? (
+            /* ---- YOUR PAGE tab ---- */
+            <div>
+              <p className="text-xs text-charcoal/40 text-center mb-4 leading-relaxed">
+                Share your page — visitors will always see<br />whatever lyric is on your mind right now
+              </p>
+
+              {/* Profile URL display */}
+              <div
+                className="flex items-center justify-between gap-2 p-3 mb-4"
+                style={{
+                  backgroundColor: 'var(--surface-bg, #FAF8F5)',
+                  border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+                }}
+              >
+                <span className="text-sm text-charcoal/60 truncate">
+                  {profileUrl.replace(/^https?:\/\//, '')}
+                </span>
+              </div>
+
+              {/* Copy page link */}
+              <button
+                onClick={() => copyLink(profileUrl)}
+                disabled={!profileUrl}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  backgroundColor: 'var(--text-primary, #2C2825)',
+                  color: 'var(--surface-bg, #F5F2ED)',
+                  border: 'none',
+                  cursor: profileUrl ? 'pointer' : 'not-allowed',
+                  opacity: profileUrl ? 1 : 0.4,
+                }}
+              >
+                {copied ? 'Copied' : 'Copy page link'}
+              </button>
+            </div>
+          ) : (
+            /* ---- THIS LYRIC tab ---- */
+            <>
+              <p className="text-xs text-charcoal/40 text-center mb-3">
+                A permanent link to this specific lyric
+              </p>
+
+              {/* Preview */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <canvas
+                  ref={canvasRef}
                   style={{
-                    flex: 1,
+                    height: selectedFormat === 'tall' ? '20rem' : '14rem',
+                    aspectRatio: selectedFormat === 'tall' ? '9/16' : '1/1',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                    transition: 'all 0.3s ease-out',
+                  }}
+                />
+              </div>
+
+              {/* Controls */}
+              <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+                    <button
+                      onClick={() => setSelectedFormat('square')}
+                      style={{
+                        flex: 1,
+                        padding: '0.625rem',
+                        fontSize: '0.875rem',
+                        backgroundColor: selectedFormat === 'square' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: selectedFormat === 'square' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Square
+                    </button>
+                    <button
+                      onClick={() => setSelectedFormat('tall')}
+                      style={{
+                        flex: 1,
+                        padding: '0.625rem',
+                        fontSize: '0.875rem',
+                        backgroundColor: selectedFormat === 'tall' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: selectedFormat === 'tall' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Story
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  style={{
+                    width: '3rem',
                     padding: '0.625rem',
                     fontSize: '0.875rem',
-                    backgroundColor: selectedFormat === 'square' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                    color: selectedFormat === 'square' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                    border: 'none',
+                    backgroundColor: isDarkMode ? 'var(--text-primary, #2C2825)' : 'transparent',
+                    color: isDarkMode ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                    border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                    borderRadius: '4px',
                     cursor: 'pointer',
                   }}
+                  title={isDarkMode ? 'Light mode' : 'Dark mode'}
                 >
-                  Square
-                </button>
-                <button
-                  onClick={() => setSelectedFormat('tall')}
-                  style={{
-                    flex: 1,
-                    padding: '0.625rem',
-                    fontSize: '0.875rem',
-                    backgroundColor: selectedFormat === 'tall' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                    color: selectedFormat === 'tall' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Story
+                  {isDarkMode ? '◐' : '○'}
                 </button>
               </div>
-            </div>
 
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              style={{
-                width: '3rem',
-                padding: '0.625rem',
-                fontSize: '0.875rem',
-                backgroundColor: isDarkMode ? 'var(--text-primary, #2C2825)' : 'transparent',
-                color: isDarkMode ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-              title={isDarkMode ? 'Light mode' : 'Dark mode'}
-            >
-              {isDarkMode ? '◐' : '○'}
-            </button>
-          </div>
+              {/* Actions */}
+              <div style={{ marginTop: '1.5rem' }}>
+                <button
+                  onClick={share}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    backgroundColor: 'var(--text-primary, #2C2825)',
+                    color: 'var(--surface-bg, #F5F2ED)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {shared ? 'Shared' : 'Share image'}
+                </button>
+              </div>
 
-          {/* Actions */}
-          <div style={{ marginTop: '1.5rem' }}>
-            <button
-              onClick={share}
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                backgroundColor: 'var(--text-primary, #2C2825)',
-                color: 'var(--surface-bg, #F5F2ED)',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {shared ? 'Shared' : 'Share'}
-            </button>
-          </div>
-
-          <button
-            onClick={copyLink}
-            disabled={loading || !shareUrl}
-            style={{
-              width: '100%',
-              marginTop: '0.5rem',
-              padding: '0.625rem',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary, #6B635A)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: loading || !shareUrl ? 'not-allowed' : 'pointer',
-              opacity: loading || !shareUrl ? 0.4 : 1,
-            }}
-          >
-            {loading ? 'Generating link...' : copied ? 'Copied' : 'Copy link'}
-          </button>
+              <button
+                onClick={() => copyLink(shareUrl)}
+                disabled={loading || !shareUrl}
+                style={{
+                  width: '100%',
+                  marginTop: '0.5rem',
+                  padding: '0.625rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary, #6B635A)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: loading || !shareUrl ? 'not-allowed' : 'pointer',
+                  opacity: loading || !shareUrl ? 0.4 : 1,
+                }}
+              >
+                {loading ? 'Generating link...' : copied ? 'Copied' : 'Copy lyric link'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
