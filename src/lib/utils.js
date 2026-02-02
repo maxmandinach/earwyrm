@@ -50,7 +50,7 @@ export function isValidUsername(username) {
  */
 export function getPublicProfileUrl(username) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${baseUrl}/@${username}`
+  return `${baseUrl}/u/${username}`
 }
 
 /**
