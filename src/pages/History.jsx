@@ -80,109 +80,6 @@ function groupLyricsByPeriod(lyrics) {
   return groups
 }
 
-// Development mode detection
-const isDev = import.meta.env.DEV
-
-// Mock data for testing
-function generateMockLyrics() {
-  const now = new Date()
-
-  return [
-    // Recent lyrics (last month)
-    {
-      id: 'mock-1',
-      content: 'And I know that you mean so well, but I am not a vessel for your good intent',
-      song_title: 'Liability',
-      artist_name: 'Lorde',
-      theme: 'default',
-      created_at: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-2',
-      content: 'I want to be alone, alone with you',
-      song_title: 'Wash.',
-      artist_name: 'Bon Iver',
-      theme: 'serif',
-      created_at: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-3',
-      content: 'The only thing I ever learned from love was how to shoot somebody who outdrew ya',
-      song_title: 'Hallelujah',
-      artist_name: 'Leonard Cohen',
-      theme: 'mono',
-      created_at: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-4',
-      content: 'I could be your anytime',
-      song_title: 'I Know',
-      artist_name: 'Fiona Apple',
-      theme: 'typewriter',
-      created_at: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString(), // 3 weeks ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-5',
-      content: 'Time is a valuable thing, watch it fly by as the pendulum swings',
-      song_title: 'In The End',
-      artist_name: 'Linkin Park',
-      theme: 'minimal',
-      created_at: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString(), // 4 weeks ago
-      is_current: false,
-      is_public: false,
-    },
-
-    // Older lyrics (1-3 months ago)
-    {
-      id: 'mock-6',
-      content: 'What do you think I\'d see if I could walk away from me?',
-      song_title: 'Tidal Wave',
-      artist_name: 'Taking Back Sunday',
-      theme: 'default',
-      created_at: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString(), // 35 days ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-7',
-      content: 'I took the Jeep to the sand with a plan that involved a beverage',
-      song_title: 'Golden',
-      artist_name: 'Harry Styles',
-      theme: 'serif',
-      created_at: new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000).toISOString(), // 50 days ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-8',
-      content: 'Your ex-lover is dead',
-      song_title: 'Your Ex-Lover is Dead',
-      artist_name: 'Stars',
-      theme: 'mono',
-      created_at: new Date(now.getTime() - 75 * 24 * 60 * 60 * 1000).toISOString(), // 75 days ago
-      is_current: false,
-      is_public: false,
-    },
-    {
-      id: 'mock-9',
-      content: 'So this is the new year, and I don\'t feel any different',
-      song_title: 'The New Year',
-      artist_name: 'Death Cab for Cutie',
-      theme: 'typewriter',
-      created_at: new Date(now.getTime() - 85 * 24 * 60 * 60 * 1000).toISOString(), // 85 days ago
-      is_current: false,
-      is_public: false,
-    },
-  ]
-}
 
 function TimePeriodHeader({ title }) {
   return (
@@ -319,8 +216,6 @@ export default function History() {
   const [lyrics, setLyrics] = useState([])
   const [notes, setNotes] = useState({}) // Map of lyricId -> note
   const [loading, setLoading] = useState(true)
-  const [useMockData, setUseMockData] = useState(false) // Use real data by default
-  const [realDataExists, setRealDataExists] = useState(false)
 
   useEffect(() => {
     async function fetchHistory() {
@@ -328,13 +223,6 @@ export default function History() {
 
       setLoading(true)
       try {
-        // Use mock data if toggled on
-        if (useMockData) {
-          setLyrics(generateMockLyrics())
-          setLoading(false)
-          return
-        }
-
         // Fetch lyrics
         const { data, error } = await supabase
           .from('lyrics')
@@ -348,7 +236,6 @@ export default function History() {
           const realLyrics = data || []
           // Sort client-side since our wrapper doesn't support .order()
           realLyrics.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          setRealDataExists(realLyrics.length > 0)
           setLyrics(realLyrics)
 
           // Fetch notes for these lyrics
@@ -377,7 +264,7 @@ export default function History() {
     }
 
     fetchHistory()
-  }, [user, useMockData])
+  }, [user])
 
 
   if (loading) {
@@ -438,21 +325,9 @@ export default function History() {
             now
           </Link>
         </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-charcoal/30">
-            {lyrics.length} {lyrics.length === 1 ? 'moment' : 'moments'}
-          </p>
-          {isDev && (
-            <button
-              onClick={() => setUseMockData(!useMockData)}
-              className="text-xs px-3 py-1.5 border border-charcoal/20 hover:border-charcoal/40
-                         transition-colors text-charcoal/30 rounded-sm"
-              title="Toggle mock data for testing"
-            >
-              {useMockData ? '✕ mock' : '+ mock'}
-            </button>
-          )}
-        </div>
+        <p className="text-xs text-charcoal/30">
+          {lyrics.length} {lyrics.length === 1 ? 'moment' : 'moments'}
+        </p>
       </div>
 
       {/* Timeline - scrollable container */}

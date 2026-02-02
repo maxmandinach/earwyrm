@@ -6,6 +6,7 @@ import { LyricProvider } from './contexts/LyricContext'
 import { CollectionProvider } from './contexts/CollectionContext'
 import { FollowProvider } from './contexts/FollowContext'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 import { initializePageTexture } from './lib/paperTexture'
 
@@ -15,15 +16,17 @@ initializePageTexture()
 createRoot(document.getElementById('root')).render(
   // <StrictMode> - Temporarily disabled due to React 19 + Supabase compatibility issue
     <BrowserRouter>
-      <AuthProvider>
-        <LyricProvider>
-          <CollectionProvider>
-            <FollowProvider>
-              <App />
-            </FollowProvider>
-          </CollectionProvider>
-        </LyricProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <LyricProvider>
+            <CollectionProvider>
+              <FollowProvider>
+                <App />
+              </FollowProvider>
+            </CollectionProvider>
+          </LyricProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   // </StrictMode>
 )

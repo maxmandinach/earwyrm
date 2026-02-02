@@ -8,9 +8,9 @@ import LyricCard from '../components/LyricCard'
 export default function Following() {
   const { follows, loading: followsLoading, unfollow } = useFollow()
   const { user } = useAuth()
+  const [allMatched, setAllMatched] = useState([])
   const [lyrics, setLyrics] = useState([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const PAGE_SIZE = 20
 
@@ -32,7 +32,7 @@ export default function Following() {
         // Fetch recent public lyrics
         const { data } = await supabase
           .from('lyrics')
-          .select('*')
+          .select('*, profiles:user_id(username, is_public)')
           .eq('is_public', true)
           .order('created_at', { ascending: false })
           .limit(100)
@@ -46,6 +46,7 @@ export default function Following() {
             return false
           })
 
+          setAllMatched(matched)
           setLyrics(matched.slice(0, PAGE_SIZE))
           setHasMore(matched.length > PAGE_SIZE)
         }
@@ -120,6 +121,7 @@ export default function Following() {
               isAnon={!user}
               isOwn={user?.id === lyric.user_id}
               isPublic={lyric.is_public}
+              username={lyric.profiles?.username}
             />
           ))}
 
@@ -127,7 +129,9 @@ export default function Following() {
             <div className="text-center pt-4">
               <button
                 onClick={() => {
-                  setPage(prev => prev + 1)
+                  const next = lyrics.length + PAGE_SIZE
+                  setLyrics(allMatched.slice(0, next))
+                  setHasMore(allMatched.length > next)
                 }}
                 className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
               >
