@@ -4,18 +4,23 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
 
-function AnonymousFooter() {
+function AnonymousFooter({ username }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-transparent border-t border-charcoal/10 py-4 px-6 z-20">
+    <div className="fixed bottom-0 left-0 right-0 py-4 px-6 z-20"
+      style={{
+        backgroundColor: 'var(--surface-card, #F5F2ED)',
+        borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+      }}
+    >
       <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
         <p className="text-sm text-charcoal/50">
-          Save the lyrics that stay with you
+          What lyric is stuck in <em>your</em> head?
         </p>
         <Link
           to="/signup"
-          className="text-sm text-charcoal font-medium hover:text-charcoal/70 transition-colors"
+          className="text-sm text-charcoal font-medium hover:text-charcoal/70 transition-colors whitespace-nowrap"
         >
-          Sign up
+          Start yours
         </Link>
       </div>
     </div>
@@ -144,7 +149,7 @@ export default function PublicProfile({ showHistory = false }) {
         )}
       </header>
 
-      {/* Main Content - artifact-first */}
+      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 pb-24">
         {isPrivate ? (
           <div className="text-center max-w-md">
@@ -155,6 +160,11 @@ export default function PublicProfile({ showHistory = false }) {
           </div>
         ) : lyric ? (
           <div className="w-full max-w-lg">
+            {/* Context — who and what */}
+            <p className="text-xs text-charcoal/30 mb-4 text-center">
+              on <span className="text-charcoal/50">@{username}</span>'s mind right now
+            </p>
+
             <LyricCard
               lyric={lyric}
               showTimestamp={true}
@@ -184,13 +194,6 @@ export default function PublicProfile({ showHistory = false }) {
                 </p>
               </div>
             )}
-
-            {/* Subtle attribution */}
-            <div className="mt-8 text-center">
-              <p className="text-xs text-charcoal/30">
-                @{username}
-              </p>
-            </div>
           </div>
         ) : (
           <div className="text-center max-w-md">
@@ -202,7 +205,7 @@ export default function PublicProfile({ showHistory = false }) {
       </main>
 
       {/* Footer for anonymous users */}
-      {isAnonymous && <AnonymousFooter />}
+      {isAnonymous && <AnonymousFooter username={username} />}
     </div>
   )
 }
