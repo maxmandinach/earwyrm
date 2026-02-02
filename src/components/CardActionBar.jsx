@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
 import OverflowMenu from './OverflowMenu'
@@ -56,6 +57,7 @@ export default function CardActionBar({
   onToggleComments,
   username,
 }) {
+  const navigate = useNavigate()
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [showSave, setShowSave] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -63,6 +65,10 @@ export default function CardActionBar({
   const [shareCopied, setShareCopied] = useState(false)
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
+
+  function promptSignup() {
+    navigate('/signup')
+  }
 
   function handleShare() {
     setShareNudge(true)
@@ -107,10 +113,10 @@ export default function CardActionBar({
         <div className="flex items-center gap-1 flex-1">
           {/* Resonate */}
           <button
-            onClick={!isAnon ? toggle : undefined}
+            onClick={isAnon ? promptSignup : toggle}
             className={`flex items-center gap-1.5 text-xs transition-all duration-200 py-1 px-2 ${
               isAnon
-                ? 'text-charcoal/30 cursor-default'
+                ? 'text-charcoal/30 hover:text-charcoal/50 cursor-pointer'
                 : hasReacted
                   ? 'text-charcoal/70'
                   : 'text-charcoal/30 hover:text-charcoal/50'
@@ -119,63 +125,59 @@ export default function CardActionBar({
               transform: animating ? 'scale(1.1)' : 'scale(1)',
               transition: 'transform 0.3s ease',
             }}
-            title={isAnon ? 'Sign in to resonate' : hasReacted ? 'Remove resonance' : 'Resonate'}
+            title={isAnon ? 'Sign up to resonate' : hasReacted ? 'Remove resonance' : 'Resonate'}
           >
             <ResonateIcon active={hasReacted} animating={animating} />
             {count > 0 && <span>{count}</span>}
           </button>
 
           {/* Comment */}
-          {!isAnon && (
-            <button
-              onClick={handleToggleComments}
-              className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
-              title="Thoughts"
+          <button
+            onClick={handleToggleComments}
+            className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
+            title="Thoughts"
+            style={{
+              transform: commentPop ? 'scale(1.12)' : 'scale(1)',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
               style={{
-                transform: commentPop ? 'scale(1.12)' : 'scale(1)',
-                transition: 'transform 0.2s ease',
+                opacity: commentPop ? 0.7 : 1,
+                transition: 'opacity 0.2s ease',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-                style={{
-                  opacity: commentPop ? 0.7 : 1,
-                  transition: 'opacity 0.2s ease',
-                }}
-              >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg>
-              {commentCount > 0 && <span>{commentCount}</span>}
-            </button>
-          )}
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            {commentCount > 0 && <span>{commentCount}</span>}
+          </button>
 
           {/* Save (other's cards) / Visibility (own cards) */}
-          {!isAnon && (
-            isOwn ? (
-              <VisibilityToggle
-                isPublic={isPublic}
-                profileIsPublic={profileIsPublic}
-                onChange={onVisibilityChange}
-              />
-            ) : (
-              <div className="relative">
-                <button
-                  onClick={handleSaveToggle}
-                  className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
-                  title="Save"
-                  style={{
-                    transform: bookmarkSettle ? 'translateY(1px)' : 'translateY(0)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                  </svg>
-                </button>
-                {showSave && (
-                  <SavePopover lyricId={lyric.id} onClose={() => setShowSave(false)} />
-                )}
-              </div>
-            )
+          {isOwn && !isAnon ? (
+            <VisibilityToggle
+              isPublic={isPublic}
+              profileIsPublic={profileIsPublic}
+              onChange={onVisibilityChange}
+            />
+          ) : (
+            <div className="relative">
+              <button
+                onClick={isAnon ? promptSignup : handleSaveToggle}
+                className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
+                title={isAnon ? 'Sign up to save' : 'Save'}
+                style={{
+                  transform: bookmarkSettle ? 'translateY(1px)' : 'translateY(0)',
+                  transition: 'transform 0.2s ease',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+              {showSave && !isAnon && (
+                <SavePopover lyricId={lyric.id} onClose={() => setShowSave(false)} />
+              )}
+            </div>
           )}
         </div>
 

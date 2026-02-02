@@ -4,18 +4,23 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
 
-function AnonymousFooter({ username }) {
+function AnonymousFooter() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-transparent border-t border-charcoal/10 py-4 px-6 z-20">
+    <div className="fixed bottom-0 left-0 right-0 py-4 px-6 z-20"
+      style={{
+        backgroundColor: 'var(--surface-card, #F5F2ED)',
+        borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+      }}
+    >
       <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
         <p className="text-sm text-charcoal/50">
-          Save the lyrics that stay with you
+          What lyric is stuck in <em>your</em> head?
         </p>
         <Link
           to="/signup"
-          className="text-sm text-charcoal font-medium hover:text-charcoal/70 transition-colors"
+          className="text-sm text-charcoal font-medium hover:text-charcoal/70 transition-colors whitespace-nowrap"
         >
-          Sign up
+          Start yours
         </Link>
       </div>
     </div>
