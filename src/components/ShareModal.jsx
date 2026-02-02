@@ -396,7 +396,6 @@ export default function ShareModal({ lyric, onClose }) {
         const shareData = {
           files: [file],
           text: getShareText(),
-          url: shareUrl,
         }
 
         if (navigator.canShare?.(shareData)) {
