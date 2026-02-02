@@ -157,7 +157,7 @@ export default function App() {
 
       {/* Public routes - no layout, accessible to all */}
       <Route path="/s/:token" element={<SharedLyric />} />
-      <Route path="/@:username" element={<PublicProfile />} />
+      <Route path="@:username" element={<PublicProfile />} />
     </Routes>
   )
 }
