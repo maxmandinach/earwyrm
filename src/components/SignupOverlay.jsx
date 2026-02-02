@@ -68,7 +68,7 @@ export default function SignupOverlay({ intent = 'default', onClose }) {
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] sm:pt-0 sm:items-center"
       onClick={handleClose}
     >
       {/* Backdrop — translucent so the lyric is still visible */}
@@ -84,7 +84,7 @@ export default function SignupOverlay({ intent = 'default', onClose }) {
 
       {/* Panel */}
       <div
-        className="relative w-full max-w-sm mx-4 mb-0 sm:mb-0 transition-all duration-200 ease-out"
+        className="relative w-full max-w-sm mx-4 transition-all duration-200 ease-out"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
           border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
@@ -136,7 +136,6 @@ export default function SignupOverlay({ intent = 'default', onClose }) {
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
                     placeholder="username"
                     required
-                    autoFocus
                     className="flex-1 px-2 py-2.5 text-sm bg-transparent focus:outline-none
                                placeholder:text-charcoal/25 text-charcoal"
                   />
