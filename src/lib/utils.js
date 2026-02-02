@@ -54,12 +54,17 @@ export function getPublicProfileUrl(username) {
 }
 
 /**
- * Generate a cryptographically secure share token (128-bit)
+ * Generate a short, URL-friendly share token (~11 chars, base62, 64-bit entropy)
  */
 export function generateShareToken() {
-  const bytes = new Uint8Array(16)
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  const bytes = new Uint8Array(11)
   crypto.getRandomValues(bytes)
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+  let token = ''
+  for (let i = 0; i < 11; i++) {
+    token += chars[bytes[i] % 62]
+  }
+  return token
 }
 
 /**

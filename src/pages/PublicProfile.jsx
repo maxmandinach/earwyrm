@@ -155,7 +155,17 @@ export default function PublicProfile({ showHistory = false }) {
           </div>
         ) : lyric ? (
           <div className="w-full max-w-lg">
-            <LyricCard lyric={lyric} showTimestamp={true} linkable />
+            <LyricCard
+              lyric={lyric}
+              showTimestamp={true}
+              linkable
+              showActions
+              isAnon={isAnonymous}
+              isOwn={user?.id === lyric.user_id}
+              isPublic={lyric.is_public}
+              profileIsPublic={profile?.is_public}
+              username={profile?.username}
+            />
 
             {/* Note displayed like marginalia */}
             {note && (
