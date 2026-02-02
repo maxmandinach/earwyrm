@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { formatRelativeTime } from '../lib/utils'
 
-export default function CommentSection({ lyricId, initialCount = 0, startOpen = false }) {
+export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt }) {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(startOpen)
   const [comments, setComments] = useState([])
@@ -129,7 +129,11 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
         </form>
       ) : (
         <p className="mb-4 text-xs text-charcoal/30 text-center">
-          <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link> to share your thoughts
+          {onSignupPrompt ? (
+            <button onClick={onSignupPrompt} className="underline hover:text-charcoal/50">Sign up</button>
+          ) : (
+            <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link>
+          )} to share your thoughts
         </p>
       )}
 

@@ -5,6 +5,7 @@ import useResonate from '../hooks/useResonate'
 import CompactCommentModal from './CompactCommentModal'
 import SavePopover from './SavePopover'
 import ShareModal from './ShareModal'
+import SignupOverlay from './SignupOverlay'
 
 /**
  * Compact lyric card for horizontal carousels.
@@ -17,6 +18,7 @@ function CompactCard({ lyric }) {
   const [showSave, setShowSave] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [commentCount, setCommentCount] = useState(lyric.comment_count || 0)
+  const [signupIntent, setSignupIntent] = useState(null)
   const isAnon = !user
 
   const linkTo = lyric.share_token
@@ -32,7 +34,8 @@ function CompactCard({ lyric }) {
   function handleResonate(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (!isAnon) toggle()
+    if (isAnon) { setSignupIntent('resonate'); return }
+    toggle()
   }
 
   function handleCommentClick(e) {
@@ -44,7 +47,8 @@ function CompactCard({ lyric }) {
   function handleSaveClick(e) {
     e.preventDefault()
     e.stopPropagation()
-    if (!isAnon) setShowSave(true)
+    if (isAnon) { setSignupIntent('save'); return }
+    setShowSave(true)
   }
 
   const username = lyric.profiles?.username
@@ -186,6 +190,12 @@ function CompactCard({ lyric }) {
         <ShareModal
           lyric={lyric}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+      {signupIntent && (
+        <SignupOverlay
+          intent={signupIntent}
+          onClose={() => setSignupIntent(null)}
         />
       )}
     </div>
