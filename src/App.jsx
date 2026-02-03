@@ -17,6 +17,7 @@ import Explore from './pages/Explore'
 import Following from './pages/Following'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage'
+import Activity from './pages/Activity'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -125,6 +126,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="activity"
+          element={
+            <ProtectedRoute>
+              <Activity />
             </ProtectedRoute>
           }
         />

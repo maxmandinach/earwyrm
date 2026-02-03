@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
+import SharePageButton from '../components/SharePageButton'
 
 export default function ArtistPage() {
   const { slug } = useParams()
@@ -60,11 +61,11 @@ export default function ArtistPage() {
           .eq('is_public', true)
           .ilike('artist_name', artistName)
           .order('created_at', { ascending: false })
-          .range(0, PAGE_SIZE)
+          .range(0, 49)
 
         if (error) throw error
         setLyrics(data || [])
-        setHasMore((data || []).length > PAGE_SIZE)
+        setHasMore((data || []).length > 49)
 
         // Fetch notes
         if (data && data.length > 0) {
@@ -96,7 +97,7 @@ export default function ArtistPage() {
 
   async function loadMore() {
     const nextPage = page + 1
-    const from = nextPage * PAGE_SIZE
+    const from = 50 + (nextPage - 1) * PAGE_SIZE
     try {
       const { data } = await supabase
         .from('lyrics')
@@ -137,6 +138,34 @@ export default function ArtistPage() {
     }
   }
 
+  // Cluster lyrics by canonical_lyric_id
+  const { topClusters, recentClusters } = useMemo(() => {
+    const map = {}
+    lyrics.forEach(l => {
+      const key = l.canonical_lyric_id || l.id
+      if (!map[key]) map[key] = []
+      map[key].push(l)
+    })
+
+    const all = Object.entries(map).map(([id, group]) => {
+      const representative = group.reduce((best, l) =>
+        (l.reaction_count || 0) > (best.reaction_count || 0) ? l : best
+      , group[0])
+      const totalReactions = group.reduce((sum, l) => sum + (l.reaction_count || 0), 0)
+      const mostRecent = group.reduce((latest, l) =>
+        new Date(l.created_at) > new Date(latest.created_at) ? l : latest
+      , group[0])
+      return { id, group, representative, saveCount: group.length, totalReactions, mostRecent }
+    })
+
+    const topClusters = [...all].sort((a, b) => b.saveCount - a.saveCount)
+    const recentClusters = [...all].sort((a, b) =>
+      new Date(b.mostRecent.created_at) - new Date(a.mostRecent.created_at)
+    )
+
+    return { topClusters, recentClusters }
+  }, [lyrics])
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -146,6 +175,7 @@ export default function ArtistPage() {
   }
 
   const isAnon = !user
+  const mostSavedClusters = topClusters.filter(c => c.saveCount > 1).slice(0, 3)
 
   return (
     <div className="flex-1 flex flex-col px-4 py-8">
@@ -178,6 +208,7 @@ export default function ArtistPage() {
                 {currentlyFollowing ? 'following' : 'follow'}
               </button>
             )}
+            <SharePageButton title={`${artistName} lyrics on earwyrm`} />
           </div>
           <p className="text-xs text-charcoal/30">
             {lyrics.length} {lyrics.length === 1 ? 'lyric' : 'lyrics'} shared
@@ -204,7 +235,34 @@ export default function ArtistPage() {
           </div>
         )}
 
-        {/* All lyrics — clustered by canonical */}
+        {/* Most Saved Lines section */}
+        {mostSavedClusters.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Most saved lines</h2>
+            <div className="space-y-6">
+              {mostSavedClusters.map((cluster) => (
+                <div key={cluster.id}>
+                  <LyricCard
+                    lyric={{ ...cluster.representative, reaction_count: cluster.totalReactions }}
+                    showTimestamp
+                    linkable
+                    className="border border-charcoal/10"
+                    showActions
+                    isAnon={isAnon}
+                    isOwn={user?.id === cluster.representative.user_id}
+                    isPublic={cluster.representative.is_public}
+                    notes={notes[cluster.representative.id]}
+                  />
+                  <p className="text-xs text-charcoal/30 mt-1">
+                    {cluster.saveCount} people saved this
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Saves */}
         {lyrics.length === 0 ? (
           <div className="text-center py-12">
             <p
@@ -219,40 +277,27 @@ export default function ArtistPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {(() => {
-              const clusters = {}
-              lyrics.forEach(l => {
-                const key = l.canonical_lyric_id || l.id
-                if (!clusters[key]) clusters[key] = []
-                clusters[key].push(l)
-              })
-              return Object.entries(clusters).map(([key, group]) => {
-                const representative = group.reduce((best, l) =>
-                  (l.reaction_count || 0) > (best.reaction_count || 0) ? l : best
-                , group[0])
-                const totalReactions = group.reduce((sum, l) => sum + (l.reaction_count || 0), 0)
-                return (
-                  <div key={key}>
-                    <LyricCard
-                      lyric={{ ...representative, reaction_count: totalReactions }}
-                      showTimestamp
-                      linkable
-                      className="border border-charcoal/10"
-                      showActions
-                      isAnon={isAnon}
-                      isOwn={user?.id === representative.user_id}
-                      isPublic={representative.is_public}
-                      notes={notes[representative.id]}
-                    />
-                    {group.length > 1 && (
-                      <p className="text-xs text-charcoal/30 mt-1 max-w-lg mx-auto">
-                        {group.length} people saved this
-                      </p>
-                    )}
-                  </div>
-                )
-              })
-            })()}
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider">Recent saves</h2>
+            {recentClusters.map((cluster) => (
+              <div key={cluster.id}>
+                <LyricCard
+                  lyric={{ ...cluster.representative, reaction_count: cluster.totalReactions }}
+                  showTimestamp
+                  linkable
+                  className="border border-charcoal/10"
+                  showActions
+                  isAnon={isAnon}
+                  isOwn={user?.id === cluster.representative.user_id}
+                  isPublic={cluster.representative.is_public}
+                  notes={notes[cluster.representative.id]}
+                />
+                {cluster.saveCount > 1 && (
+                  <p className="text-xs text-charcoal/30 mt-1">
+                    {cluster.saveCount} people saved this
+                  </p>
+                )}
+              </div>
+            ))}
 
             {hasMore && (
               <div className="text-center pt-4">

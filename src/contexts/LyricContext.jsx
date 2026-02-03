@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from './AuthContext'
+import { normalizeLyricText } from '../lib/utils'
 
 const LyricContext = createContext({})
 
@@ -93,6 +94,48 @@ export function LyricProvider({ children }) {
         }
       }
 
+      // Auto-link canonical_lyric_id via fuzzy matching if not already set
+      let resolvedCanonicalId = canonicalLyricId || null
+      if (!resolvedCanonicalId && songTitle) {
+        try {
+          const { data: existing } = await supabase
+            .from('lyrics')
+            .select('id, content, canonical_lyric_id, reaction_count')
+            .ilike('song_title', songTitle.trim())
+            .eq('is_public', true)
+            .limit(50)
+
+          if (existing && existing.length > 0) {
+            const normalizedNew = normalizeLyricText(content)
+            let bestMatch = null
+            let bestScore = -1 // 2 = exact, 1 = substring
+
+            for (const ex of existing) {
+              const normalizedEx = normalizeLyricText(ex.content)
+              if (normalizedNew === normalizedEx) {
+                const score = 2
+                if (score > bestScore || (score === bestScore && (ex.reaction_count || 0) > (bestMatch?.reaction_count || 0))) {
+                  bestMatch = ex
+                  bestScore = score
+                }
+              } else if (normalizedNew.includes(normalizedEx) || normalizedEx.includes(normalizedNew)) {
+                const score = 1
+                if (score > bestScore || (score === bestScore && (ex.reaction_count || 0) > (bestMatch?.reaction_count || 0))) {
+                  bestMatch = ex
+                  bestScore = score
+                }
+              }
+            }
+
+            if (bestMatch) {
+              resolvedCanonicalId = bestMatch.canonical_lyric_id || bestMatch.id
+            }
+          }
+        } catch (err) {
+          console.error('Auto-link canonical failed (non-blocking):', err)
+        }
+      }
+
       // Create new lyric - inherit visibility from profile
       // Normalize artist/song names: lowercase + trim
       const { data, error } = await supabase
@@ -106,7 +149,7 @@ export function LyricProvider({ children }) {
           theme,
           is_current: true,
           is_public: profile?.is_public || false,
-          canonical_lyric_id: canonicalLyricId || null,
+          canonical_lyric_id: resolvedCanonicalId,
         })
         .select()
         .single()
