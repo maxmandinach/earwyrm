@@ -17,7 +17,7 @@ export default function ActivityFeed() {
         // Fetch recent reactions on user's public lyrics
         const { data: reactionData } = await supabase
           .from('reactions')
-          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id)')
+          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id, share_token)')
           .eq('lyrics.user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10)
@@ -25,7 +25,7 @@ export default function ActivityFeed() {
         // Fetch recent comments on user's public lyrics
         const { data: commentData } = await supabase
           .from('comments')
-          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id), profiles:user_id(username)')
+          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id, share_token), profiles:user_id(username)')
           .eq('lyrics.user_id', user.id)
           .neq('user_id', user.id) // exclude own comments
           .order('created_at', { ascending: false })
@@ -79,19 +79,32 @@ export default function ActivityFeed() {
     fetchActivity()
   }, [user?.id])
 
+  // Generate link for activity item - prefer share_token for direct lyric link
+  function getLinkForActivity(activity) {
+    if (activity.lyric.share_token) {
+      return `/s/${activity.lyric.share_token}`
+    }
+    if (activity.lyric.song_title) {
+      return `/song/${encodeURIComponent(activity.lyric.song_title.toLowerCase())}`
+    }
+    return '/home'
+  }
+
   if (loading || activities.length === 0) return null
 
   return (
     <div className="w-full max-w-lg mx-auto">
-      <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Activity on your lyrics</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs text-charcoal/30 uppercase tracking-wider">Activity on your lyrics</h2>
+        <Link to="/activity" className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors">
+          See all →
+        </Link>
+      </div>
       <div className="space-y-2">
         {activities.map((activity, i) => (
           <Link
             key={i}
-            to={activity.lyric.song_title
-              ? `/song/${encodeURIComponent(activity.lyric.song_title.toLowerCase())}`
-              : '/explore'
-            }
+            to={getLinkForActivity(activity)}
             className="block px-3 py-2 hover:bg-charcoal/5 transition-colors"
           >
             <p className="text-sm text-charcoal/60">{activity.text}</p>

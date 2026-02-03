@@ -74,3 +74,17 @@ export function getShareableUrl(token) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
   return `${baseUrl}/s/${token}`
 }
+
+/**
+ * Normalize lyric text for fuzzy comparison.
+ * Lowercases, normalizes quotes/ellipsis, collapses whitespace, trims.
+ */
+export function normalizeLyricText(text) {
+  return text
+    .toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .replace(/[\u2026]/g, '...')
+    .replace(/\s+/g, ' ')
+    .trim()
+}

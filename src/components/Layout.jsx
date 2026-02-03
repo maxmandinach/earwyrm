@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import SearchBar from './SearchBar'
+import ActivityDropdown from './ActivityDropdown'
 
 export default function Layout() {
   const { user, signOut } = useAuth()
@@ -63,7 +64,9 @@ export default function Layout() {
           )}
 
           {user && !isAuthPage && (
-            <div className="relative" ref={menuRef}>
+            <>
+              <ActivityDropdown />
+              <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-3 text-charcoal-light hover:text-charcoal transition-colors"
@@ -151,7 +154,8 @@ export default function Layout() {
                   </nav>
                 </div>
               )}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </header>

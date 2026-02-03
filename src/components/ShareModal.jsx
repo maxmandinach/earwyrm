@@ -574,23 +574,57 @@ export default function ShareModal({ lyric, onClose }) {
                 </span>
               </div>
 
+              {/* Share page (native share sheet) */}
+              {navigator.share && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.share({
+                        title: 'my earwyrm',
+                        text: 'see what lyric is on my mind',
+                        url: profileUrl,
+                      })
+                      setShared(true)
+                      setTimeout(() => setShared(false), 2000)
+                    } catch (err) {
+                      if (err.name !== 'AbortError') console.error('Share failed:', err)
+                    }
+                  }}
+                  disabled={!profileUrl}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    backgroundColor: 'var(--text-primary, #2C2825)',
+                    color: 'var(--surface-bg, #F5F2ED)',
+                    border: 'none',
+                    cursor: profileUrl ? 'pointer' : 'not-allowed',
+                    opacity: profileUrl ? 1 : 0.4,
+                  }}
+                >
+                  {shared ? 'Shared' : 'Share'}
+                </button>
+              )}
+
               {/* Copy page link */}
               <button
                 onClick={() => copyLink(profileUrl)}
                 disabled={!profileUrl}
                 style={{
                   width: '100%',
-                  padding: '0.875rem',
+                  marginTop: navigator.share ? '0.5rem' : 0,
+                  padding: navigator.share ? '0.625rem' : '0.875rem',
                   fontSize: '0.875rem',
-                  fontWeight: 500,
-                  backgroundColor: 'var(--text-primary, #2C2825)',
-                  color: 'var(--surface-bg, #F5F2ED)',
+                  fontWeight: navigator.share ? 400 : 500,
+                  backgroundColor: navigator.share ? 'transparent' : 'var(--text-primary, #2C2825)',
+                  color: navigator.share ? 'var(--text-secondary, #6B635A)' : 'var(--surface-bg, #F5F2ED)',
                   border: 'none',
                   cursor: profileUrl ? 'pointer' : 'not-allowed',
                   opacity: profileUrl ? 1 : 0.4,
                 }}
               >
-                {copied ? 'Copied' : 'Copy page link'}
+                {copied ? 'Copied' : 'Copy link'}
               </button>
             </div>
           ) : (
