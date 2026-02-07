@@ -18,6 +18,22 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [coverArtUrl, setCoverArtUrl] = useState(null)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
   const [artistMbid, setArtistMbid] = useState(null)
+  const blurTimeoutRef = useRef(null)
+
+  const handleFieldFocus = (field) => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+    setActiveField(field)
+  }
+
+  const handleFieldBlur = () => {
+    blurTimeoutRef.current = setTimeout(() => {
+      setActiveField(null)
+      blurTimeoutRef.current = null
+    }, 200)
+  }
 
   const handleMatchSelect = (match) => {
     if (match) {
@@ -193,8 +209,8 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                           setMusicbrainzData(null)
                         }
                       }}
-                      onFocus={() => setActiveField('artist')}
-                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                      onFocus={() => handleFieldFocus('artist')}
+                      onBlur={handleFieldBlur}
                       placeholder="Artist"
                       className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                       style={{
@@ -212,8 +228,8 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                           setMusicbrainzData(null)
                         }
                       }}
-                      onFocus={() => setActiveField('song')}
-                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                      onFocus={() => handleFieldFocus('song')}
+                      onBlur={handleFieldBlur}
                       placeholder="Song title"
                       className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                       style={{

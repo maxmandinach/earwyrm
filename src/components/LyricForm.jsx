@@ -14,6 +14,23 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [artistMbid, setArtistMbid] = useState(null) // MusicBrainz artist ID for precise song search
   const [activeField, setActiveField] = useState(null) // 'artist' | 'song' | null
   const textareaRef = useRef(null)
+  const blurTimeoutRef = useRef(null)
+
+  // Clear any pending blur timeout when focusing a new field
+  const handleFieldFocus = (field) => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+    setActiveField(field)
+  }
+
+  const handleFieldBlur = () => {
+    blurTimeoutRef.current = setTimeout(() => {
+      setActiveField(null)
+      blurTimeoutRef.current = null
+    }, 200)
+  }
 
   const handleMatchSelect = (match) => {
     if (match) {
@@ -161,8 +178,8 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
                     setMusicbrainzData(null)
                   }
                 }}
-                onFocus={() => setActiveField('artist')}
-                onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                onFocus={() => handleFieldFocus('artist')}
+                onBlur={handleFieldBlur}
                 placeholder="Artist"
                 className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                 style={{
@@ -182,8 +199,8 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
                     setMusicbrainzData(null)
                   }
                 }}
-                onFocus={() => setActiveField('song')}
-                onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                onFocus={() => handleFieldFocus('song')}
+                onBlur={handleFieldBlur}
                 placeholder="Song title"
                 className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                 style={{

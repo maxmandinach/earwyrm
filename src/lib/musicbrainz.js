@@ -8,6 +8,12 @@
 const MB_BASE = 'https://musicbrainz.org/ws/2'
 const CAA_BASE = 'https://coverartarchive.org'
 
+// Ensure cover art URLs use HTTPS
+function ensureHttps(url) {
+  if (!url) return null
+  return url.replace(/^http:\/\//i, 'https://')
+}
+
 // Browser-safe headers (can't set User-Agent from browser, it's a protected header)
 const MB_HEADERS = {
   'Accept': 'application/json',
@@ -221,7 +227,8 @@ export async function getCoverArt(releaseId) {
     const data = await res.json()
     const front = data.images?.find(img => img.front)
 
-    return front?.thumbnails?.['250'] || front?.thumbnails?.small || null
+    const url = front?.thumbnails?.['250'] || front?.thumbnails?.small || null
+    return ensureHttps(url)
   } catch (err) {
     // Cover art not available is common, don't log as error
     return null
@@ -242,7 +249,8 @@ export async function getCoverArtByReleaseGroup(releaseGroupId) {
     const data = await res.json()
     const front = data.images?.find(img => img.front)
 
-    return front?.thumbnails?.['250'] || front?.thumbnails?.small || null
+    const url = front?.thumbnails?.['250'] || front?.thumbnails?.small || null
+    return ensureHttps(url)
   } catch (err) {
     return null
   }
