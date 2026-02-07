@@ -129,6 +129,62 @@ export async function searchByArtistAndSong(artist, song, limit = 5) {
 }
 
 /**
+ * Fetch all recordings by an artist (for prefetching).
+ * Returns up to 100 recordings sorted by release count (proxy for popularity).
+ */
+export async function fetchArtistRecordings(artistId, limit = 100) {
+  if (!artistId) return []
+
+  const url = `${MB_BASE}/recording?artist=${artistId}&limit=${limit}&fmt=json`
+
+  try {
+    const res = await fetch(url, { headers: MB_HEADERS })
+    if (!res.ok) throw new Error(`MusicBrainz error: ${res.status}`)
+
+    const data = await res.json()
+    const recordings = data.recordings || []
+
+    // Sort by number of releases (proxy for popularity)
+    const sorted = [...recordings].sort((a, b) => {
+      const aReleases = a.releases?.length || 0
+      const bReleases = b.releases?.length || 0
+      return bReleases - aReleases
+    })
+
+    return sorted.map(rec => {
+      const artist = rec['artist-credit']?.[0]?.name || null
+      const preferredRelease = rec.releases?.find(isPreferredRelease) || rec.releases?.[0] || null
+
+      return {
+        id: rec.id,
+        title: rec.title,
+        artist: artist,
+        album: preferredRelease?.title || null,
+        releaseId: preferredRelease?.id || null,
+        releaseGroupId: preferredRelease?.['release-group']?.id || null,
+        year: preferredRelease?.date?.substring(0, 4) || null,
+        releaseCount: rec.releases?.length || 0,
+      }
+    })
+  } catch (err) {
+    console.error('MusicBrainz fetch artist recordings error:', err)
+    return []
+  }
+}
+
+/**
+ * Filter prefetched recordings by song query (instant, local).
+ */
+export function filterRecordingsByTitle(recordings, query) {
+  if (!query || query.length < 1) return []
+
+  const q = query.toLowerCase()
+  return recordings
+    .filter(r => r.title.toLowerCase().includes(q))
+    .slice(0, 5)
+}
+
+/**
  * Search recordings by artist MBID (most precise).
  * Use this when we have a verified artist ID from selection.
  */
@@ -172,23 +228,16 @@ export async function searchRecordingsByArtistId(artistId, songQuery, limit = 10
 }
 
 /**
- * Search recordings by artist ID with cover art.
+ * Get cover art for a single recording (call on selection, not during search).
  */
-export async function searchRecordingsByArtistIdWithCoverArt(artistId, songQuery, limit = 5) {
-  const results = await searchRecordingsByArtistId(artistId, songQuery, limit)
+export async function getCoverArtForRecording(recording) {
+  if (!recording) return null
 
-  const withArt = await Promise.all(
-    results.slice(0, 3).map(async (result) => {
-      let coverUrl = await getCoverArtByReleaseGroup(result.releaseGroupId)
-      if (!coverUrl) {
-        coverUrl = await getCoverArt(result.releaseId)
-      }
-      return { ...result, coverArtUrl: coverUrl }
-    })
-  )
-
-  const remaining = results.slice(3).map(r => ({ ...r, coverArtUrl: null }))
-  return [...withArt, ...remaining]
+  let coverUrl = await getCoverArtByReleaseGroup(recording.releaseGroupId)
+  if (!coverUrl) {
+    coverUrl = await getCoverArt(recording.releaseId)
+  }
+  return coverUrl
 }
 
 /**
