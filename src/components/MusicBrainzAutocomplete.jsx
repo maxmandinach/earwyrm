@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchArtists, searchWithCoverArt } from '../lib/musicbrainz'
+import { searchArtists, searchWithCoverArt, searchRecordingsByArtistIdWithCoverArt } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
@@ -7,6 +7,7 @@ import { searchArtists, searchWithCoverArt } from '../lib/musicbrainz'
  */
 export default function MusicBrainzAutocomplete({
   artistValue,
+  artistId, // MBID of selected artist (for precise song filtering)
   songValue,
   activeField, // 'artist' | 'song' | null
   onSelectArtist,
@@ -56,12 +57,20 @@ export default function MusicBrainzAutocomplete({
           setSearchMode('artist')
           setIsOpen(data.length > 0)
         } else if (shouldSearchSong) {
-          // Search for songs, optionally filtered by artist
-          let query = songValue
-          if (artistValue && artistValue.length >= 2) {
-            query = `artist:"${artistValue}" AND recording:"${songValue}"`
+          let data
+          if (artistId) {
+            // Use artist MBID for precise matching (best results)
+            console.log('[MusicBrainz] Searching songs by artist ID:', artistId, songValue)
+            data = await searchRecordingsByArtistIdWithCoverArt(artistId, songValue, 5)
+          } else if (artistValue && artistValue.length >= 2) {
+            // Fall back to artist name search
+            const query = `artist:"${artistValue}" AND recording:"${songValue}"`
+            data = await searchWithCoverArt(query, 5)
+          } else {
+            // Just song title search
+            data = await searchWithCoverArt(songValue, 5)
           }
-          const data = await searchWithCoverArt(query, 5)
+          console.log('[MusicBrainz] Song results:', data)
           setResults(data)
           setSearchMode('song')
           setIsOpen(data.length > 0)
@@ -79,7 +88,7 @@ export default function MusicBrainzAutocomplete({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [artistValue, songValue, activeField, disabled, shouldSearchArtist, shouldSearchSong])
+  }, [artistValue, artistId, songValue, activeField, disabled, shouldSearchArtist, shouldSearchSong])
 
   // Close on click outside
   useEffect(() => {
@@ -96,7 +105,10 @@ export default function MusicBrainzAutocomplete({
   }, [isOpen])
 
   const handleSelectArtist = (artist) => {
-    onSelectArtist?.(artist.name)
+    onSelectArtist?.({
+      name: artist.name,
+      id: artist.id, // MBID for precise song filtering
+    })
     setIsOpen(false)
     setResults([])
   }
@@ -167,7 +179,7 @@ export default function MusicBrainzAutocomplete({
                     {artist.name}
                   </p>
                   <p className="text-xs text-charcoal/50 truncate">
-                    {artist.type || 'Artist'}
+                    {artist.disambiguation || artist.type || 'Artist'}
                     {artist.country && ` · ${artist.country}`}
                   </p>
                 </div>
