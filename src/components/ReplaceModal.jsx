@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import TagInput from './TagInput'
 import ModalSheet from './ModalSheet'
 import SuggestMatches from './SuggestMatches'
+import MusicBrainzAutocomplete from './MusicBrainzAutocomplete'
 
 export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [content, setContent] = useState('')
@@ -13,6 +14,9 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [preMatchContent, setPreMatchContent] = useState('')
   const [saveState, setSaveState] = useState('idle') // idle | saving | saved
   const [error, setError] = useState(null)
+  const [activeField, setActiveField] = useState(null)
+  const [coverArtUrl, setCoverArtUrl] = useState(null)
+  const [musicbrainzData, setMusicbrainzData] = useState(null)
 
   const handleMatchSelect = (match) => {
     if (match) {
@@ -38,6 +42,25 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
     setArtistName('')
     setCanonicalLyricId(null)
     setIsLocked(false)
+    setCoverArtUrl(null)
+    setMusicbrainzData(null)
+  }
+
+  const handleArtistSelect = (name) => {
+    setArtistName(name)
+    setActiveField(null)
+  }
+
+  const handleSongSelect = (data) => {
+    setArtistName(data.artist || '')
+    setSongTitle(data.song || '')
+    setCoverArtUrl(data.coverArtUrl)
+    setMusicbrainzData({
+      recordingId: data.musicbrainzRecordingId,
+      releaseId: data.musicbrainzReleaseId,
+      album: data.album,
+    })
+    setActiveField(null)
   }
 
   const handleSubmit = async (e) => {
@@ -53,6 +76,10 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
         artistName: artistName.trim() || null,
         tags: tags,
         canonicalLyricId,
+        coverArtUrl,
+        musicbrainzRecordingId: musicbrainzData?.recordingId || null,
+        musicbrainzReleaseId: musicbrainzData?.releaseId || null,
+        album: musicbrainzData?.album || null,
       })
 
       setSaveState('saved')
@@ -139,27 +166,68 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
 
               {/* Song & Artist */}
               <div className="mt-4 pt-4 border-t border-charcoal/10 space-y-2">
-                <input
-                  type="text"
-                  value={songTitle}
-                  onChange={(e) => setSongTitle(e.target.value)}
-                  placeholder="Song title"
-                  className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    fontSize: '0.9375rem',
-                  }}
-                />
-                <input
-                  type="text"
-                  value={artistName}
-                  onChange={(e) => setArtistName(e.target.value)}
-                  placeholder="Artist"
-                  className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    fontSize: '0.9375rem',
-                  }}
+                <div className="flex items-center gap-3">
+                  {coverArtUrl && (
+                    <div
+                      className="w-12 h-12 flex-shrink-0 rounded"
+                      style={{
+                        backgroundImage: `url(${coverArtUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={songTitle}
+                      onChange={(e) => {
+                        setSongTitle(e.target.value)
+                        if (musicbrainzData) {
+                          setCoverArtUrl(null)
+                          setMusicbrainzData(null)
+                        }
+                      }}
+                      onFocus={() => setActiveField('song')}
+                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                      placeholder="Song title"
+                      className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                      style={{
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                        fontSize: '0.9375rem',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={artistName}
+                      onChange={(e) => {
+                        setArtistName(e.target.value)
+                        if (musicbrainzData) {
+                          setCoverArtUrl(null)
+                          setMusicbrainzData(null)
+                        }
+                      }}
+                      onFocus={() => setActiveField('artist')}
+                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                      placeholder="Artist"
+                      className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                      style={{
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                        fontSize: '0.9375rem',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* MusicBrainz autocomplete */}
+                <MusicBrainzAutocomplete
+                  artistValue={artistName}
+                  songValue={songTitle}
+                  activeField={activeField}
+                  onSelectArtist={handleArtistSelect}
+                  onSelectSong={handleSongSelect}
+                  disabled={isLocked}
                 />
               </div>
             </div>
