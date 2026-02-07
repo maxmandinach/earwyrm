@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchArtists, fetchArtistRecordings, filterRecordingsByTitle, getCoverArtForRecording } from '../lib/musicbrainz'
+import { searchArtists, fetchArtistRecordings, filterRecordingsByTitle, getCoverArtForRecording, searchRecordingsByArtistId } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
@@ -37,7 +37,7 @@ export default function MusicBrainzAutocomplete({
     }
   }, [artistId, prefetchedArtistId])
 
-  // Instant local filtering for songs when we have prefetched data
+  // Song search - instant local filtering when prefetched, fallback to API
   useEffect(() => {
     if (disabled || !shouldSearchSong) {
       if (searchMode === 'song') {
@@ -48,7 +48,7 @@ export default function MusicBrainzAutocomplete({
     }
 
     // If we have prefetched recordings for this artist, filter locally (instant!)
-    if (artistId && artistRecordings.length > 0) {
+    if (artistId && artistRecordings.length > 0 && prefetchedArtistId === artistId) {
       const filtered = filterRecordingsByTitle(artistRecordings, songValue)
       setResults(filtered)
       setSearchMode('song')
@@ -56,7 +56,30 @@ export default function MusicBrainzAutocomplete({
       setLoading(false)
       return
     }
-  }, [songValue, artistId, artistRecordings, disabled, shouldSearchSong, searchMode])
+
+    // Fallback: API search if no prefetched data yet
+    if (artistId && songValue.length >= 2) {
+      setLoading(true)
+
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const data = await searchRecordingsByArtistId(artistId, songValue, 8)
+          setResults(data)
+          setSearchMode('song')
+          setIsOpen(data.length > 0)
+        } catch (err) {
+          console.error('MusicBrainz search error:', err)
+          setResults([])
+        } finally {
+          setLoading(false)
+        }
+      }, 200)
+    }
+  }, [songValue, artistId, artistRecordings, prefetchedArtistId, disabled, shouldSearchSong, searchMode])
 
   // Debounced search for artists only
   useEffect(() => {
@@ -95,7 +118,7 @@ export default function MusicBrainzAutocomplete({
     }
   }, [artistValue, disabled, shouldSearchArtist, searchMode])
 
-  // Close on click outside
+  // Close on click outside (use mouseup to allow scrollbar interaction)
   useEffect(() => {
     function handleClickOutside(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -104,8 +127,8 @@ export default function MusicBrainzAutocomplete({
     }
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener('mouseup', handleClickOutside)
+      return () => document.removeEventListener('mouseup', handleClickOutside)
     }
   }, [isOpen])
 
@@ -141,7 +164,7 @@ export default function MusicBrainzAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       {/* Loading indicator */}
       {loading && (
         <div className="absolute right-0 -top-6 text-xs text-charcoal/30">
@@ -152,15 +175,18 @@ export default function MusicBrainzAutocomplete({
       {/* Results dropdown */}
       {isOpen && results.length > 0 && (
         <div
-          className="absolute z-50 w-full mt-1 shadow-lg overflow-hidden"
+          ref={containerRef}
+          className="absolute z-50 w-full mt-1 shadow-lg rounded"
           style={{
             backgroundColor: 'var(--surface-elevated, #FAF8F5)',
             border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+            maxHeight: '300px',
+            overflowY: 'auto',
           }}
         >
-          <div className="px-3 py-2 border-b border-charcoal/10">
+          <div className="px-3 py-2 border-b border-charcoal/10 sticky top-0 bg-inherit">
             <p className="text-xs text-charcoal/40">
-              {searchMode === 'artist' ? 'Select artist' : 'Select to use verified metadata'}
+              {searchMode === 'artist' ? 'Select artist' : 'Select song'}
             </p>
           </div>
 

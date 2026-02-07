@@ -173,15 +173,38 @@ export async function fetchArtistRecordings(artistId, limit = 100) {
 }
 
 /**
+ * Check if a recording title or album suggests it's a live version.
+ */
+function isLikelyLive(recording) {
+  const livePatterns = /\b(live|concert|bootleg|unplugged|acoustic live|in concert)\b/i
+  if (livePatterns.test(recording.title)) return true
+  if (recording.album && livePatterns.test(recording.album)) return true
+  return false
+}
+
+/**
  * Filter prefetched recordings by song query (instant, local).
+ * Filters out live versions and duplicates.
  */
 export function filterRecordingsByTitle(recordings, query) {
   if (!query || query.length < 1) return []
 
   const q = query.toLowerCase()
+  const seen = new Set()
+
   return recordings
-    .filter(r => r.title.toLowerCase().includes(q))
-    .slice(0, 5)
+    .filter(r => {
+      // Must match query
+      if (!r.title.toLowerCase().includes(q)) return false
+      // Skip live versions
+      if (isLikelyLive(r)) return false
+      // Skip duplicates (same title)
+      const key = r.title.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 8)
 }
 
 /**
