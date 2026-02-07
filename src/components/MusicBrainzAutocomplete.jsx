@@ -30,26 +30,37 @@ export default function MusicBrainzAutocomplete({
   // Prefetch artist recordings when artist is selected
   useEffect(() => {
     if (artistId && artistId !== prefetchedArtistId) {
+      console.log('[Prefetch] Starting for artist:', artistId)
       setPrefetchedArtistId(artistId)
       fetchArtistRecordings(artistId, 100).then(recordings => {
+        console.log('[Prefetch] Got recordings:', recordings.length)
         setArtistRecordings(recordings)
+      }).catch(err => {
+        console.error('[Prefetch] Error:', err)
       })
     }
   }, [artistId, prefetchedArtistId])
 
   // Song search - instant local filtering when prefetched, fallback to API
   useEffect(() => {
+    console.log('[Song Search]', {
+      shouldSearchSong,
+      activeField,
+      artistId,
+      songValue,
+      prefetchedArtistId,
+      artistRecordingsCount: artistRecordings.length
+    })
+
     if (disabled || !shouldSearchSong) {
-      if (searchMode === 'song') {
-        setResults([])
-        setIsOpen(false)
-      }
       return
     }
 
     // If we have prefetched recordings for this artist, filter locally (instant!)
     if (artistId && artistRecordings.length > 0 && prefetchedArtistId === artistId) {
+      console.log('[Song Search] Using local filter')
       const filtered = filterRecordingsByTitle(artistRecordings, songValue)
+      console.log('[Song Search] Filtered results:', filtered.length)
       setResults(filtered)
       setSearchMode('song')
       setIsOpen(filtered.length > 0)
@@ -59,6 +70,7 @@ export default function MusicBrainzAutocomplete({
 
     // Fallback: API search if no prefetched data yet
     if (artistId && songValue.length >= 2) {
+      console.log('[Song Search] Using API fallback')
       setLoading(true)
 
       if (debounceRef.current) {
@@ -68,6 +80,7 @@ export default function MusicBrainzAutocomplete({
       debounceRef.current = setTimeout(async () => {
         try {
           const data = await searchRecordingsByArtistId(artistId, songValue, 8)
+          console.log('[Song Search] API results:', data.length)
           setResults(data)
           setSearchMode('song')
           setIsOpen(data.length > 0)
@@ -78,8 +91,14 @@ export default function MusicBrainzAutocomplete({
           setLoading(false)
         }
       }, 200)
+
+      return () => {
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current)
+        }
+      }
     }
-  }, [songValue, artistId, artistRecordings, prefetchedArtistId, disabled, shouldSearchSong, searchMode])
+  }, [songValue, artistId, artistRecordings, prefetchedArtistId, disabled, shouldSearchSong, activeField])
 
   // Debounced search for artists only
   useEffect(() => {
