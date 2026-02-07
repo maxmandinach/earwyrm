@@ -212,40 +212,54 @@ export default function LyricCard({
                     opacity: 0.5
                   }}
                 />
-                <p
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                    fontSize: '0.875rem',
-                    fontStyle: 'italic',
-                    color: 'var(--text-secondary, #6B635A)',
-                  }}
-                >
-                  {lyric.song_title && (
-                    linkable ? (
-                      <Link
-                        to={`/song/${encodeURIComponent(lyric.song_title.toLowerCase())}${lyric.artist_name ? `?artist=${encodeURIComponent(lyric.artist_name)}` : ''}`}
-                        className="hover:opacity-70 transition-opacity"
-                      >
-                        {lyric.song_title}
-                      </Link>
-                    ) : (
-                      <span>{lyric.song_title}</span>
-                    )
+                <div className="flex items-center gap-3">
+                  {/* Cover art thumbnail */}
+                  {lyric.cover_art_url && (
+                    <div
+                      className="w-10 h-10 flex-shrink-0 rounded"
+                      style={{
+                        backgroundImage: `url(${lyric.cover_art_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                      }}
+                    />
                   )}
-                  {lyric.song_title && lyric.artist_name && <span> — </span>}
-                  {lyric.artist_name && (
-                    linkable ? (
-                      <Link
-                        to={`/artist/${encodeURIComponent(lyric.artist_name.toLowerCase())}`}
-                        className="hover:opacity-70 transition-opacity"
-                      >
-                        {lyric.artist_name}
-                      </Link>
-                    ) : (
-                      <span>{lyric.artist_name}</span>
-                    )
-                  )}
-                </p>
+                  <p
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      fontSize: '0.875rem',
+                      fontStyle: 'italic',
+                      color: 'var(--text-secondary, #6B635A)',
+                    }}
+                  >
+                    {lyric.song_title && (
+                      linkable ? (
+                        <Link
+                          to={`/song/${encodeURIComponent(lyric.song_title.toLowerCase())}${lyric.artist_name ? `?artist=${encodeURIComponent(lyric.artist_name)}` : ''}`}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          {lyric.song_title}
+                        </Link>
+                      ) : (
+                        <span>{lyric.song_title}</span>
+                      )
+                    )}
+                    {lyric.song_title && lyric.artist_name && <span> — </span>}
+                    {lyric.artist_name && (
+                      linkable ? (
+                        <Link
+                          to={`/artist/${encodeURIComponent(lyric.artist_name.toLowerCase())}`}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          {lyric.artist_name}
+                        </Link>
+                      ) : (
+                        <span>{lyric.artist_name}</span>
+                      )
+                    )}
+                  </p>
+                </div>
               </>
             )}
 

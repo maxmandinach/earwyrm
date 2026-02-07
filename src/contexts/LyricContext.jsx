@@ -77,7 +77,7 @@ export function LyricProvider({ children }) {
     fetchCurrentLyric()
   }, [fetchCurrentLyric])
 
-  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature', canonicalLyricId = null }) {
+  async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature', canonicalLyricId = null, coverArtUrl = null, musicbrainzRecordingId = null, musicbrainzReleaseId = null, album = null }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
 
     try {
@@ -145,11 +145,15 @@ export function LyricProvider({ children }) {
           content,
           song_title: songTitle?.trim() || null,
           artist_name: artistName?.trim() || null,
+          album_name: album?.trim() || null,
           tags: tags || [],
           theme,
           is_current: true,
           is_public: profile?.is_public || false,
           canonical_lyric_id: resolvedCanonicalId,
+          cover_art_url: coverArtUrl || null,
+          musicbrainz_recording_id: musicbrainzRecordingId || null,
+          musicbrainz_release_id: musicbrainzReleaseId || null,
         })
         .select()
         .single()

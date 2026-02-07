@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import SuggestMatches from './SuggestMatches'
+import MusicBrainzAutocomplete from './MusicBrainzAutocomplete'
 
 export default function LyricForm({ onSubmit, initialValues = {}, isLoading = false, error = null }) {
   const [content, setContent] = useState(initialValues.content || '')
@@ -8,6 +9,8 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [canonicalLyricId, setCanonicalLyricId] = useState(null)
   const [isLocked, setIsLocked] = useState(false)
   const [preMatchContent, setPreMatchContent] = useState('')
+  const [coverArtUrl, setCoverArtUrl] = useState(null)
+  const [musicbrainzData, setMusicbrainzData] = useState(null)
   const textareaRef = useRef(null)
 
   const handleMatchSelect = (match) => {
@@ -34,6 +37,19 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
     setArtistName('')
     setCanonicalLyricId(null)
     setIsLocked(false)
+    setCoverArtUrl(null)
+    setMusicbrainzData(null)
+  }
+
+  const handleMusicBrainzSelect = (data) => {
+    setArtistName(data.artist || '')
+    setSongTitle(data.song || '')
+    setCoverArtUrl(data.coverArtUrl)
+    setMusicbrainzData({
+      recordingId: data.musicbrainzRecordingId,
+      releaseId: data.musicbrainzReleaseId,
+      album: data.album,
+    })
   }
 
   // Auto-expand textarea
@@ -53,6 +69,10 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
       songTitle: songTitle.trim() || null,
       artistName: artistName.trim() || null,
       canonicalLyricId,
+      coverArtUrl,
+      musicbrainzRecordingId: musicbrainzData?.recordingId || null,
+      musicbrainzReleaseId: musicbrainzData?.releaseId || null,
+      album: musicbrainzData?.album || null,
     })
   }
 
@@ -107,29 +127,66 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
 
         {/* Song & Artist - integrated */}
         <div className="mt-4 pt-4 border-t border-charcoal/10 space-y-2">
-          <input
-            type="text"
-            value={songTitle}
-            onChange={(e) => setSongTitle(e.target.value)}
-            placeholder="Song title"
-            className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-            style={{
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              fontSize: '0.9375rem',
-              color: 'var(--text-secondary, #6B635A)',
-            }}
-          />
-          <input
-            type="text"
-            value={artistName}
-            onChange={(e) => setArtistName(e.target.value)}
-            placeholder="Artist"
-            className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-            style={{
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              fontSize: '0.9375rem',
-              color: 'var(--text-secondary, #6B635A)',
-            }}
+          <div className="flex items-center gap-3">
+            {/* Cover art preview */}
+            {coverArtUrl && (
+              <div
+                className="w-12 h-12 flex-shrink-0 rounded"
+                style={{
+                  backgroundImage: `url(${coverArtUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              />
+            )}
+            <div className="flex-1 space-y-2">
+              <input
+                type="text"
+                value={songTitle}
+                onChange={(e) => {
+                  setSongTitle(e.target.value)
+                  // Clear MusicBrainz data when manually editing
+                  if (musicbrainzData) {
+                    setCoverArtUrl(null)
+                    setMusicbrainzData(null)
+                  }
+                }}
+                placeholder="Song title"
+                className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: '0.9375rem',
+                  color: 'var(--text-secondary, #6B635A)',
+                }}
+              />
+              <input
+                type="text"
+                value={artistName}
+                onChange={(e) => {
+                  setArtistName(e.target.value)
+                  if (musicbrainzData) {
+                    setCoverArtUrl(null)
+                    setMusicbrainzData(null)
+                  }
+                }}
+                placeholder="Artist"
+                className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: '0.9375rem',
+                  color: 'var(--text-secondary, #6B635A)',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* MusicBrainz autocomplete */}
+          <MusicBrainzAutocomplete
+            artistValue={artistName}
+            songValue={songTitle}
+            onSelect={handleMusicBrainzSelect}
+            disabled={isLocked}
           />
         </div>
       </div>
