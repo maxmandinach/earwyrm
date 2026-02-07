@@ -17,7 +17,7 @@ export default function useResonate(lyricId, initialCount = 0) {
         .select('id')
         .eq('lyric_id', lyricId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
       setHasReacted(!!data)
     }
