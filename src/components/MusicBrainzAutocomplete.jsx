@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchArtists, searchWithCoverArt, searchRecordingsByArtistIdWithCoverArt } from '../lib/musicbrainz'
+import { searchArtists, fetchArtistRecordings, filterRecordingsByTitle, getCoverArtForRecording } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
@@ -18,67 +18,82 @@ export default function MusicBrainzAutocomplete({
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [searchMode, setSearchMode] = useState(null) // 'artist' | 'song'
+  const [artistRecordings, setArtistRecordings] = useState([]) // Prefetched songs
+  const [prefetchedArtistId, setPrefetchedArtistId] = useState(null)
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
 
   // Determine what to search based on active field
   const shouldSearchArtist = activeField === 'artist' && artistValue && artistValue.length >= 2
-  const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
+  const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 1
 
-  // Debounced search
+  // Prefetch artist recordings when artist is selected
   useEffect(() => {
-    if (disabled || (!shouldSearchArtist && !shouldSearchSong)) {
-      setResults([])
-      setIsOpen(false)
+    if (artistId && artistId !== prefetchedArtistId) {
+      setPrefetchedArtistId(artistId)
+      fetchArtistRecordings(artistId, 100).then(recordings => {
+        setArtistRecordings(recordings)
+      })
+    }
+  }, [artistId, prefetchedArtistId])
+
+  // Instant local filtering for songs when we have prefetched data
+  useEffect(() => {
+    if (disabled || !shouldSearchSong) {
+      if (searchMode === 'song') {
+        setResults([])
+        setIsOpen(false)
+      }
+      return
+    }
+
+    // If we have prefetched recordings for this artist, filter locally (instant!)
+    if (artistId && artistRecordings.length > 0) {
+      const filtered = filterRecordingsByTitle(artistRecordings, songValue)
+      setResults(filtered)
+      setSearchMode('song')
+      setIsOpen(filtered.length > 0)
+      setLoading(false)
+      return
+    }
+  }, [songValue, artistId, artistRecordings, disabled, shouldSearchSong, searchMode])
+
+  // Debounced search for artists only
+  useEffect(() => {
+    if (disabled || !shouldSearchArtist) {
+      if (searchMode === 'artist') {
+        setResults([])
+        setIsOpen(false)
+      }
       return
     }
 
     setLoading(true)
 
-    // Clear previous debounce
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
 
-    // Debounce 250ms for snappy feel while respecting rate limit
     debounceRef.current = setTimeout(async () => {
       try {
-        if (shouldSearchArtist) {
-          const data = await searchArtists(artistValue, 5)
-          setResults(data)
-          setSearchMode('artist')
-          setIsOpen(data.length > 0)
-        } else if (shouldSearchSong) {
-          let data
-          if (artistId) {
-            // Use artist MBID for precise matching (best results)
-            data = await searchRecordingsByArtistIdWithCoverArt(artistId, songValue, 5)
-          } else if (artistValue && artistValue.length >= 2) {
-            // Fall back to artist name search
-            const query = `artist:"${artistValue}" AND recording:"${songValue}"`
-            data = await searchWithCoverArt(query, 5)
-          } else {
-            // Just song title search
-            data = await searchWithCoverArt(songValue, 5)
-          }
-          setResults(data)
-          setSearchMode('song')
-          setIsOpen(data.length > 0)
-        }
+        const data = await searchArtists(artistValue, 5)
+        setResults(data)
+        setSearchMode('artist')
+        setIsOpen(data.length > 0)
       } catch (err) {
         console.error('MusicBrainz search error:', err)
         setResults([])
       } finally {
         setLoading(false)
       }
-    }, 250)
+    }, 200)
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
     }
-  }, [artistValue, artistId, songValue, activeField, disabled, shouldSearchArtist, shouldSearchSong])
+  }, [artistValue, disabled, shouldSearchArtist, searchMode])
 
   // Close on click outside
   useEffect(() => {
@@ -103,17 +118,22 @@ export default function MusicBrainzAutocomplete({
     setResults([])
   }
 
-  const handleSelectSong = (result) => {
+  const handleSelectSong = async (result) => {
+    // Immediately close and pass basic data
+    setIsOpen(false)
+    setResults([])
+
+    // Fetch cover art in background, then update
+    const coverArtUrl = await getCoverArtForRecording(result)
+
     onSelectSong?.({
       artist: result.artist,
       song: result.title,
       album: result.album,
-      coverArtUrl: result.coverArtUrl,
+      coverArtUrl: coverArtUrl,
       musicbrainzRecordingId: result.id,
       musicbrainzReleaseId: result.releaseId,
     })
-    setIsOpen(false)
-    setResults([])
   }
 
   if (disabled || (!loading && results.length === 0 && !isOpen)) {
