@@ -24,6 +24,9 @@ export default function MusicBrainzAutocomplete({
   const shouldSearchArtist = activeField === 'artist' && artistValue && artistValue.length >= 2
   const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
 
+  // Debug logging
+  console.log('[MusicBrainz]', { activeField, artistValue, songValue, shouldSearchArtist, shouldSearchSong, disabled })
+
   // Debounced search
   useEffect(() => {
     if (disabled || (!shouldSearchArtist && !shouldSearchSong)) {
@@ -32,6 +35,7 @@ export default function MusicBrainzAutocomplete({
       return
     }
 
+    console.log('[MusicBrainz] Starting search...', { shouldSearchArtist, shouldSearchSong })
     setLoading(true)
 
     // Clear previous debounce
@@ -41,10 +45,13 @@ export default function MusicBrainzAutocomplete({
 
     // Debounce 400ms for responsive feel while respecting rate limit
     debounceRef.current = setTimeout(async () => {
+      console.log('[MusicBrainz] Debounce fired, searching...')
       try {
         if (shouldSearchArtist) {
           // Search for artists
+          console.log('[MusicBrainz] Searching artists:', artistValue)
           const data = await searchArtists(artistValue, 5)
+          console.log('[MusicBrainz] Artist results:', data)
           setResults(data)
           setSearchMode('artist')
           setIsOpen(data.length > 0)
