@@ -14,6 +14,35 @@ const MB_HEADERS = {
 }
 
 /**
+ * Check if a release is likely a studio/official version (not live, compilation, etc.)
+ */
+function isPreferredRelease(release) {
+  if (!release) return false
+
+  const secondaryTypes = release['secondary-type-list'] || release['secondary-types'] || []
+  const dominated = ['Live', 'Compilation', 'Remix', 'DJ-mix', 'Mixtape/Street', 'Demo', 'Bootleg']
+
+  // Prefer releases without these secondary types
+  return !secondaryTypes.some(type => dominated.includes(type))
+}
+
+/**
+ * Sort recordings to prefer studio/official releases
+ */
+function sortByPreferredRelease(recordings) {
+  return [...recordings].sort((a, b) => {
+    const aPreferred = a.releases?.some(isPreferredRelease) ? 1 : 0
+    const bPreferred = b.releases?.some(isPreferredRelease) ? 1 : 0
+
+    // Prefer recordings with studio releases
+    if (bPreferred !== aPreferred) return bPreferred - aPreferred
+
+    // Fall back to score
+    return (b.score || 0) - (a.score || 0)
+  })
+}
+
+/**
  * Search for artists by name.
  */
 export async function searchArtists(query, limit = 5) {
@@ -33,6 +62,7 @@ export async function searchArtists(query, limit = 5) {
       name: artist.name,
       type: artist.type || null,
       country: artist.country || null,
+      disambiguation: artist.disambiguation || null, // e.g. "UK rock band"
       score: artist.score,
     }))
   } catch (err) {
@@ -90,6 +120,69 @@ export async function searchByArtistAndSong(artist, song, limit = 5) {
   if (song) query += `recording:"${song}"`
 
   return searchRecordings(query, limit)
+}
+
+/**
+ * Search recordings by artist MBID (most precise).
+ * Use this when we have a verified artist ID from selection.
+ */
+export async function searchRecordingsByArtistId(artistId, songQuery, limit = 10) {
+  if (!artistId || !songQuery || songQuery.length < 2) return []
+
+  // Use arid: for precise artist matching
+  const query = `arid:${artistId} AND recording:"${songQuery}"`
+  const url = `${MB_BASE}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`
+
+  try {
+    const res = await fetch(url, { headers: MB_HEADERS })
+    if (!res.ok) throw new Error(`MusicBrainz error: ${res.status}`)
+
+    const data = await res.json()
+    const recordings = data.recordings || []
+
+    // Sort to prefer studio versions
+    const sorted = sortByPreferredRelease(recordings)
+
+    return sorted.map(rec => {
+      const artist = rec['artist-credit']?.[0]?.name || null
+      // Find the best release (prefer studio albums)
+      const preferredRelease = rec.releases?.find(isPreferredRelease) || rec.releases?.[0] || null
+
+      return {
+        id: rec.id,
+        title: rec.title,
+        artist: artist,
+        album: preferredRelease?.title || null,
+        releaseId: preferredRelease?.id || null,
+        releaseGroupId: preferredRelease?.['release-group']?.id || null,
+        year: preferredRelease?.date?.substring(0, 4) || null,
+        score: rec.score,
+      }
+    })
+  } catch (err) {
+    console.error('MusicBrainz search by artist ID error:', err)
+    return []
+  }
+}
+
+/**
+ * Search recordings by artist ID with cover art.
+ */
+export async function searchRecordingsByArtistIdWithCoverArt(artistId, songQuery, limit = 5) {
+  const results = await searchRecordingsByArtistId(artistId, songQuery, limit)
+
+  const withArt = await Promise.all(
+    results.slice(0, 3).map(async (result) => {
+      let coverUrl = await getCoverArtByReleaseGroup(result.releaseGroupId)
+      if (!coverUrl) {
+        coverUrl = await getCoverArt(result.releaseId)
+      }
+      return { ...result, coverArtUrl: coverUrl }
+    })
+  )
+
+  const remaining = results.slice(3).map(r => ({ ...r, coverArtUrl: null }))
+  return [...withArt, ...remaining]
 }
 
 /**

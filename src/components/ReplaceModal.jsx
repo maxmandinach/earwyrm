@@ -17,6 +17,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [activeField, setActiveField] = useState(null)
   const [coverArtUrl, setCoverArtUrl] = useState(null)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
+  const [artistMbid, setArtistMbid] = useState(null)
 
   const handleMatchSelect = (match) => {
     if (match) {
@@ -44,10 +45,12 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
     setIsLocked(false)
     setCoverArtUrl(null)
     setMusicbrainzData(null)
+    setArtistMbid(null)
   }
 
-  const handleArtistSelect = (name) => {
-    setArtistName(name)
+  const handleArtistSelect = (artist) => {
+    setArtistName(artist.name)
+    setArtistMbid(artist.id)
     setActiveField(null)
   }
 
@@ -203,6 +206,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                       value={artistName}
                       onChange={(e) => {
                         setArtistName(e.target.value)
+                        setArtistMbid(null)
                         if (musicbrainzData) {
                           setCoverArtUrl(null)
                           setMusicbrainzData(null)
@@ -223,6 +227,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                 {/* MusicBrainz autocomplete */}
                 <MusicBrainzAutocomplete
                   artistValue={artistName}
+                  artistId={artistMbid}
                   songValue={songTitle}
                   activeField={activeField}
                   onSelectArtist={handleArtistSelect}

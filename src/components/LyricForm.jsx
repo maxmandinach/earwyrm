@@ -11,6 +11,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [preMatchContent, setPreMatchContent] = useState('')
   const [coverArtUrl, setCoverArtUrl] = useState(null)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
+  const [artistMbid, setArtistMbid] = useState(null) // MusicBrainz artist ID for precise song search
   const [activeField, setActiveField] = useState(null) // 'artist' | 'song' | null
   const textareaRef = useRef(null)
 
@@ -42,8 +43,9 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
     setMusicbrainzData(null)
   }
 
-  const handleArtistSelect = (artistName) => {
-    setArtistName(artistName)
+  const handleArtistSelect = (artist) => {
+    setArtistName(artist.name)
+    setArtistMbid(artist.id) // Store MBID for precise song search
     setActiveField(null) // Close dropdown
   }
 
@@ -174,6 +176,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
                 value={artistName}
                 onChange={(e) => {
                   setArtistName(e.target.value)
+                  setArtistMbid(null) // Clear MBID when manually editing
                   if (musicbrainzData) {
                     setCoverArtUrl(null)
                     setMusicbrainzData(null)
@@ -195,6 +198,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
           {/* MusicBrainz autocomplete */}
           <MusicBrainzAutocomplete
             artistValue={artistName}
+            artistId={artistMbid}
             songValue={songTitle}
             activeField={activeField}
             onSelectArtist={handleArtistSelect}
