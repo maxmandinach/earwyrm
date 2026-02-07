@@ -63,6 +63,27 @@ export async function searchByArtistAndSong(artist, song, limit = 5) {
 }
 
 /**
+ * Search by artist/song and get cover art in one call.
+ */
+export async function searchByArtistAndSongWithCoverArt(artist, song, limit = 5) {
+  const results = await searchByArtistAndSong(artist, song, limit)
+
+  // Get cover art for first few results
+  const withArt = await Promise.all(
+    results.slice(0, 3).map(async (result) => {
+      let coverUrl = await getCoverArtByReleaseGroup(result.releaseGroupId)
+      if (!coverUrl) {
+        coverUrl = await getCoverArt(result.releaseId)
+      }
+      return { ...result, coverArtUrl: coverUrl }
+    })
+  )
+
+  const remaining = results.slice(3).map(r => ({ ...r, coverArtUrl: null }))
+  return [...withArt, ...remaining]
+}
+
+/**
  * Get cover art URL for a release.
  * Returns the front cover in 250px size, or null if not available.
  */

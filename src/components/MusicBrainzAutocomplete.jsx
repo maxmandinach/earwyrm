@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchWithCoverArt } from '../lib/musicbrainz'
+import { searchWithCoverArt, searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
@@ -17,12 +17,14 @@ export default function MusicBrainzAutocomplete({
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
 
-  // Combined query from artist + song
-  const query = [artistValue, songValue].filter(Boolean).join(' ')
+  // Need at least one field with 2+ chars
+  const hasArtist = artistValue && artistValue.length >= 2
+  const hasSong = songValue && songValue.length >= 2
+  const shouldSearch = hasArtist || hasSong
 
   // Debounced search
   useEffect(() => {
-    if (disabled || query.length < 3) {
+    if (disabled || !shouldSearch) {
       setResults([])
       setIsOpen(false)
       return
@@ -38,7 +40,8 @@ export default function MusicBrainzAutocomplete({
     // Debounce 600ms to respect MusicBrainz rate limit
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await searchWithCoverArt(query, 5)
+        // Use structured search when we have artist or song
+        const data = await searchByArtistAndSongWithCoverArt(artistValue, songValue, 5)
         setResults(data)
         setIsOpen(data.length > 0)
       } catch (err) {
@@ -54,7 +57,7 @@ export default function MusicBrainzAutocomplete({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [query, disabled])
+  }, [artistValue, songValue, disabled, shouldSearch])
 
   // Close on click outside
   useEffect(() => {
@@ -83,7 +86,7 @@ export default function MusicBrainzAutocomplete({
     setResults([])
   }
 
-  if (disabled || (!loading && results.length === 0 && !isOpen)) {
+  if (disabled || (!loading && results.length === 0 && !isOpen) || !shouldSearch) {
     return null
   }
 
