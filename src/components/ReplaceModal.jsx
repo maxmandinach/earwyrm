@@ -184,25 +184,6 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                   <div className="flex-1 space-y-2">
                     <input
                       type="text"
-                      value={songTitle}
-                      onChange={(e) => {
-                        setSongTitle(e.target.value)
-                        if (musicbrainzData) {
-                          setCoverArtUrl(null)
-                          setMusicbrainzData(null)
-                        }
-                      }}
-                      onFocus={() => setActiveField('song')}
-                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
-                      placeholder="Song title"
-                      className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
-                      style={{
-                        fontFamily: "'DM Sans', system-ui, sans-serif",
-                        fontSize: '0.9375rem',
-                      }}
-                    />
-                    <input
-                      type="text"
                       value={artistName}
                       onChange={(e) => {
                         setArtistName(e.target.value)
@@ -215,6 +196,25 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                       onFocus={() => setActiveField('artist')}
                       onBlur={() => setTimeout(() => setActiveField(null), 200)}
                       placeholder="Artist"
+                      className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
+                      style={{
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                        fontSize: '0.9375rem',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={songTitle}
+                      onChange={(e) => {
+                        setSongTitle(e.target.value)
+                        if (musicbrainzData) {
+                          setCoverArtUrl(null)
+                          setMusicbrainzData(null)
+                        }
+                      }}
+                      onFocus={() => setActiveField('song')}
+                      onBlur={() => setTimeout(() => setActiveField(null), 200)}
+                      placeholder="Song title"
                       className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                       style={{
                         fontFamily: "'DM Sans', system-ui, sans-serif",
