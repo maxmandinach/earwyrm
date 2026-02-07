@@ -7,7 +7,11 @@
 
 const MB_BASE = 'https://musicbrainz.org/ws/2'
 const CAA_BASE = 'https://coverartarchive.org'
-const USER_AGENT = 'Earwyrm/1.0 (https://earwyrm.app)'
+
+// Browser-safe headers (can't set User-Agent from browser, it's a protected header)
+const MB_HEADERS = {
+  'Accept': 'application/json',
+}
 
 /**
  * Search for artists by name.
@@ -18,9 +22,7 @@ export async function searchArtists(query, limit = 5) {
   const url = `${MB_BASE}/artist?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT }
-    })
+    const res = await fetch(url, { headers: MB_HEADERS })
 
     if (!res.ok) throw new Error(`MusicBrainz error: ${res.status}`)
 
@@ -49,9 +51,7 @@ export async function searchRecordings(query, limit = 5) {
   const url = `${MB_BASE}/recording?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT }
-    })
+    const res = await fetch(url, { headers: MB_HEADERS })
 
     if (!res.ok) throw new Error(`MusicBrainz error: ${res.status}`)
 
@@ -121,9 +121,7 @@ export async function getCoverArt(releaseId) {
   if (!releaseId) return null
 
   try {
-    const res = await fetch(`${CAA_BASE}/release/${releaseId}`, {
-      headers: { 'User-Agent': USER_AGENT }
-    })
+    const res = await fetch(`${CAA_BASE}/release/${releaseId}`, { headers: MB_HEADERS })
 
     if (!res.ok) return null
 
@@ -144,9 +142,7 @@ export async function getCoverArtByReleaseGroup(releaseGroupId) {
   if (!releaseGroupId) return null
 
   try {
-    const res = await fetch(`${CAA_BASE}/release-group/${releaseGroupId}`, {
-      headers: { 'User-Agent': USER_AGENT }
-    })
+    const res = await fetch(`${CAA_BASE}/release-group/${releaseGroupId}`, { headers: MB_HEADERS })
 
     if (!res.ok) return null
 
