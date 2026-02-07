@@ -25,9 +25,6 @@ export default function MusicBrainzAutocomplete({
   const shouldSearchArtist = activeField === 'artist' && artistValue && artistValue.length >= 2
   const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
 
-  // Debug logging
-  console.log('[MusicBrainz]', { activeField, artistValue, artistId, songValue, shouldSearchArtist, shouldSearchSong, disabled })
-
   // Debounced search
   useEffect(() => {
     if (disabled || (!shouldSearchArtist && !shouldSearchSong)) {
@@ -36,7 +33,6 @@ export default function MusicBrainzAutocomplete({
       return
     }
 
-    console.log('[MusicBrainz] Starting search...', { shouldSearchArtist, shouldSearchSong })
     setLoading(true)
 
     // Clear previous debounce
@@ -44,15 +40,11 @@ export default function MusicBrainzAutocomplete({
       clearTimeout(debounceRef.current)
     }
 
-    // Debounce 400ms for responsive feel while respecting rate limit
+    // Debounce 250ms for snappy feel while respecting rate limit
     debounceRef.current = setTimeout(async () => {
-      console.log('[MusicBrainz] Debounce fired, searching...')
       try {
         if (shouldSearchArtist) {
-          // Search for artists
-          console.log('[MusicBrainz] Searching artists:', artistValue)
           const data = await searchArtists(artistValue, 5)
-          console.log('[MusicBrainz] Artist results:', data)
           setResults(data)
           setSearchMode('artist')
           setIsOpen(data.length > 0)
@@ -60,30 +52,26 @@ export default function MusicBrainzAutocomplete({
           let data
           if (artistId) {
             // Use artist MBID for precise matching (best results)
-            console.log('[MusicBrainz] Searching songs by artist ID:', artistId, songValue)
             data = await searchRecordingsByArtistIdWithCoverArt(artistId, songValue, 5)
           } else if (artistValue && artistValue.length >= 2) {
             // Fall back to artist name search
-            console.log('[MusicBrainz] Searching songs by artist name:', artistValue, songValue)
             const query = `artist:"${artistValue}" AND recording:"${songValue}"`
             data = await searchWithCoverArt(query, 5)
           } else {
             // Just song title search
-            console.log('[MusicBrainz] Searching songs (no artist):', songValue)
             data = await searchWithCoverArt(songValue, 5)
           }
-          console.log('[MusicBrainz] Song results:', data)
           setResults(data)
           setSearchMode('song')
           setIsOpen(data.length > 0)
         }
       } catch (err) {
-        console.error('Search error:', err)
+        console.error('MusicBrainz search error:', err)
         setResults([])
       } finally {
         setLoading(false)
       }
-    }, 400)
+    }, 250)
 
     return () => {
       if (debounceRef.current) {
