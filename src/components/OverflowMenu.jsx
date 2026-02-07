@@ -46,7 +46,7 @@ export default function OverflowMenu({ isOwn, lyric, username, profileIsPublic, 
                 onClick={() => { setOpen(false); onReplace?.() }}
                 className="w-full text-left px-4 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
               >
-                New version (replace)
+                New lyric
               </button>
             </>
           ) : (
