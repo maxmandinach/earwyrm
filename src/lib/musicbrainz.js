@@ -10,6 +10,36 @@ const CAA_BASE = 'https://coverartarchive.org'
 const USER_AGENT = 'Earwyrm/1.0 (https://earwyrm.app)'
 
 /**
+ * Search for artists by name.
+ */
+export async function searchArtists(query, limit = 5) {
+  if (!query || query.length < 2) return []
+
+  const url = `${MB_BASE}/artist?query=${encodeURIComponent(query)}&fmt=json&limit=${limit}`
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT }
+    })
+
+    if (!res.ok) throw new Error(`MusicBrainz error: ${res.status}`)
+
+    const data = await res.json()
+
+    return (data.artists || []).map(artist => ({
+      id: artist.id,
+      name: artist.name,
+      type: artist.type || null,
+      country: artist.country || null,
+      score: artist.score,
+    }))
+  } catch (err) {
+    console.error('MusicBrainz artist search error:', err)
+    return []
+  }
+}
+
+/**
  * Search for recordings (songs) by artist and/or title.
  * Returns top matches with artist, song, album, and release ID for cover art.
  */
