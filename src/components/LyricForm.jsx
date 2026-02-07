@@ -11,6 +11,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [preMatchContent, setPreMatchContent] = useState('')
   const [coverArtUrl, setCoverArtUrl] = useState(null)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
+  const [activeField, setActiveField] = useState(null) // 'artist' | 'song' | null
   const textareaRef = useRef(null)
 
   const handleMatchSelect = (match) => {
@@ -41,7 +42,12 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
     setMusicbrainzData(null)
   }
 
-  const handleMusicBrainzSelect = (data) => {
+  const handleArtistSelect = (artistName) => {
+    setArtistName(artistName)
+    setActiveField(null) // Close dropdown
+  }
+
+  const handleSongSelect = (data) => {
     setArtistName(data.artist || '')
     setSongTitle(data.song || '')
     setCoverArtUrl(data.coverArtUrl)
@@ -50,6 +56,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
       releaseId: data.musicbrainzReleaseId,
       album: data.album,
     })
+    setActiveField(null) // Close dropdown
   }
 
   // Auto-expand textarea
@@ -152,6 +159,8 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
                     setMusicbrainzData(null)
                   }
                 }}
+                onFocus={() => setActiveField('song')}
+                onBlur={() => setTimeout(() => setActiveField(null), 200)}
                 placeholder="Song title"
                 className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                 style={{
@@ -170,6 +179,8 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
                     setMusicbrainzData(null)
                   }
                 }}
+                onFocus={() => setActiveField('artist')}
+                onBlur={() => setTimeout(() => setActiveField(null), 200)}
                 placeholder="Artist"
                 className="w-full bg-transparent focus:outline-none placeholder:opacity-50"
                 style={{
@@ -185,7 +196,9 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
           <MusicBrainzAutocomplete
             artistValue={artistName}
             songValue={songTitle}
-            onSelect={handleMusicBrainzSelect}
+            activeField={activeField}
+            onSelectArtist={handleArtistSelect}
+            onSelectSong={handleSongSelect}
             disabled={isLocked}
           />
         </div>

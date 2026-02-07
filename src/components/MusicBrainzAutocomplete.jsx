@@ -1,30 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchWithCoverArt, searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
+import { searchArtists, searchWithCoverArt } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
- * Shows results with cover art thumbnails.
+ * Shows artist results when typing in artist field, song results when typing in song field.
  */
 export default function MusicBrainzAutocomplete({
   artistValue,
   songValue,
-  onSelect,
+  activeField, // 'artist' | 'song' | null
+  onSelectArtist,
+  onSelectSong,
   disabled = false,
 }) {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [searchMode, setSearchMode] = useState(null) // 'artist' | 'song'
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
 
-  // Need at least one field with 2+ chars
-  const hasArtist = artistValue && artistValue.length >= 2
-  const hasSong = songValue && songValue.length >= 2
-  const shouldSearch = hasArtist || hasSong
+  // Determine what to search based on active field
+  const shouldSearchArtist = activeField === 'artist' && artistValue && artistValue.length >= 2
+  const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
 
   // Debounced search
   useEffect(() => {
-    if (disabled || !shouldSearch) {
+    if (disabled || (!shouldSearchArtist && !shouldSearchSong)) {
       setResults([])
       setIsOpen(false)
       return
@@ -37,27 +39,40 @@ export default function MusicBrainzAutocomplete({
       clearTimeout(debounceRef.current)
     }
 
-    // Debounce 600ms to respect MusicBrainz rate limit
+    // Debounce 400ms for responsive feel while respecting rate limit
     debounceRef.current = setTimeout(async () => {
       try {
-        // Use structured search when we have artist or song
-        const data = await searchByArtistAndSongWithCoverArt(artistValue, songValue, 5)
-        setResults(data)
-        setIsOpen(data.length > 0)
+        if (shouldSearchArtist) {
+          // Search for artists
+          const data = await searchArtists(artistValue, 5)
+          setResults(data)
+          setSearchMode('artist')
+          setIsOpen(data.length > 0)
+        } else if (shouldSearchSong) {
+          // Search for songs, optionally filtered by artist
+          let query = songValue
+          if (artistValue && artistValue.length >= 2) {
+            query = `artist:"${artistValue}" AND recording:"${songValue}"`
+          }
+          const data = await searchWithCoverArt(query, 5)
+          setResults(data)
+          setSearchMode('song')
+          setIsOpen(data.length > 0)
+        }
       } catch (err) {
         console.error('Search error:', err)
         setResults([])
       } finally {
         setLoading(false)
       }
-    }, 600)
+    }, 400)
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
     }
-  }, [artistValue, songValue, disabled, shouldSearch])
+  }, [artistValue, songValue, activeField, disabled, shouldSearchArtist, shouldSearchSong])
 
   // Close on click outside
   useEffect(() => {
@@ -73,8 +88,14 @@ export default function MusicBrainzAutocomplete({
     }
   }, [isOpen])
 
-  const handleSelect = (result) => {
-    onSelect({
+  const handleSelectArtist = (artist) => {
+    onSelectArtist?.(artist.name)
+    setIsOpen(false)
+    setResults([])
+  }
+
+  const handleSelectSong = (result) => {
+    onSelectSong?.({
       artist: result.artist,
       song: result.title,
       album: result.album,
@@ -86,14 +107,14 @@ export default function MusicBrainzAutocomplete({
     setResults([])
   }
 
-  if (disabled || (!loading && results.length === 0 && !isOpen) || !shouldSearch) {
+  if (disabled || (!loading && results.length === 0 && !isOpen)) {
     return null
   }
 
   return (
     <div ref={containerRef} className="relative">
       {/* Loading indicator */}
-      {loading && query.length >= 3 && (
+      {loading && (
         <div className="absolute right-0 -top-6 text-xs text-charcoal/30">
           searching...
         </div>
@@ -109,48 +130,84 @@ export default function MusicBrainzAutocomplete({
           }}
         >
           <div className="px-3 py-2 border-b border-charcoal/10">
-            <p className="text-xs text-charcoal/40">Select to use verified metadata</p>
+            <p className="text-xs text-charcoal/40">
+              {searchMode === 'artist' ? 'Select artist' : 'Select to use verified metadata'}
+            </p>
           </div>
 
-          {results.map((result) => (
-            <button
-              key={result.id}
-              type="button"
-              onClick={() => handleSelect(result)}
-              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-charcoal/5 transition-colors text-left"
-            >
-              {/* Cover art thumbnail */}
-              <div
-                className="w-10 h-10 flex-shrink-0 bg-charcoal/10"
-                style={{
-                  backgroundImage: result.coverArtUrl ? `url(${result.coverArtUrl})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
+          {searchMode === 'artist' ? (
+            // Artist results
+            results.map((artist) => (
+              <button
+                key={artist.id}
+                type="button"
+                onClick={() => handleSelectArtist(artist)}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-charcoal/5 transition-colors text-left"
               >
-                {!result.coverArtUrl && (
-                  <div className="w-full h-full flex items-center justify-center text-charcoal/20">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </div>
-                )}
-              </div>
+                {/* Artist icon */}
+                <div
+                  className="w-10 h-10 flex-shrink-0 bg-charcoal/10 flex items-center justify-center rounded-full"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-charcoal/30">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
 
-              {/* Song info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-charcoal truncate">
-                  {result.title}
-                </p>
-                <p className="text-xs text-charcoal/50 truncate">
-                  {result.artist}
-                  {result.album && ` · ${result.album}`}
-                  {result.year && ` (${result.year})`}
-                </p>
-              </div>
-            </button>
-          ))}
+                {/* Artist info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-charcoal truncate">
+                    {artist.name}
+                  </p>
+                  <p className="text-xs text-charcoal/50 truncate">
+                    {artist.type || 'Artist'}
+                    {artist.country && ` · ${artist.country}`}
+                  </p>
+                </div>
+              </button>
+            ))
+          ) : (
+            // Song results
+            results.map((result) => (
+              <button
+                key={result.id}
+                type="button"
+                onClick={() => handleSelectSong(result)}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-charcoal/5 transition-colors text-left"
+              >
+                {/* Cover art thumbnail */}
+                <div
+                  className="w-10 h-10 flex-shrink-0 bg-charcoal/10"
+                  style={{
+                    backgroundImage: result.coverArtUrl ? `url(${result.coverArtUrl})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  {!result.coverArtUrl && (
+                    <div className="w-full h-full flex items-center justify-center text-charcoal/20">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+
+                {/* Song info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-charcoal truncate">
+                    {result.title}
+                  </p>
+                  <p className="text-xs text-charcoal/50 truncate">
+                    {result.artist}
+                    {result.album && ` · ${result.album}`}
+                    {result.year && ` (${result.year})`}
+                  </p>
+                </div>
+              </button>
+            ))
+          )}
 
           <div className="px-3 py-2 border-t border-charcoal/10">
             <p className="text-xs text-charcoal/30">Data from MusicBrainz</p>
