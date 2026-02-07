@@ -26,7 +26,7 @@ export default function MusicBrainzAutocomplete({
   const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
 
   // Debug logging
-  console.log('[MusicBrainz]', { activeField, artistValue, songValue, shouldSearchArtist, shouldSearchSong, disabled })
+  console.log('[MusicBrainz]', { activeField, artistValue, artistId, songValue, shouldSearchArtist, shouldSearchSong, disabled })
 
   // Debounced search
   useEffect(() => {
@@ -64,10 +64,12 @@ export default function MusicBrainzAutocomplete({
             data = await searchRecordingsByArtistIdWithCoverArt(artistId, songValue, 5)
           } else if (artistValue && artistValue.length >= 2) {
             // Fall back to artist name search
+            console.log('[MusicBrainz] Searching songs by artist name:', artistValue, songValue)
             const query = `artist:"${artistValue}" AND recording:"${songValue}"`
             data = await searchWithCoverArt(query, 5)
           } else {
             // Just song title search
+            console.log('[MusicBrainz] Searching songs (no artist):', songValue)
             data = await searchWithCoverArt(songValue, 5)
           }
           console.log('[MusicBrainz] Song results:', data)
