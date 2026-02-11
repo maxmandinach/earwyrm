@@ -36,15 +36,3 @@ export const darkVariant = {
   accentColor: '#C8B8A8',          // brighter taupe for visibility
   dividerColor: '#4A4540',         // visible divider
 }
-
-// Legacy support - all theme lookups return signature style
-export const themes = {
-  default: signatureStyle,
-  handwritten: signatureStyle,
-  signature: signatureStyle,
-}
-
-// Proxy to return signature style for any theme lookup
-export const getTheme = (themeId) => signatureStyle
-
-export const themeList = [signatureStyle]

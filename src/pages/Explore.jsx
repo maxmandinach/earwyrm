@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
+import SharePageButton from '../components/SharePageButton'
 
-const isDev = import.meta.env.DEV
 
 export default function Explore() {
   const { filterType, filterValue } = useParams()
@@ -173,6 +173,10 @@ export default function Explore() {
             <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
               {getTitle()}
             </h1>
+
+            {filterType && (
+              <SharePageButton title={`${getTitle()} on earwyrm`} />
+            )}
 
             {filterType && user && (
               <button

@@ -92,45 +92,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Typography scale utilities */
-.text-lyric {
-  font-family: var(--font-hand);
-  font-size: 1.875rem;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
-}
-
-.text-attribution {
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--color-charcoal-light);
-}
-
-.text-note {
-  font-family: var(--font-hand);
-  font-size: 1.25rem;
-  font-weight: 400;
-  line-height: 1.6;
-  color: var(--color-charcoal-light);
-}
-
-.text-ui {
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: var(--color-charcoal);
-}
-
-.text-ui-small {
-  font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 400;
-  color: var(--color-charcoal-muted);
-}
-
 /* Breathing animation for prompts */
 @keyframes breathe {
   0%, 100% { opacity: 0.25; }

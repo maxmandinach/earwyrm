@@ -768,7 +768,7 @@ export default function Landing() {
           <div className="text-center mt-12">
             <button
               onClick={() => {
-                setShowCompose(true)
+                setStep(STEPS.compose)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
               className="inline-block px-8 py-3 text-sm font-medium transition-all hover:opacity-90"

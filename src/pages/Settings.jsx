@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
-import { setColorSchemePreference, applyColorScheme } from '../lib/paperTexture'
+import { setColorSchemePreference } from '../lib/paperTexture'
 import { useNavigate } from 'react-router-dom'
 
 export default function Settings() {

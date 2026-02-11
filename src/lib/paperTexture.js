@@ -117,11 +117,3 @@ export function applyDarkPaperTexture(ctx, width, height, options = {}) {
   ctx.fillRect(0, 0, width, height)
 }
 
-// Legacy exports for compatibility
-export function getBackgroundTexture() {
-  return null // No longer using data URLs
-}
-
-export function getCardTexture() {
-  return null // No longer using data URLs
-}

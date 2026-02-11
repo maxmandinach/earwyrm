@@ -248,6 +248,32 @@ export const supabase = {
             }
             return dbQuery(table, opts)
           },
+          maybeSingle: async () => {
+            // Like single() but returns null instead of error when no rows found
+            const opts = {
+              select: columns,
+              eq: Object.keys(eqFilters).length ? eqFilters : undefined,
+              contains: Object.keys(containsFilters).length ? containsFilters : undefined,
+              ilike: Object.keys(ilikeFilters).length ? ilikeFilters : undefined,
+              inFilter: Object.keys(inFilters).length ? inFilters : undefined,
+              isFilter: Object.keys(isFilters).length ? isFilters : undefined,
+              neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              orFilter: orFilterVal || undefined,
+              notFilter: notFilters.length ? notFilters : undefined,
+              rangeFilter: rangeVal || undefined,
+              textSearchFilter: textSearchVal || undefined,
+              order: orderBy.length ? orderBy : undefined,
+              limit: 1 // Only need 1 row max
+            }
+            const result = await dbQuery(table, opts)
+            if (result.error) return result
+            // Return null if no rows, otherwise return the single row
+            if (!result.data || (Array.isArray(result.data) && result.data.length === 0)) {
+              return { data: null, error: null }
+            }
+            const row = Array.isArray(result.data) ? result.data[0] : result.data
+            return { data: row, error: null }
+          },
           then: (resolve, reject) => {
             const opts = {
               select: columns,

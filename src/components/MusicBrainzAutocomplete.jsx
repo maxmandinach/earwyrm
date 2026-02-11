@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchArtists, fetchArtistRecordings, filterRecordingsByTitle, getCoverArtForRecording, searchRecordingsByArtistId } from '../lib/musicbrainz'
+import { searchArtists, getCoverArtForRecording, searchRecordingsByArtistId } from '../lib/musicbrainz'
 
 /**
  * Autocomplete dropdown for song/artist powered by MusicBrainz.
@@ -18,87 +18,49 @@ export default function MusicBrainzAutocomplete({
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [searchMode, setSearchMode] = useState(null) // 'artist' | 'song'
-  const [artistRecordings, setArtistRecordings] = useState([]) // Prefetched songs
-  const [prefetchedArtistId, setPrefetchedArtistId] = useState(null)
   const debounceRef = useRef(null)
   const containerRef = useRef(null)
 
   // Determine what to search based on active field
   const shouldSearchArtist = activeField === 'artist' && artistValue && artistValue.length >= 2
-  const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 1
+  const shouldSearchSong = activeField === 'song' && songValue && songValue.length >= 2
 
-  // Prefetch artist recordings when artist is selected
+  // Song search - always uses search API (with dedup/ranking on the response)
   useEffect(() => {
-    if (artistId && artistId !== prefetchedArtistId) {
-      console.log('[Prefetch] Starting for artist:', artistId)
-      setPrefetchedArtistId(artistId)
-      fetchArtistRecordings(artistId, 100).then(recordings => {
-        console.log('[Prefetch] Got recordings:', recordings.length)
-        setArtistRecordings(recordings)
-      }).catch(err => {
-        console.error('[Prefetch] Error:', err)
-      })
-    }
-  }, [artistId, prefetchedArtistId])
-
-  // Song search - instant local filtering when prefetched, fallback to API
-  useEffect(() => {
-    console.log('[Song Search]', {
-      shouldSearchSong,
-      activeField,
-      artistId,
-      songValue,
-      prefetchedArtistId,
-      artistRecordingsCount: artistRecordings.length
-    })
-
-    if (disabled || !shouldSearchSong) {
+    if (disabled || !shouldSearchSong || !artistId) {
+      if (searchMode === 'song') {
+        setResults([])
+        setIsOpen(false)
+      }
       return
     }
 
-    // If we have prefetched recordings for this artist, filter locally (instant!)
-    if (artistId && artistRecordings.length > 0 && prefetchedArtistId === artistId) {
-      console.log('[Song Search] Using local filter')
-      const filtered = filterRecordingsByTitle(artistRecordings, songValue)
-      console.log('[Song Search] Filtered results:', filtered.length)
-      setResults(filtered)
-      setSearchMode('song')
-      setIsOpen(filtered.length > 0)
-      setLoading(false)
-      return
+    setLoading(true)
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
     }
 
-    // Fallback: API search if no prefetched data yet
-    if (artistId && songValue.length >= 2) {
-      console.log('[Song Search] Using API fallback')
-      setLoading(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await searchRecordingsByArtistId(artistId, songValue, 8)
+        setResults(data)
+        setSearchMode('song')
+        setIsOpen(data.length > 0)
+      } catch (err) {
+        console.error('MusicBrainz search error:', err)
+        setResults([])
+      } finally {
+        setLoading(false)
+      }
+    }, 200)
 
+    return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
-
-      debounceRef.current = setTimeout(async () => {
-        try {
-          const data = await searchRecordingsByArtistId(artistId, songValue, 8)
-          console.log('[Song Search] API results:', data.length)
-          setResults(data)
-          setSearchMode('song')
-          setIsOpen(data.length > 0)
-        } catch (err) {
-          console.error('MusicBrainz search error:', err)
-          setResults([])
-        } finally {
-          setLoading(false)
-        }
-      }, 200)
-
-      return () => {
-        if (debounceRef.current) {
-          clearTimeout(debounceRef.current)
-        }
-      }
     }
-  }, [songValue, artistId, artistRecordings, prefetchedArtistId, disabled, shouldSearchSong, activeField])
+  }, [songValue, artistId, disabled, shouldSearchSong, searchMode])
 
   // Debounced search for artists only
   useEffect(() => {
