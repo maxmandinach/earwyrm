@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import SuggestMatches from './SuggestMatches'
 import MusicBrainzAutocomplete from './MusicBrainzAutocomplete'
+import useLyricSuggestion from '../hooks/useLyricSuggestion'
 
 export default function LyricForm({ onSubmit, initialValues = {}, isLoading = false, error = null }) {
   const [content, setContent] = useState(initialValues.content || '')
@@ -15,6 +16,16 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [activeField, setActiveField] = useState(null) // 'artist' | 'song' | null
   const textareaRef = useRef(null)
   const blurTimeoutRef = useRef(null)
+
+  // Genius lyrics search — suggests artist/song based on lyric text
+  const { suggestion: lyricSuggestion, loading: lyricSuggestionLoading, dismiss: dismissSuggestion } = useLyricSuggestion(content, artistName, songTitle)
+
+  const handleAcceptLyricSuggestion = (suggestion) => {
+    if (suggestion.artist) setArtistName(suggestion.artist)
+    if (suggestion.title) setSongTitle(suggestion.title)
+    if (suggestion.albumArt) setCoverArtUrl(suggestion.albumArt)
+    dismissSuggestion()
+  }
 
   // Clear any pending blur timeout when focusing a new field
   const handleFieldFocus = (field) => {
@@ -149,6 +160,39 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
         {/* Suggest matches — searches as user types lyric or song title */}
         {!isLocked && (
           <SuggestMatches content={content} songTitle={songTitle} onSelect={handleMatchSelect} />
+        )}
+
+        {/* Genius lyric suggestion — auto-identifies song from lyrics */}
+        {lyricSuggestion && !isLocked && !artistName && !songTitle && (
+          <button
+            type="button"
+            onClick={() => handleAcceptLyricSuggestion(lyricSuggestion)}
+            className="mt-3 w-full flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all hover:opacity-80"
+            style={{
+              backgroundColor: 'var(--text-primary, #2C2825)',
+              color: 'var(--surface-elevated, #F5F0E8)',
+            }}
+          >
+            {lyricSuggestion.albumArt && (
+              <img
+                src={lyricSuggestion.albumArt}
+                alt=""
+                className="w-10 h-10 rounded flex-shrink-0"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {lyricSuggestion.title}
+              </p>
+              <p className="text-xs opacity-70 truncate">
+                {lyricSuggestion.artist}
+              </p>
+            </div>
+            <span className="text-xs opacity-50 flex-shrink-0">tap to fill</span>
+          </button>
+        )}
+        {lyricSuggestionLoading && !artistName && !songTitle && !isLocked && content.trim().length >= 15 && (
+          <p className="mt-2 text-xs text-charcoal/30 text-center">identifying song...</p>
         )}
 
         {/* Song & Artist - integrated */}
