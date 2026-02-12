@@ -22,7 +22,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const blurTimeoutRef = useRef(null)
 
   // Genius lyrics search — suggests artist/song based on lyric text
-  const { suggestion: lyricSuggestion, loading: lyricSuggestionLoading, dismiss: dismissSuggestion } = useLyricSuggestion(content, artistName, songTitle)
+  const { suggestions: lyricSuggestions, loading: lyricSuggestionLoading, dismiss: dismissSuggestion } = useLyricSuggestion(content, artistName, songTitle)
 
   const handleAcceptLyricSuggestion = (suggestion) => {
     if (suggestion.artist) setArtistName(suggestion.artist)
@@ -194,34 +194,43 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
                 <SuggestMatches content={content} songTitle={songTitle} onSelect={handleMatchSelect} />
               )}
 
-              {/* Genius lyric suggestion — auto-identifies song from lyrics */}
-              {lyricSuggestion && !isLocked && !artistName && !songTitle && (
-                <button
-                  type="button"
-                  onClick={() => handleAcceptLyricSuggestion(lyricSuggestion)}
-                  className="mt-3 w-full flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all hover:opacity-80"
-                  style={{
-                    backgroundColor: 'var(--text-primary, #2C2825)',
-                    color: 'var(--surface-elevated, #F5F0E8)',
-                  }}
-                >
-                  {lyricSuggestion.albumArt && (
-                    <img
-                      src={lyricSuggestion.albumArt}
-                      alt=""
-                      className="w-10 h-10 rounded flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {lyricSuggestion.title}
-                    </p>
-                    <p className="text-xs opacity-70 truncate">
-                      {lyricSuggestion.artist}
-                    </p>
-                  </div>
-                  <span className="text-xs opacity-50 flex-shrink-0">tap to fill</span>
-                </button>
+              {/* Genius lyric suggestions — auto-identifies song from lyrics */}
+              {lyricSuggestions.length > 0 && !isLocked && !artistName && !songTitle && (
+                <div className="mt-3 space-y-1.5">
+                  {lyricSuggestions.map((suggestion, i) => (
+                    <button
+                      key={`${suggestion.title}-${suggestion.artist}`}
+                      type="button"
+                      onClick={() => handleAcceptLyricSuggestion(suggestion)}
+                      className={`w-full flex items-center gap-3 px-3 rounded text-left transition-all hover:opacity-80 ${
+                        i === 0 ? 'py-2.5' : 'py-1.5'
+                      }`}
+                      style={{
+                        backgroundColor: i === 0 ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: i === 0 ? 'var(--surface-elevated, #F5F0E8)' : 'var(--text-secondary, #6B635A)',
+                        border: i === 0 ? 'none' : '1px solid var(--text-primary, #2C2825)1a',
+                      }}
+                    >
+                      {suggestion.albumArt && (
+                        <img
+                          src={suggestion.albumArt}
+                          alt=""
+                          className={`rounded flex-shrink-0 ${i === 0 ? 'w-10 h-10' : 'w-7 h-7'}`}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium truncate ${i === 0 ? 'text-sm' : 'text-xs'}`}>
+                          {suggestion.title}
+                        </p>
+                        <p className={`opacity-70 truncate ${i === 0 ? 'text-xs' : 'text-[11px]'}`}>
+                          {suggestion.artist}
+                        </p>
+                      </div>
+                      {i === 0 && <span className="text-xs opacity-50 flex-shrink-0">tap to fill</span>}
+                    </button>
+                  ))}
+                  <p className="text-[10px] text-charcoal/25 text-center pt-0.5">via Genius</p>
+                </div>
               )}
               {lyricSuggestionLoading && !artistName && !songTitle && !isLocked && content.trim().length >= 15 && (
                 <p className="mt-2 text-xs text-charcoal/30 text-center">identifying song...</p>

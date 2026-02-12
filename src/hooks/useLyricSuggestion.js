@@ -7,7 +7,7 @@ import { searchByLyrics } from '../lib/genius'
  * Returns a suggestion the user can accept or dismiss.
  */
 export default function useLyricSuggestion(lyricText, artistName, songTitle) {
-  const [suggestion, setSuggestion] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
   const [loading, setLoading] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const debounceRef = useRef(null)
@@ -27,7 +27,7 @@ export default function useLyricSuggestion(lyricText, artistName, songTitle) {
     const fieldsEmpty = !artistName?.trim() && !songTitle?.trim()
 
     if (!hasLyrics || !fieldsEmpty || dismissed) {
-      setSuggestion(null)
+      setSuggestions([])
       setLoading(false)
       return
     }
@@ -46,13 +46,17 @@ export default function useLyricSuggestion(lyricText, artistName, songTitle) {
       lastQueryRef.current = query
       try {
         const results = await searchByLyrics(query)
-        if (results.length > 0) {
-          setSuggestion(results[0])
-        } else {
-          setSuggestion(null)
-        }
+        // Dedupe by title+artist (Genius sometimes returns duplicates)
+        const seen = new Set()
+        const unique = results.filter(r => {
+          const key = `${r.title}::${r.artist}`.toLowerCase()
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        setSuggestions(unique.slice(0, 3))
       } catch {
-        setSuggestion(null)
+        setSuggestions([])
       } finally {
         setLoading(false)
       }
@@ -67,8 +71,8 @@ export default function useLyricSuggestion(lyricText, artistName, songTitle) {
 
   const dismiss = () => {
     setDismissed(true)
-    setSuggestion(null)
+    setSuggestions([])
   }
 
-  return { suggestion, loading, dismiss }
+  return { suggestions, loading, dismiss }
 }
