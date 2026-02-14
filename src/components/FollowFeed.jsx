@@ -101,7 +101,7 @@ export default function FollowFeed({ limit = 8 }) {
 
   return (
     <HorizontalCardCarousel
-      title="From Your Follows"
+      title="from your follows"
       lyrics={lyrics}
       linkTo="/following"
       linkLabel="See all →"

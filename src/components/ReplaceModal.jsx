@@ -15,6 +15,8 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [preMatchContent, setPreMatchContent] = useState('')
   const [saveState, setSaveState] = useState('idle') // idle | saving | saved
   const [error, setError] = useState(null)
+  const [noteContent, setNoteContent] = useState('')
+  const [showNoteField, setShowNoteField] = useState(false)
   const [activeField, setActiveField] = useState(null)
   const [coverArtUrl, setCoverArtUrl] = useState(null)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
@@ -110,6 +112,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
         musicbrainzRecordingId: musicbrainzData?.recordingId || null,
         musicbrainzReleaseId: musicbrainzData?.releaseId || null,
         album: musicbrainzData?.album || null,
+        note: noteContent.trim() || null,
       })
 
       setSaveState('saved')
@@ -315,6 +318,36 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
               suggestions={allUserTags}
               showSuggestionsOnFocus
             />
+          </div>
+
+          {/* Optional note */}
+          <div className="mt-6 w-full max-w-md mx-auto">
+            {!showNoteField ? (
+              <button
+                type="button"
+                onClick={() => setShowNoteField(true)}
+                className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+              >
+                + add a note
+              </button>
+            ) : (
+              <div>
+                <label className="text-xs text-charcoal/30 mb-1.5 block">note (optional)</label>
+                <textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  placeholder="why does this one stay with you?"
+                  rows={2}
+                  className="w-full bg-transparent focus:outline-none resize-none placeholder:text-charcoal/25 text-charcoal/60"
+                  style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '1.05rem',
+                    borderBottom: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+                    paddingBottom: '0.5rem',
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Save Button */}

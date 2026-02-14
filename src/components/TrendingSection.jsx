@@ -32,7 +32,7 @@ export default function TrendingSection() {
 
   return (
     <HorizontalCardCarousel
-      title="Trending"
+      title="trending"
       lyrics={lyrics}
       linkTo="/explore"
       linkLabel="Explore →"

@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import SearchBar from './SearchBar'
 import ActivityDropdown from './ActivityDropdown'
+import BottomNav from './BottomNav'
 
 export default function Layout() {
   const { user, signOut } = useAuth()
@@ -66,7 +67,7 @@ export default function Layout() {
           {user && !isAuthPage && (
             <>
               <ActivityDropdown />
-              <div className="relative" ref={menuRef}>
+              <div className="relative hidden md:block" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-3 text-charcoal-light hover:text-charcoal transition-colors"
@@ -124,16 +125,10 @@ export default function Layout() {
 
                     {/* Your archive */}
                     <Link
-                      to="/history"
+                      to="/archive"
                       className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
-                      memory lane
-                    </Link>
-                    <Link
-                      to="/collections"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      collections
+                      archive
                     </Link>
 
                     <div className="my-1 border-t border-charcoal/10" />
@@ -160,11 +155,15 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col">
-        <Outlet />
+      <main className="flex-1 flex flex-col pb-16 md:pb-0" key={location.pathname}>
+        <div className="flex-1 flex flex-col page-enter">
+          <Outlet />
+        </div>
       </main>
 
-      <footer className="px-4 py-6 border-t border-charcoal/10">
+      {user && <BottomNav />}
+
+      <footer className="px-4 py-6 border-t border-charcoal/10 hidden md:block">
         <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal-light/60">
           <Link to="/privacy" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Privacy

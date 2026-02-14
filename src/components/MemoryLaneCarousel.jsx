@@ -1,0 +1,149 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { useLyric } from '../contexts/LyricContext'
+import { supabase } from '../lib/supabase-wrapper'
+
+function formatDuration(createdAt, replacedAt) {
+  const start = new Date(createdAt)
+  const end = replacedAt ? new Date(replacedAt) : new Date()
+  const diffMs = end - start
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffWeeks = Math.floor(diffDays / 7)
+  const diffMonths = Math.floor(diffDays / 30)
+
+  if (diffMonths >= 1) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'}`
+  if (diffWeeks >= 1) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'}`
+  if (diffDays >= 1) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`
+  if (diffHours >= 1) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'}`
+  return `${diffMins} ${diffMins === 1 ? 'min' : 'mins'}`
+}
+
+function CompactMemoryCard({ lyric, index }) {
+  const duration = formatDuration(lyric.created_at, lyric.replaced_at)
+
+  return (
+    <div
+      className="flex-shrink-0 w-[220px] sm:w-[240px] carousel-card"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <Link
+        to="/archive"
+        className="block p-4 h-full"
+        style={{
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+          border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+        }}
+      >
+        {/* Lyric snippet */}
+        <p
+          className="text-charcoal/70 leading-relaxed mb-2 line-clamp-2"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem' }}
+        >
+          {lyric.content}
+        </p>
+
+        {/* Attribution */}
+        {(lyric.song_title || lyric.artist_name) && (
+          <div className="flex items-center gap-2">
+            {lyric.cover_art_url && (
+              <div
+                className="w-6 h-6 flex-shrink-0 rounded"
+                style={{
+                  backgroundImage: `url(${lyric.cover_art_url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                }}
+              />
+            )}
+            <p className="text-xs text-charcoal/35 italic truncate">
+              {lyric.song_title}
+              {lyric.song_title && lyric.artist_name && ' — '}
+              {lyric.artist_name}
+            </p>
+          </div>
+        )}
+      </Link>
+    </div>
+  )
+}
+
+export default function MemoryLaneCarousel() {
+  const { user } = useAuth()
+  const { currentLyric } = useLyric()
+  const [pastLyrics, setPastLyrics] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchPastLyrics() {
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('lyrics')
+          .select('*')
+          .eq('user_id', user.id)
+
+        if (error) throw error
+
+        // Filter out current lyric and sort by created_at desc
+        const past = (data || [])
+          .filter(l => !currentLyric || l.id !== currentLyric.id)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          .slice(0, 8)
+
+        setPastLyrics(past)
+      } catch (err) {
+        console.error('Error fetching past lyrics:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPastLyrics()
+  }, [user, currentLyric?.id])
+
+  if (loading || pastLyrics.length < 3) return null
+
+  return (
+    <div className="w-full max-w-lg mx-auto">
+      <div className="flex items-center justify-between mb-3">
+        <h2
+          className="text-sm text-charcoal/40 lowercase"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
+        >
+          memory lane
+        </h2>
+        <Link
+          to="/archive"
+          className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+        >
+          See all
+        </Link>
+      </div>
+
+      <div
+        className="-mx-4 px-4 flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+        style={{
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        {pastLyrics.map((lyric, i) => (
+          <div key={lyric.id} style={{ scrollSnapAlign: 'start' }}>
+            <CompactMemoryCard lyric={lyric} index={i} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

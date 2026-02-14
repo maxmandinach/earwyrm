@@ -79,11 +79,24 @@ function CompactCard({ lyric }) {
 
         {/* Attribution */}
         {(lyric.song_title || lyric.artist_name) && (
-          <p className="text-xs text-charcoal/40 italic truncate">
-            {lyric.song_title}
-            {lyric.song_title && lyric.artist_name && ' — '}
-            {lyric.artist_name}
-          </p>
+          <div className="flex items-center gap-2">
+            {lyric.cover_art_url && (
+              <div
+                className="w-7 h-7 flex-shrink-0 rounded"
+                style={{
+                  backgroundImage: `url(${lyric.cover_art_url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                }}
+              />
+            )}
+            <p className="text-xs text-charcoal/40 italic truncate">
+              {lyric.song_title}
+              {lyric.song_title && lyric.artist_name && ' — '}
+              {lyric.artist_name}
+            </p>
+          </div>
         )}
 
         {/* Compact action row */}
@@ -212,7 +225,10 @@ export default function HorizontalCardCarousel({ title, lyrics, linkTo, linkLabe
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs text-charcoal/30 uppercase tracking-wider">{title}</h2>
+        <h2
+          className="text-charcoal/40 lowercase"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
+        >{title}</h2>
         {linkTo && (
           <Link to={linkTo} className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors">
             {linkLabel}
@@ -230,8 +246,12 @@ export default function HorizontalCardCarousel({ title, lyrics, linkTo, linkLabe
           msOverflowStyle: 'none',
         }}
       >
-        {lyrics.map((lyric) => (
-          <div key={lyric.id} style={{ scrollSnapAlign: 'start' }}>
+        {lyrics.map((lyric, i) => (
+          <div
+            key={lyric.id}
+            className="carousel-card"
+            style={{ scrollSnapAlign: 'start', animationDelay: `${i * 60}ms` }}
+          >
             <CompactCard lyric={lyric} />
           </div>
         ))}

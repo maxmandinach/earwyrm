@@ -213,10 +213,10 @@ export default function LyricCard({
                   }}
                 />
                 <div className="flex items-center gap-3">
-                  {/* Cover art thumbnail */}
+                  {/* Cover art thumbnail — larger on hero */}
                   {lyric.cover_art_url && (
                     <div
-                      className="w-10 h-10 flex-shrink-0 rounded"
+                      className={`${hero ? 'w-14 h-14' : 'w-10 h-10'} flex-shrink-0 rounded`}
                       style={{
                         backgroundImage: `url(${lyric.cover_art_url})`,
                         backgroundSize: 'cover',
@@ -321,8 +321,8 @@ export default function LyricCard({
         )}
       </div>
 
-      {/* Note peek - after card */}
-      {showActions && !isEditing && (notes || isOwn) && (
+      {/* Note peek - after card (hidden on hero/home view) */}
+      {showActions && !isEditing && !hero && (notes || isOwn) && (
         <NotePeek
           notes={notes}
           isOwn={isOwn}

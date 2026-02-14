@@ -7,9 +7,10 @@ import LyricForm from '../components/LyricForm'
 import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import OnboardingFlow from '../components/OnboardingFlow'
-import ActivityFeed from '../components/ActivityFeed'
 import TrendingSection from '../components/TrendingSection'
 import FollowFeed from '../components/FollowFeed'
+import MemoryLaneCarousel from '../components/MemoryLaneCarousel'
+import CollectionsCarousel from '../components/CollectionsCarousel'
 import { getRandomPrompt } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -163,7 +164,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
         className="relative w-full max-w-lg mx-auto transition-all duration-1000 ease-out"
         style={{
           opacity: revealed ? 1 : 0,
-          transform: revealed ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
+          transform: revealed ? 'translateY(0) scale(1) rotate(0deg)' : 'translateY(20px) scale(0.98) rotate(-0.5deg)',
         }}
       >
         <LyricCard
@@ -208,7 +209,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
 
 export default function Home() {
   const { profile } = useAuth()
-  const { currentLyric, loading, setLyric, replaceLyric, setVisibility } = useLyric()
+  const { currentLyric, loading, setLyric, replaceLyric, setVisibility, saveNote } = useLyric()
   const [revealed, setRevealed] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -262,13 +263,25 @@ export default function Home() {
   }
 
   const handleReplace = async (data) => {
-    await setLyric({
+    const newLyric = await setLyric({
       content: data.content,
       songTitle: data.songTitle,
       artistName: data.artistName,
       tags: data.tags,
       canonicalLyricId: data.canonicalLyricId || null,
+      coverArtUrl: data.coverArtUrl || null,
+      musicbrainzRecordingId: data.musicbrainzRecordingId || null,
+      musicbrainzReleaseId: data.musicbrainzReleaseId || null,
+      album: data.album || null,
     })
+    // Save note if one was provided
+    if (data.note && newLyric?.id) {
+      try {
+        await saveNote(newLyric.id, data.note)
+      } catch (err) {
+        console.error('Error saving note:', err)
+      }
+    }
   }
 
   if (loading) {
@@ -296,18 +309,25 @@ export default function Home() {
         revealed={revealed}
       />
 
-      {/* Social sections - fade in after hero */}
-      <div
-        className="w-full space-y-10 transition-all duration-700 ease-out"
-        style={{
-          opacity: revealed ? 1 : 0,
-          transitionDelay: '800ms',
-        }}
-      >
-        <ActivityFeed />
-        <FollowFeed />
-        <TrendingSection />
-      </div>
+      {/* Hub sections - staggered cascade after hero */}
+      {[
+        { key: 'memory', delay: 600, component: <MemoryLaneCarousel /> },
+        { key: 'trending', delay: 800, component: <TrendingSection /> },
+        { key: 'follows', delay: 1000, component: <FollowFeed /> },
+        { key: 'collections', delay: 1200, component: <CollectionsCarousel /> },
+      ].map(({ key, delay, component }) => (
+        <div
+          key={key}
+          className="w-full transition-all duration-700 ease-out"
+          style={{
+            opacity: revealed ? 1 : 0,
+            transform: revealed ? 'translateY(0)' : 'translateY(12px)',
+            transitionDelay: `${delay}ms`,
+          }}
+        >
+          {component}
+        </div>
+      ))}
     </div>
   )
 }

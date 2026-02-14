@@ -18,6 +18,7 @@ import Following from './pages/Following'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage'
 import Activity from './pages/Activity'
+import Archive from './pages/Archive'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -98,20 +99,20 @@ export default function App() {
           }
         />
         <Route
-          path="history"
+          path="archive"
           element={
             <ProtectedRoute>
-              <History />
+              <Archive />
             </ProtectedRoute>
           }
         />
         <Route
+          path="history"
+          element={<Navigate to="/archive" replace />}
+        />
+        <Route
           path="collections"
-          element={
-            <ProtectedRoute>
-              <Collections />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/archive?view=collections" replace />}
         />
         <Route
           path="collections/:id"
