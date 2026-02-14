@@ -289,8 +289,8 @@ export default function LyricCard({
               </div>
             )}
 
-            {/* Poster's note — inside the card as marginalia */}
-            {isOwn && showActions && !isEditing && (
+            {/* Poster's note — inside the card as marginalia (only if one exists) */}
+            {isOwn && showActions && !isEditing && initialNote?.content && (
               <div className="mt-5">
                 <NoteEditor
                   lyricId={lyric.id}
