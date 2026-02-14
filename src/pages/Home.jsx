@@ -338,24 +338,6 @@ export default function Home() {
         clearPrefill={() => setReplacePrefill(null)}
       />
 
-      {/* What's this song? */}
-      <div
-        className="transition-all duration-700 ease-out"
-        style={{
-          opacity: revealed ? 1 : 0,
-          transform: revealed ? 'translateY(0)' : 'translateY(8px)',
-          transitionDelay: '400ms',
-        }}
-      >
-        <button
-          onClick={() => setShowIdentifyModal(true)}
-          className="text-charcoal/30 hover:text-charcoal/50 transition-colors"
-          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
-        >
-          name that tune
-        </button>
-      </div>
-
       {/* Hub sections - staggered cascade after hero */}
       {[
         { key: 'memory', delay: 600, component: <MemoryLaneCarousel /> },
