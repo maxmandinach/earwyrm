@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { signatureStyle } from '../lib/themes'
 import { formatRelativeTime } from '../lib/utils'
 import CardActionBar from './CardActionBar'
+import NoteEditor from './NoteEditor'
 import NotePeek from './NotePeek'
 import CommentSection from './CommentSection'
 import SignupOverlay from './SignupOverlay'
@@ -288,6 +289,18 @@ export default function LyricCard({
               </div>
             )}
 
+            {/* Poster's note — inside the card as marginalia */}
+            {isOwn && showActions && !isEditing && (
+              <div className="mt-5">
+                <NoteEditor
+                  lyricId={lyric.id}
+                  initialNote={initialNote}
+                  onNoteChange={onNoteChange}
+                  showVisibilityToggle
+                />
+              </div>
+            )}
+
             {showTimestamp && lyric.created_at && (
               <p
                 className="text-xs mt-5 opacity-40"
@@ -321,14 +334,10 @@ export default function LyricCard({
         )}
       </div>
 
-      {/* Note peek - after card (hidden on hero/home view) */}
-      {showActions && !isEditing && !hero && (notes || isOwn) && (
+      {/* Other people's public notes - below the card */}
+      {showActions && !isEditing && !isOwn && notes && notes.length > 0 && (
         <NotePeek
           notes={notes}
-          isOwn={isOwn}
-          lyricId={lyric.id}
-          initialNote={initialNote}
-          onNoteChange={onNoteChange}
         />
       )}
 

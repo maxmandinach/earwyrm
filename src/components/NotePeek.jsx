@@ -1,24 +1,8 @@
 import { useState } from 'react'
-import NoteEditor from './NoteEditor'
 
-export default function NotePeek({ notes, isOwn, lyricId, initialNote, onNoteChange }) {
+export default function NotePeek({ notes }) {
   const [expanded, setExpanded] = useState(false)
 
-  // Own card: render NoteEditor directly
-  if (isOwn) {
-    return (
-      <div className="w-full max-w-lg mx-auto mt-4">
-        <NoteEditor
-          lyricId={lyricId}
-          initialNote={initialNote}
-          onNoteChange={onNoteChange}
-          showVisibilityToggle
-        />
-      </div>
-    )
-  }
-
-  // Other cards: show peek of first public note
   if (!notes || notes.length === 0) return null
 
   const firstNote = notes[0]
