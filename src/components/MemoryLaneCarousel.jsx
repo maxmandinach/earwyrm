@@ -30,7 +30,7 @@ function CompactMemoryCard({ lyric, index }) {
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <Link
-        to="/archive"
+        to="/history"
         className="block p-4 h-full"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
@@ -122,7 +122,7 @@ export default function MemoryLaneCarousel() {
           memory lane
         </h2>
         <Link
-          to="/archive"
+          to="/history"
           className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
         >
           See all

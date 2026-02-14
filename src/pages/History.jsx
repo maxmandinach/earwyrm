@@ -271,7 +271,7 @@ function TimelineEntry({ lyric, note, index }) {
   )
 }
 
-export default function History({ embedded = false }) {
+export default function History() {
   const { user } = useAuth()
   const { currentLyric } = useLyric()
   const [lyrics, setLyrics] = useState([])
@@ -377,31 +377,20 @@ export default function History({ embedded = false }) {
 
   return (
     <div className="flex-1 w-full flex flex-col overflow-hidden">
-      {/* Header — hidden when embedded in Archive */}
-      {!embedded && (
-        <div className="max-w-lg mx-auto px-4 sm:px-6 pt-8 pb-6 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h1
-              className="text-charcoal/50 lowercase"
-              style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem' }}
-            >
-              memory lane
-            </h1>
-            <span className="text-xs text-charcoal/30">
-              {pastLyrics.length} {pastLyrics.length === 1 ? 'moment' : 'moments'}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Moment count when embedded */}
-      {embedded && (
-        <div className="max-w-lg mx-auto px-4 sm:px-6 pt-2 pb-4 flex-shrink-0">
+      {/* Header */}
+      <div className="max-w-lg mx-auto px-4 sm:px-6 pt-8 pb-6 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h1
+            className="text-charcoal/50 lowercase"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem' }}
+          >
+            memory lane
+          </h1>
           <span className="text-xs text-charcoal/30">
             {pastLyrics.length} {pastLyrics.length === 1 ? 'moment' : 'moments'}
           </span>
         </div>
-      )}
+      </div>
 
       {/* Timeline */}
       <div className="flex-1 overflow-y-auto">

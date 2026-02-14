@@ -120,7 +120,7 @@ export default function CollectionsCarousel() {
           your collections
         </h2>
         <Link
-          to="/archive?view=collections"
+          to="/collections"
           className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
         >
           See all
