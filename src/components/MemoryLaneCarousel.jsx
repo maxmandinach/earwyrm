@@ -26,7 +26,7 @@ function CompactMemoryCard({ lyric, index }) {
 
   return (
     <div
-      className="flex-shrink-0 w-[220px] sm:w-[240px] carousel-card"
+      className="flex-shrink-0 w-[240px] sm:w-[260px] carousel-card"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <Link
@@ -34,7 +34,7 @@ function CompactMemoryCard({ lyric, index }) {
         className="block p-4 h-full"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+          boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
           border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
         }}
       >
@@ -60,7 +60,7 @@ function CompactMemoryCard({ lyric, index }) {
                 }}
               />
             )}
-            <p className="text-xs text-charcoal/35 italic truncate">
+            <p className="text-xs text-charcoal/30 italic truncate">
               {lyric.song_title}
               {lyric.song_title && lyric.artist_name && ' — '}
               {lyric.artist_name}
@@ -117,7 +117,7 @@ export default function MemoryLaneCarousel() {
     <div className="w-full max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-3">
         <h2
-          className="text-sm text-charcoal/40 lowercase"
+          className="text-charcoal/40 lowercase"
           style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
         >
           memory lane
@@ -131,7 +131,7 @@ export default function MemoryLaneCarousel() {
       </div>
 
       <div
-        className="-mx-4 px-4 flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+        className="-mx-4 px-4 flex gap-4 overflow-x-auto pb-2 scrollbar-hide"
         style={{
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',

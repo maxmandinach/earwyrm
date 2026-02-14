@@ -60,7 +60,7 @@ function CompactCard({ lyric }) {
         className="block p-5 h-full"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+          boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
           border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
         }}
       >
@@ -109,10 +109,10 @@ function CompactCard({ lyric }) {
             onClick={handleResonate}
             className={`flex items-center gap-1 text-xs py-1 px-1.5 transition-all duration-200 ${
               isAnon
-                ? 'text-charcoal/25 cursor-default'
+                ? 'text-charcoal/30 cursor-default'
                 : hasReacted
                   ? 'text-charcoal/60'
-                  : 'text-charcoal/25 hover:text-charcoal/40'
+                  : 'text-charcoal/30 hover:text-charcoal/40'
             }`}
             style={{
               transform: animating ? 'scale(1.1)' : 'scale(1)',
@@ -144,7 +144,7 @@ function CompactCard({ lyric }) {
           {/* Comment */}
           <button
             onClick={handleCommentClick}
-            className="flex items-center gap-1 text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors py-1 px-1.5"
+            className="flex items-center gap-1 text-xs text-charcoal/30 hover:text-charcoal/40 transition-colors py-1 px-1.5"
             title="Comments"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -157,7 +157,7 @@ function CompactCard({ lyric }) {
           <button
             onClick={handleSaveClick}
             className={`text-xs py-1 px-1.5 transition-colors ${
-              isAnon ? 'text-charcoal/25 cursor-default' : 'text-charcoal/25 hover:text-charcoal/40'
+              isAnon ? 'text-charcoal/30 cursor-default' : 'text-charcoal/30 hover:text-charcoal/40'
             }`}
             title={isAnon ? 'Sign in to save' : 'Save to collection'}
           >
@@ -171,7 +171,7 @@ function CompactCard({ lyric }) {
           {/* Share */}
           <button
             onClick={handleShare}
-            className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors py-1 px-1.5"
+            className="text-xs text-charcoal/30 hover:text-charcoal/40 transition-colors py-1 px-1.5"
             title="Share"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

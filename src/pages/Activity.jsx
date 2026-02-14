@@ -109,22 +109,19 @@ export default function Activity() {
   return (
     <div className="flex-1 flex flex-col px-4 py-8">
       <div className="max-w-lg mx-auto w-full">
-        <h1
-          className="text-2xl text-charcoal mb-6"
-          style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
-        >
-          Activity
+        <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase mb-6">
+          activity
         </h1>
 
         {activities.length === 0 ? (
           <div className="text-center py-12">
             <p
               className="text-xl mb-2"
-              style={{ fontFamily: "'Caveat', cursive", color: '#6B635A' }}
+              style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
             >
               No activity yet
             </p>
-            <p className="text-sm text-charcoal-light">
+            <p className="text-sm text-charcoal/30">
               When people resonate with or comment on your lyrics, you'll see it here
             </p>
           </div>
@@ -182,7 +179,7 @@ export default function Activity() {
                   </div>
 
                   {/* Time */}
-                  <span className="text-xs text-charcoal/25 flex-shrink-0">
+                  <span className="text-xs text-charcoal/30 flex-shrink-0">
                     {formatRelativeTime(activity.created_at)}
                   </span>
                 </div>

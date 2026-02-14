@@ -109,7 +109,7 @@ function CurrentLyricCard({ lyric }) {
         </blockquote>
 
         {(lyric.song_title || lyric.artist_name) && (
-          <p className="text-xs text-charcoal/35 italic mt-3 truncate">
+          <p className="text-xs text-charcoal/30 italic mt-3 truncate">
             {lyric.song_title}
             {lyric.song_title && lyric.artist_name && ' — '}
             {lyric.artist_name}
@@ -254,7 +254,7 @@ function TimelineEntry({ lyric, note, index }) {
                   <Link
                     key={idx}
                     to={`/explore/tag/${encodeURIComponent(tag)}`}
-                    className="text-xs text-charcoal/25 hover:text-charcoal/50 transition-colors"
+                    className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
                   >
                     #{tag}
                   </Link>
@@ -351,7 +351,7 @@ export default function History() {
           <p className="text-sm text-charcoal/40 leading-relaxed">
             Your moments will gather here
           </p>
-          <p className="text-xs text-charcoal/25">
+          <p className="text-xs text-charcoal/30">
             Each lyric that moves through your mind leaves a trace
           </p>
         </div>
@@ -381,10 +381,7 @@ export default function History() {
       {/* Header */}
       <div className="max-w-lg mx-auto px-4 sm:px-6 pt-8 pb-6 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h1
-            className="text-charcoal/50 lowercase"
-            style={{ fontFamily: "'Caveat', cursive", fontSize: '1.5rem' }}
-          >
+          <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
             memory lane
           </h1>
           <span className="text-xs text-charcoal/30">

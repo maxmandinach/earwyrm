@@ -14,7 +14,7 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
         className="block p-5 transition-all group"
         style={{
           backgroundColor: 'var(--surface-card, #F5F2ED)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+          boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
           border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
         }}
       >
@@ -296,7 +296,7 @@ export default function Collections() {
           className="mb-8 p-5"
           style={{
             backgroundColor: 'var(--surface-card, #F5F2ED)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 3px 10px rgba(0,0,0,0.06)',
+            boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
             border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
           }}
         >
@@ -311,7 +311,7 @@ export default function Collections() {
               placeholder="Collection name"
               className="w-full px-3 py-2 text-sm bg-transparent border border-charcoal/10
                          focus:border-charcoal/30 focus:outline-none
-                         placeholder:text-charcoal/25 text-charcoal"
+                         placeholder:text-charcoal/30 text-charcoal"
               autoFocus
             />
             <textarea
@@ -321,7 +321,7 @@ export default function Collections() {
               rows={2}
               className="w-full px-3 py-2 text-sm bg-transparent border border-charcoal/10
                          focus:border-charcoal/30 focus:outline-none resize-none
-                         placeholder:text-charcoal/25 text-charcoal"
+                         placeholder:text-charcoal/30 text-charcoal"
             />
 
             {/* Smart collection toggle */}
@@ -379,7 +379,7 @@ export default function Collections() {
       {collections.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-charcoal/40 mb-2">No collections yet</p>
-          <p className="text-sm text-charcoal/25">
+          <p className="text-sm text-charcoal/30">
             Collections help you organize your lyrics by theme, mood, or any way you like.
           </p>
         </div>

@@ -86,7 +86,7 @@ export default function Following() {
 
       {follows.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-charcoal-light/60 mb-2">
+          <p className="text-charcoal/40 mb-2">
             Follow artists and tags on Explore to build your feed
           </p>
           <Link
@@ -100,11 +100,11 @@ export default function Following() {
         <div className="text-center py-12">
           <p
             className="text-xl mb-2"
-            style={{ fontFamily: "'Caveat', cursive", color: '#6B635A' }}
+            style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
           >
             Nothing new yet
           </p>
-          <p className="text-sm text-charcoal-light">
+          <p className="text-sm text-charcoal/30">
             New public lyrics from your follows will appear here
           </p>
         </div>

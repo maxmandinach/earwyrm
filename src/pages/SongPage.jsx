@@ -228,11 +228,11 @@ export default function SongPage() {
           <div className="text-center py-12">
             <p
               className="text-xl mb-2"
-              style={{ fontFamily: "'Caveat', cursive", color: '#6B635A' }}
+              style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
             >
               No one has shared from this song yet
             </p>
-            <p className="text-sm text-charcoal-light">
+            <p className="text-sm text-charcoal/30">
               Be the first to share a lyric
             </p>
           </div>

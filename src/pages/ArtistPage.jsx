@@ -190,7 +190,7 @@ export default function ArtistPage() {
           </Link>
           <div className="flex items-center gap-3 mb-2">
             <h1
-              className="text-3xl text-charcoal"
+              className="text-2xl text-charcoal"
               style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
             >
               {artistName}
@@ -267,11 +267,11 @@ export default function ArtistPage() {
           <div className="text-center py-12">
             <p
               className="text-xl mb-2"
-              style={{ fontFamily: "'Caveat', cursive", color: '#6B635A' }}
+              style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
             >
               No lyrics here yet
             </p>
-            <p className="text-sm text-charcoal-light">
+            <p className="text-sm text-charcoal/30">
               Be the first to share a {artistName} lyric
             </p>
           </div>

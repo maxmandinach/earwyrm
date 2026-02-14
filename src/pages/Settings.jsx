@@ -159,7 +159,7 @@ export default function Settings() {
         <div className="space-y-8">
           {/* Username */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">username</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">username</h2>
 
             <form onSubmit={handleUpdateUsername} className="space-y-3">
               <div>
@@ -199,7 +199,7 @@ export default function Settings() {
 
           {/* Profile Visibility */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">profile visibility</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">profile visibility</h2>
 
             <div className="space-y-4">
               <label className="flex items-start gap-3 cursor-pointer group">
@@ -265,7 +265,7 @@ export default function Settings() {
 
           {/* Appearance */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">appearance</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">appearance</h2>
 
             <div className="space-y-3">
               <label className="flex items-center gap-3 cursor-pointer group">
@@ -329,7 +329,7 @@ export default function Settings() {
 
           {/* Email */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">email</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">email</h2>
 
             <input
               type="email"
@@ -345,7 +345,7 @@ export default function Settings() {
 
           {/* Password */}
           <section className="border-b border-charcoal/10 pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">change password</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">change password</h2>
 
             <form onSubmit={handleUpdatePassword} className="space-y-3">
               <div>
@@ -413,7 +413,7 @@ export default function Settings() {
 
           {/* Delete Account */}
           <section className="pb-8">
-            <h2 className="text-lg font-light text-charcoal mb-4 lowercase">delete account</h2>
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">delete account</h2>
 
             <p className="text-sm text-charcoal-light mb-4">
               To delete your account and all your lyrics, contact us.
