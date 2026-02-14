@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import ModalSheet from './ModalSheet'
 import { searchByLyrics } from '../lib/genius'
-import { recognizeAudio } from '../lib/audd'
-import useAudioRecorder from '../hooks/useAudioRecorder'
 import { useCollection } from '../contexts/CollectionContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase-wrapper'
@@ -126,138 +124,43 @@ function LyricsTab({ onResultSelect, selectedResult }) {
   )
 }
 
-function ListenTab({ onResultSelect, selectedResult }) {
-  const {
-    startRecording, stopRecording, reset,
-    isRecording, secondsElapsed, error, audioBase64, maxDuration,
-  } = useAudioRecorder()
-  const [recognizing, setRecognizing] = useState(false)
-  const [result, setResult] = useState(null)
-  const [noMatch, setNoMatch] = useState(false)
-
-  // When audio is captured, send for recognition
-  useEffect(() => {
-    if (!audioBase64) return
-
-    async function recognize() {
-      setRecognizing(true)
-      setNoMatch(false)
-      try {
-        const match = await recognizeAudio(audioBase64)
-        if (match) {
-          setResult(match)
-          onResultSelect(match)
-        } else {
-          setNoMatch(true)
-        }
-      } catch {
-        setNoMatch(true)
-      } finally {
-        setRecognizing(false)
-      }
-    }
-    recognize()
-  }, [audioBase64])
-
-  const handleTryAgain = () => {
-    reset()
-    setResult(null)
-    setNoMatch(false)
-  }
-
+function ListenTab() {
   return (
-    <div className="flex flex-col items-center space-y-6 py-4">
-      {/* Mic button */}
-      {!result && !recognizing && (
-        <>
-          <button
-            type="button"
-            onClick={isRecording ? stopRecording : startRecording}
-            className="relative w-24 h-24 rounded-full flex items-center justify-center transition-all"
-            style={{
-              backgroundColor: isRecording
-                ? 'var(--text-primary, #2C2825)'
-                : 'var(--surface-elevated, #F5F0E8)',
-              color: isRecording
-                ? 'var(--surface-elevated, #F5F0E8)'
-                : 'var(--text-primary, #2C2825)',
-              border: '2px solid var(--text-primary, #2C2825)',
-            }}
-          >
-            {/* Pulse ring when recording */}
-            {isRecording && (
-              <span
-                className="absolute inset-0 rounded-full animate-ping"
-                style={{
-                  border: '2px solid var(--text-primary, #2C2825)',
-                  opacity: 0.3,
-                }}
-              />
-            )}
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-            </svg>
-          </button>
+    <div className="flex flex-col items-center py-8 px-4">
+      {/* Mic icon */}
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+        style={{
+          backgroundColor: 'var(--surface-elevated, #F5F0E8)',
+          border: '2px solid var(--border-subtle, rgba(0,0,0,0.08))',
+        }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-secondary, #6B635A)', opacity: 0.4 }}>
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="currentColor" />
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill="currentColor" />
+        </svg>
+      </div>
 
-          <p
-            className="text-sm text-center"
-            style={{
-              fontFamily: "'Caveat', cursive",
-              fontSize: '1.1rem',
-              color: 'var(--text-secondary, #6B635A)',
-            }}
-          >
-            {isRecording
-              ? `listening... ${maxDuration - secondsElapsed}s`
-              : 'tap to listen'}
-          </p>
-        </>
-      )}
-
-      {/* Recognizing state */}
-      {recognizing && (
-        <div className="flex flex-col items-center gap-3 py-8">
-          <div
-            className="w-8 h-8 border-2 rounded-full animate-spin"
-            style={{
-              borderColor: 'var(--border-subtle, rgba(0,0,0,0.1))',
-              borderTopColor: 'var(--text-primary, #2C2825)',
-            }}
-          />
-          <p className="text-xs text-charcoal/40">identifying song...</p>
-        </div>
-      )}
-
-      {/* Result */}
-      {result && (
-        <div className="w-full">
-          <ResultCard
-            result={result}
-            selected={selectedResult?.title === result.title && selectedResult?.artist === result.artist}
-            onSelect={onResultSelect}
-          />
-        </div>
-      )}
-
-      {/* No match */}
-      {noMatch && (
-        <div className="text-center space-y-3 py-4">
-          <p className="text-sm text-charcoal/40">couldn't find a match</p>
-          <button
-            type="button"
-            onClick={handleTryAgain}
-            className="text-xs text-charcoal/50 hover:text-charcoal/70 transition-colors underline"
-          >
-            try again?
-          </button>
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <p className="text-xs text-red-600/70 text-center max-w-xs">{error}</p>
-      )}
+      <p
+        className="text-center mb-2"
+        style={{
+          fontFamily: "'Caveat', cursive",
+          fontSize: '1.2rem',
+          color: 'var(--text-primary, #2C2825)',
+        }}
+      >
+        coming soon
+      </p>
+      <p
+        className="text-center max-w-xs"
+        style={{
+          fontSize: '0.8rem',
+          color: 'var(--text-secondary, #6B635A)',
+          opacity: 0.6,
+        }}
+      >
+        hum, sing, or whistle a tune and we'll find it for you
+      </p>
     </div>
   )
 }
@@ -301,7 +204,7 @@ function CollectionPicker({ onSelect, onCreateNew }) {
 
 export default function IdentifySongModal({ onClose, onSaveAsEarwyrm }) {
   const { user } = useAuth()
-  const { addLyricToCollection, createCollection, fetchCollections } = useCollection()
+  const { addLyricToCollection, createCollection } = useCollection()
   const [tab, setTab] = useState('lyrics') // 'lyrics' | 'listen'
   const [selectedResult, setSelectedResult] = useState(null)
   const [showCollectionPicker, setShowCollectionPicker] = useState(false)
@@ -383,7 +286,7 @@ export default function IdentifySongModal({ onClose, onSaveAsEarwyrm }) {
   })
 
   return (
-    <ModalSheet onClose={onClose} title="what's this song?" maxWidth="max-w-lg">
+    <ModalSheet onClose={onClose} title="name that tune" maxWidth="max-w-lg">
       <div className="p-5 sm:p-6">
         {/* Tabs */}
         <div className="flex justify-center gap-6 mb-6">
@@ -410,7 +313,7 @@ export default function IdentifySongModal({ onClose, onSaveAsEarwyrm }) {
           <LyricsTab onResultSelect={handleResultSelect} selectedResult={selectedResult} />
         )}
         {tab === 'listen' && (
-          <ListenTab onResultSelect={handleResultSelect} selectedResult={selectedResult} />
+          <ListenTab />
         )}
 
         {/* Action buttons — show when a result is selected */}

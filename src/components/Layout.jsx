@@ -144,7 +144,7 @@ export default function Layout() {
                       onClick={() => { setShowIdentifyModal(true); setIsMenuOpen(false) }}
                       className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
-                      identify song
+                      name that tune
                     </button>
 
                     <div className="my-1 border-t border-charcoal/10" />

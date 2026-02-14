@@ -352,7 +352,7 @@ export default function Home() {
           className="text-charcoal/30 hover:text-charcoal/50 transition-colors"
           style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
         >
-          what's this song?
+          name that tune
         </button>
       </div>
 
