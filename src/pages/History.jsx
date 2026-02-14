@@ -288,6 +288,7 @@ export default function History() {
           .from('lyrics')
           .select('*')
           .eq('user_id', user.id)
+          .eq('is_saved', false)
 
         if (error) {
           console.error('Error fetching history:', error)

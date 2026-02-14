@@ -5,10 +5,10 @@ import SuggestMatches from './SuggestMatches'
 import MusicBrainzAutocomplete from './MusicBrainzAutocomplete'
 import useLyricSuggestion from '../hooks/useLyricSuggestion'
 
-export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
+export default function ReplaceModal({ onReplace, onClose, allUserTags = [], initialSongTitle = '', initialArtistName = '', initialCoverArtUrl = null }) {
   const [content, setContent] = useState('')
-  const [songTitle, setSongTitle] = useState('')
-  const [artistName, setArtistName] = useState('')
+  const [songTitle, setSongTitle] = useState(initialSongTitle)
+  const [artistName, setArtistName] = useState(initialArtistName)
   const [tags, setTags] = useState([])
   const [canonicalLyricId, setCanonicalLyricId] = useState(null)
   const [isLocked, setIsLocked] = useState(false)
@@ -18,7 +18,7 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [] }) {
   const [noteContent, setNoteContent] = useState('')
   const [showNoteField, setShowNoteField] = useState(false)
   const [activeField, setActiveField] = useState(null)
-  const [coverArtUrl, setCoverArtUrl] = useState(null)
+  const [coverArtUrl, setCoverArtUrl] = useState(initialCoverArtUrl)
   const [musicbrainzData, setMusicbrainzData] = useState(null)
   const [artistMbid, setArtistMbid] = useState(null)
   const blurTimeoutRef = useRef(null)

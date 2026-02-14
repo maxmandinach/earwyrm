@@ -3,12 +3,14 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import SearchBar from './SearchBar'
 import ActivityDropdown from './ActivityDropdown'
+import IdentifySongModal from './IdentifySongModal'
 
 export default function Layout() {
   const { user, signOut } = useAuth()
   const location = useLocation()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showIdentifyModal, setShowIdentifyModal] = useState(false)
   const menuRef = useRef(null)
 
   // Close menu when clicking outside
@@ -138,6 +140,15 @@ export default function Layout() {
 
                     <div className="my-1 border-t border-charcoal/10" />
 
+                    <button
+                      onClick={() => { setShowIdentifyModal(true); setIsMenuOpen(false) }}
+                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                    >
+                      identify song
+                    </button>
+
+                    <div className="my-1 border-t border-charcoal/10" />
+
                     {/* Meta */}
                     <Link
                       to="/settings"
@@ -177,6 +188,17 @@ export default function Layout() {
           </Link>
         </div>
       </footer>
+
+      {showIdentifyModal && (
+        <IdentifySongModal
+          onClose={() => setShowIdentifyModal(false)}
+          onSaveAsEarwyrm={(prefill) => {
+            setShowIdentifyModal(false)
+            // Navigate to home where the replace modal will open with pre-filled data
+            window.dispatchEvent(new CustomEvent('earwyrm:identify-save', { detail: prefill }))
+          }}
+        />
+      )}
     </div>
   )
 }

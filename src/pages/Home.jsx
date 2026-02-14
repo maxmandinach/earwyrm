@@ -6,6 +6,7 @@ import LyricCard from '../components/LyricCard'
 import LyricForm from '../components/LyricForm'
 import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
+import IdentifySongModal from '../components/IdentifySongModal'
 import OnboardingFlow from '../components/OnboardingFlow'
 import TrendingSection from '../components/TrendingSection'
 import FollowFeed from '../components/FollowFeed'
@@ -93,7 +94,7 @@ function EmptyState({ onSetLyric, revealed }) {
   )
 }
 
-function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed }) {
+function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed, prefill, clearPrefill }) {
   const { profile, user } = useAuth()
   const { fetchNoteForLyric, saveNote } = useLyric()
   const [isEditingCard, setIsEditingCard] = useState(false)
@@ -101,6 +102,13 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
   const [showShareModal, setShowShareModal] = useState(false)
   const [allUserTags, setAllUserTags] = useState([])
   const [currentNote, setCurrentNote] = useState(null)
+
+  // Open ReplaceModal pre-filled when prefill data arrives
+  useEffect(() => {
+    if (prefill) {
+      setShowReplaceModal(true)
+    }
+  }, [prefill])
 
   // Fetch note for current lyric
   useEffect(() => {
@@ -192,8 +200,11 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed })
       {showReplaceModal && (
         <ReplaceModal
           onReplace={onReplace}
-          onClose={() => setShowReplaceModal(false)}
+          onClose={() => { setShowReplaceModal(false); if (clearPrefill) clearPrefill() }}
           allUserTags={allUserTags}
+          initialSongTitle={prefill?.songTitle || ''}
+          initialArtistName={prefill?.artistName || ''}
+          initialCoverArtUrl={prefill?.coverArtUrl || null}
         />
       )}
 
@@ -213,8 +224,19 @@ export default function Home() {
   const [revealed, setRevealed] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [showIdentifyModal, setShowIdentifyModal] = useState(false)
+  const [replacePrefill, setReplacePrefill] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Listen for "save as earwyrm" from menu-opened identify modal
+  useEffect(() => {
+    const handler = (e) => {
+      setReplacePrefill(e.detail)
+    }
+    window.addEventListener('earwyrm:identify-save', handler)
+    return () => window.removeEventListener('earwyrm:identify-save', handler)
+  }, [])
 
   // Consume draft lyric from localStorage after signup
   useEffect(() => {
@@ -298,6 +320,11 @@ export default function Home() {
     return <EmptyState onSetLyric={setLyric} revealed={revealed} />
   }
 
+  const handleSaveAsEarwyrm = (prefillData) => {
+    setShowIdentifyModal(false)
+    setReplacePrefill(prefillData)
+  }
+
   // Poster view with social sections
   return (
     <div className="flex-1 flex flex-col items-center px-4 py-8 space-y-10">
@@ -307,7 +334,27 @@ export default function Home() {
         onReplace={handleReplace}
         onVisibilityChange={setVisibility}
         revealed={revealed}
+        prefill={replacePrefill}
+        clearPrefill={() => setReplacePrefill(null)}
       />
+
+      {/* What's this song? */}
+      <div
+        className="transition-all duration-700 ease-out"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transform: revealed ? 'translateY(0)' : 'translateY(8px)',
+          transitionDelay: '400ms',
+        }}
+      >
+        <button
+          onClick={() => setShowIdentifyModal(true)}
+          className="text-charcoal/30 hover:text-charcoal/50 transition-colors"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
+        >
+          what's this song?
+        </button>
+      </div>
 
       {/* Hub sections - staggered cascade after hero */}
       {[
@@ -328,6 +375,13 @@ export default function Home() {
           {component}
         </div>
       ))}
+
+      {showIdentifyModal && (
+        <IdentifySongModal
+          onClose={() => setShowIdentifyModal(false)}
+          onSaveAsEarwyrm={handleSaveAsEarwyrm}
+        />
+      )}
     </div>
   )
 }

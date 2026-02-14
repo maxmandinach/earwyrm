@@ -90,6 +90,7 @@ export default function MemoryLaneCarousel() {
           .from('lyrics')
           .select('*')
           .eq('user_id', user.id)
+          .eq('is_saved', false)
 
         if (error) throw error
 
