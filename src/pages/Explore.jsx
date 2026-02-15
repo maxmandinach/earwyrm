@@ -19,6 +19,7 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
   const [trendingTags, setTrendingTags] = useState([])
+  const [sortBy, setSortBy] = useState('newest')
 
   const decodedFilterValue = filterValue ? decodeURIComponent(filterValue) : null
   const songArtist = filterType === 'song' && lyrics.length > 0 ? lyrics[0].artist_name : null
@@ -63,13 +64,17 @@ export default function Explore() {
           })
           const sorted = Object.entries(tagCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 12)
-            .map(([tag]) => tag)
+            .slice(0, 20)
+            .map(([tag, count]) => ({ tag, count }))
           setTrendingTags(sorted)
         }
       } catch (err) {
         console.error('Error fetching trending tags:', err)
-        setTrendingTags(['Nostalgia', 'Late Night', 'Driving', 'Heartbreak', 'Summer', 'Hopeful'])
+        setTrendingTags([
+          { tag: 'Nostalgia', count: 0 }, { tag: 'Late Night', count: 0 },
+          { tag: 'Driving', count: 0 }, { tag: 'Heartbreak', count: 0 },
+          { tag: 'Summer', count: 0 }, { tag: 'Hopeful', count: 0 },
+        ])
       }
     }
 
@@ -86,7 +91,6 @@ export default function Explore() {
           .from('lyrics')
           .select('*')
           .eq('is_public', true)
-          .order('created_at', { ascending: false })
           .limit(50)
 
         if (filterType === 'tag' && decodedFilterValue) {
@@ -95,6 +99,14 @@ export default function Explore() {
           query = query.ilike('artist_name', decodedFilterValue)
         } else if (filterType === 'song' && decodedFilterValue) {
           query = query.ilike('song_title', decodedFilterValue)
+        }
+
+        if (sortBy === 'newest') {
+          query = query.order('created_at', { ascending: false })
+        } else if (sortBy === 'resonated') {
+          query = query.order('reaction_count', { ascending: false, nullsFirst: false })
+        } else if (sortBy === 'discussed') {
+          query = query.order('comment_count', { ascending: false, nullsFirst: false })
         }
 
         const { data, error: fetchError } = await query
@@ -128,7 +140,7 @@ export default function Explore() {
     }
 
     fetchLyrics()
-  }, [filterType, decodedFilterValue])
+  }, [filterType, decodedFilterValue, sortBy])
 
   const getTitle = () => {
     if (!filterType) return 'explore'
@@ -256,21 +268,54 @@ export default function Explore() {
           )}
         </div>
 
-        {/* Trending tags - only show on main explore page */}
+        {/* Moods / trending tags - only show on main explore page */}
         {!filterType && trendingTags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {trendingTags.map((tag) => (
-              <Link
-                key={tag}
-                to={`/explore/tag/${encodeURIComponent(tag)}`}
-                className="px-3 py-1.5 text-xs border border-charcoal/10 text-charcoal/50
-                         hover:border-charcoal/30 hover:text-charcoal/70 transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
+          <div className="mb-4">
+            <p
+              className="text-charcoal/40 lowercase mb-2"
+              style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
+            >
+              moods
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {trendingTags.map(({ tag, count }) => (
+                <Link
+                  key={tag}
+                  to={`/explore/tag/${encodeURIComponent(tag)}`}
+                  className="px-3 py-2 text-xs border border-charcoal/10 text-charcoal/50
+                           hover:border-charcoal/30 hover:text-charcoal/70 transition-colors"
+                >
+                  #{tag}
+                  {count > 0 && (
+                    <span className="ml-1 text-charcoal/20 text-[10px]">{count}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Sort pills */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-charcoal/30">sort by:</span>
+          {[
+            { key: 'newest', label: 'newest' },
+            { key: 'resonated', label: 'most resonated' },
+            { key: 'discussed', label: 'most discussed' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setSortBy(key)}
+              className={`px-3 py-1 text-xs border transition-colors ${
+                sortBy === key
+                  ? 'border-charcoal/40 text-charcoal/70'
+                  : 'border-charcoal/10 text-charcoal/30 hover:border-charcoal/20'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}
