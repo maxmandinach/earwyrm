@@ -357,13 +357,18 @@ html.dark .border-charcoal\/15 {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+html.dark .border-charcoal\/30 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
 html.dark .border-charcoal\/40 {
   border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 html.dark .hover\:border-charcoal\/40:hover,
+html.dark .hover\:border-charcoal\/50:hover,
 html.dark .hover\:border-charcoal\/60:hover {
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Opacity classes — solid opaque colors for dark mode readability */
@@ -394,6 +399,10 @@ html.dark .text-charcoal\/60 {
 
 html.dark .text-charcoal\/70 {
   color: #DDD6CE !important;
+}
+
+html.dark .text-charcoal\/80 {
+  color: #E8E0D8 !important;
 }
 
 /* Border opacity classes */

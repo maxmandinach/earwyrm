@@ -22,14 +22,25 @@ function CompactPostPrompt() {
 
   return (
     <div className="w-full max-w-lg mx-auto mb-8 flex items-center gap-3">
-      <input
-        type="text"
-        placeholder="What lyric is stuck in your head?"
-        className="flex-1 px-4 py-3 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/30"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '1.125rem' }}
-        onFocus={() => {}}
-        readOnly
-      />
+      <div className="relative flex-1">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/30 pointer-events-none"
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="text"
+          placeholder="What lyric is stuck in your head?"
+          className="w-full rounded-full bg-charcoal/5 border border-charcoal/8
+                     pl-9 pr-9 py-2.5 text-sm text-charcoal
+                     focus:outline-none focus:border-charcoal/20
+                     placeholder:text-charcoal/30"
+          readOnly
+        />
+      </div>
       <button
         onClick={() => setDismissed(true)}
         className="text-charcoal/20 hover:text-charcoal/40 text-sm"
