@@ -14,7 +14,6 @@ import SharedLyric from './pages/SharedLyric'
 import Collections from './pages/Collections'
 import CollectionDetail from './pages/CollectionDetail'
 import Explore from './pages/Explore'
-import Following from './pages/Following'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage'
 import Activity from './pages/Activity'
@@ -155,14 +154,7 @@ export default function App() {
         />
         <Route path="explore" element={<Explore />} />
         <Route path="explore/:filterType/:filterValue" element={<Explore />} />
-        <Route
-          path="following"
-          element={
-            <ProtectedRoute>
-              <Following />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="following" element={<Navigate to="/explore?tab=following" replace />} />
         <Route path="artist/:slug" element={<ArtistPage />} />
         <Route path="song/:slug" element={<SongPage />} />
         <Route path="privacy" element={<Privacy />} />

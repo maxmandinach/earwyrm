@@ -63,10 +63,7 @@ function groupByMonth(lyrics) {
 function MonthHeader({ title }) {
   return (
     <div className="mb-8 mt-14 first:mt-0">
-      <h2
-        className="text-charcoal/40 lowercase"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '1.2rem' }}
-      >
+      <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide">
         {title}
       </h2>
     </div>
@@ -262,10 +259,10 @@ function TimelineEntry({ lyric, note, index }) {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Note editor */}
-        <NoteEditor lyricId={lyric.id} initialNote={note} className="mt-4" />
+          {/* Note — inside card as marginalia */}
+          <NoteEditor lyricId={lyric.id} initialNote={note} className="mt-5" />
+        </div>
       </div>
     </div>
   )
@@ -381,14 +378,9 @@ export default function History() {
     <div className="flex-1 w-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="max-w-lg mx-auto px-4 sm:px-6 pt-8 pb-6 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
-            memory lane
-          </h1>
-          <span className="text-xs text-charcoal/30">
-            {pastLyrics.length} {pastLyrics.length === 1 ? 'moment' : 'moments'}
-          </span>
-        </div>
+        <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
+          memory lane
+        </h1>
       </div>
 
       {/* Timeline */}

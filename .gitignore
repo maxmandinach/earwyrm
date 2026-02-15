@@ -29,3 +29,12 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# Local artifacts
+screenshots/
+*.jpeg
+*.png
+supabase/.temp/

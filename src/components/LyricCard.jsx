@@ -36,11 +36,12 @@ export default function LyricCard({
   skipReveal = false,
   // Visual variant
   hero = false,
+  compact = false,
 }) {
   const theme = signatureStyle
   const { ref: revealRef, revealed } = useRevealOnScroll()
-  const shouldAnimate = !skipReveal && showActions
-  const isVisible = skipReveal || !showActions || revealed
+  const shouldAnimate = !skipReveal && !compact && showActions
+  const isVisible = skipReveal || compact || !showActions || revealed
 
   // Local edit state
   const [content, setContent] = useState(lyric.content)
@@ -93,15 +94,17 @@ export default function LyricCard({
     backgroundColor: 'var(--surface-card, #F5F2ED)',
     color: 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
-    fontSize: hero ? 'clamp(1.4rem, 4vw, 1.8rem)' : theme.fontSize,
+    fontSize: compact ? '1.35rem' : hero ? 'clamp(1.4rem, 4vw, 1.8rem)' : theme.fontSize,
     fontWeight: theme.fontWeight,
-    lineHeight: hero ? '1.7' : theme.lineHeight,
+    lineHeight: compact ? '1.4' : hero ? '1.7' : theme.lineHeight,
     fontStyle: theme.fontStyle,
     letterSpacing: hero ? '0.01em' : theme.letterSpacing,
     textAlign: theme.textAlign,
-    boxShadow: hero
-      ? '0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.1)'
-      : 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+    boxShadow: compact
+      ? 'var(--shadow-card, 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06))'
+      : hero
+        ? '0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.1)'
+        : 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
     border: hero ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
   }
 
@@ -119,7 +122,7 @@ export default function LyricCard({
       }}
     >
       <div
-        className={`w-full max-w-lg mx-auto relative ${hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${className}`}
+        className={`w-full max-w-lg mx-auto relative ${compact ? 'p-4 sm:p-5' : hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${className}`}
         style={{
           ...cardStyle,
           overflow: 'visible',
@@ -198,7 +201,7 @@ export default function LyricCard({
         ) : (
           // View mode
           <>
-            <blockquote className="mb-4 leading-relaxed">
+            <blockquote className={`leading-relaxed ${compact ? 'mb-3 line-clamp-3' : 'mb-4'}`}>
               {lyric.content}
             </blockquote>
 
@@ -206,7 +209,7 @@ export default function LyricCard({
               <>
                 {/* Signature element: thin rule - matches share card */}
                 <div
-                  className="w-20 mt-5 mb-4"
+                  className={compact ? 'w-12 mt-3 mb-2' : 'w-20 mt-5 mb-4'}
                   style={{
                     height: '1.5px',
                     backgroundColor: 'var(--color-accent, #B8A99A)',
@@ -214,8 +217,8 @@ export default function LyricCard({
                   }}
                 />
                 <div className="flex items-center gap-3">
-                  {/* Cover art thumbnail — larger on hero */}
-                  {lyric.cover_art_url && (
+                  {/* Cover art thumbnail — hidden in compact */}
+                  {!compact && lyric.cover_art_url && (
                     <div
                       className={`${hero ? 'w-14 h-14' : 'w-10 h-10'} flex-shrink-0 rounded`}
                       style={{
@@ -229,7 +232,7 @@ export default function LyricCard({
                   <p
                     style={{
                       fontFamily: "'DM Sans', system-ui, sans-serif",
-                      fontSize: '0.875rem',
+                      fontSize: compact ? '0.8rem' : '0.875rem',
                       fontStyle: 'italic',
                       color: 'var(--text-secondary, #6B635A)',
                     }}
@@ -264,7 +267,8 @@ export default function LyricCard({
               </>
             )}
 
-            {lyric.tags && lyric.tags.length > 0 && (
+            {/* Tags — hidden in compact */}
+            {!compact && lyric.tags && lyric.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {lyric.tags.map((tag, index) => (
                   linkable ? (
@@ -289,8 +293,8 @@ export default function LyricCard({
               </div>
             )}
 
-            {/* Poster's note — inside the card as marginalia (only if one exists) */}
-            {isOwn && showActions && !isEditing && initialNote?.content && (
+            {/* Poster's note — hidden in compact */}
+            {!compact && isOwn && showActions && !isEditing && initialNote?.content && (
               <div className="mt-5">
                 <NoteEditor
                   lyricId={lyric.id}
@@ -301,7 +305,53 @@ export default function LyricCard({
               </div>
             )}
 
-            {showTimestamp && lyric.created_at && (
+            {/* Compact: inline counts row */}
+            {compact && (
+              <div
+                className="flex items-center gap-4 mt-3 pt-2"
+                style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
+              >
+                {(lyric.reaction_count || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-charcoal/30">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+                      {[
+                        { x: 4, h: 6 },
+                        { x: 8, h: 10 },
+                        { x: 12, h: 14 },
+                        { x: 16, h: 10 },
+                        { x: 20, h: 6 },
+                      ].map((bar, i) => (
+                        <line key={i} x1={bar.x} y1={12 - bar.h / 2} x2={bar.x} y2={12 + bar.h / 2}
+                          stroke="currentColor" strokeWidth="2" />
+                      ))}
+                    </svg>
+                    {lyric.reaction_count}
+                  </span>
+                )}
+                {(lyric.comment_count || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-charcoal/30">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    {lyric.comment_count}
+                  </span>
+                )}
+                {showTimestamp && lyric.created_at && (
+                  <span
+                    className="text-xs opacity-40 ml-auto"
+                    style={{
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
+                      color: 'var(--text-muted, #9C948A)',
+                    }}
+                  >
+                    {formatRelativeTime(lyric.created_at)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Full timestamp — non-compact only */}
+            {!compact && showTimestamp && lyric.created_at && (
               <p
                 className="text-xs mt-5 opacity-40"
                 style={{
@@ -313,8 +363,8 @@ export default function LyricCard({
               </p>
             )}
 
-            {/* Action bar */}
-            {showActions && !isEditing && (
+            {/* Action bar — non-compact only */}
+            {!compact && showActions && !isEditing && (
               <CardActionBar
                 lyric={lyric}
                 isOwn={isOwn}
@@ -334,15 +384,15 @@ export default function LyricCard({
         )}
       </div>
 
-      {/* Other people's public notes - below the card */}
-      {showActions && !isEditing && !isOwn && notes && notes.length > 0 && (
+      {/* Other people's public notes - below the card (hidden in compact) */}
+      {!compact && showActions && !isEditing && !isOwn && notes && notes.length > 0 && (
         <NotePeek
           notes={notes}
         />
       )}
 
-      {/* Comment section - after notes */}
-      {showActions && showComments && !isEditing && (
+      {/* Comment section - after notes (hidden in compact) */}
+      {!compact && showActions && showComments && !isEditing && (
         <div className="w-full max-w-lg mx-auto mt-2">
           <CommentSection
             lyricId={lyric.id}

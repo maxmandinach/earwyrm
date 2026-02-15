@@ -115,12 +115,6 @@ export default function Layout() {
                     >
                       explore
                     </Link>
-                    <Link
-                      to="/following"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      feed
-                    </Link>
 
                     <div className="my-1 border-t border-charcoal/10" />
 

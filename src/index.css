@@ -349,6 +349,18 @@ html.dark .hover\:text-charcoal\/60:hover {
   color: rgba(245, 240, 232, 0.6) !important;
 }
 
+html.dark .border-charcoal\/8 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark .border-charcoal\/15 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .border-charcoal\/40 {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
 html.dark .hover\:border-charcoal\/40:hover,
 html.dark .hover\:border-charcoal\/60:hover {
   border-color: rgba(255, 255, 255, 0.2) !important;
