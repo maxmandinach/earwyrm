@@ -7,6 +7,8 @@ import LyricCard from './LyricCard'
 import ExploreSearchInput from './ExploreSearchInput'
 import SortDropdown from './SortDropdown'
 
+const PAGE_SIZE = 20
+
 const TIME_OPTIONS = [
   { key: 'all', label: 'all time' },
   { key: 'week', label: 'this week' },
@@ -26,6 +28,7 @@ export default function ExploreForYou() {
   const [timeRange, setTimeRange] = useState('all')
   const [trendingTags, setTrendingTags] = useState([])
   const [activeTags, setActiveTags] = useState(null) // null = show all, Set = specific tags
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const searchContainerRef = useRef(null)
 
   // Close search on outside click
@@ -83,6 +86,7 @@ export default function ExploreForYou() {
     async function fetchLyrics() {
       setLoading(true)
       setError(null)
+      setVisibleCount(PAGE_SIZE)
 
       try {
         let query = supabase
@@ -176,6 +180,9 @@ export default function ExploreForYou() {
       l.tags?.some(t => t.toLowerCase().includes(q))
     )
   }
+
+  const visibleLyrics = displayedLyrics.slice(0, visibleCount)
+  const hasMore = displayedLyrics.length > visibleCount
 
   const isAnon = !user
 
@@ -344,7 +351,7 @@ export default function ExploreForYou() {
         </div>
       ) : (
         <div className="space-y-4">
-          {displayedLyrics.map((lyric) => (
+          {visibleLyrics.map((lyric) => (
             <LyricCard
               key={lyric.id}
               lyric={lyric}
@@ -358,6 +365,17 @@ export default function ExploreForYou() {
               isPublic={lyric.is_public}
             />
           ))}
+
+          {hasMore && (
+            <div className="text-center pt-4">
+              <button
+                onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                className="text-sm text-charcoal/50 hover:text-charcoal transition-colors"
+              >
+                Load more
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>
