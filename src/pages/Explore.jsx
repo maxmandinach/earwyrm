@@ -166,7 +166,7 @@ export default function Explore() {
                 <button
                   onClick={handleToggleFollow}
                   disabled={isTogglingFollow}
-                  className={`ml-3 px-3 py-1 text-xs border transition-colors ${
+                  className={`ml-3 px-3 py-1 text-xs border rounded-full transition-colors ${
                     currentlyFollowing
                       ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
                       : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
@@ -223,7 +223,7 @@ export default function Explore() {
             </p>
           </div>
         ) : (
-          <div className="space-y-6 max-w-lg mx-auto w-full">
+          <div className="space-y-4 max-w-lg mx-auto w-full">
             {(() => {
               if (filterType === 'song' || filterType === 'artist') {
                 const clusters = {}
@@ -243,12 +243,12 @@ export default function Explore() {
                         lyric={{ ...representative, reaction_count: totalReactions }}
                         showTimestamp
                         linkable
+                        compact
                         className="border border-charcoal/10"
                         showActions
                         isAnon={isAnon}
                         isOwn={user?.id === representative.user_id}
                         isPublic={representative.is_public}
-                        notes={notes[representative.id]}
                       />
                       {group.length > 1 && (
                         <p className="text-xs text-charcoal/30 mt-1 max-w-lg mx-auto">
@@ -266,12 +266,12 @@ export default function Explore() {
                   lyric={lyric}
                   showTimestamp
                   linkable
+                  compact
                   className="border border-charcoal/10"
                   showActions
                   isAnon={isAnon}
                   isOwn={user?.id === lyric.user_id}
                   isPublic={lyric.is_public}
-                  notes={notes[lyric.id]}
                 />
               ))
             })()}

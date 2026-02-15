@@ -225,10 +225,7 @@ export default function HorizontalCardCarousel({ title, lyrics, linkTo, linkLabe
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <h2
-          className="text-charcoal/40 lowercase"
-          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
-        >{title}</h2>
+        <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide">{title}</h2>
         {linkTo && (
           <Link to={linkTo} className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors">
             {linkLabel}

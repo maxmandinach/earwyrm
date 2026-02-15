@@ -160,7 +160,7 @@ export default function SearchBar() {
       {/* Results dropdown */}
       {query.trim() && hasResults && (
         <div
-          className="absolute right-0 top-full mt-1 w-72 shadow-lg z-50 max-h-80 overflow-auto"
+          className="absolute right-0 top-full mt-1 w-72 rounded-lg shadow-lg z-50 max-h-80 overflow-auto"
           style={{
             backgroundColor: 'var(--surface-elevated, #FAF8F5)',
             border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
@@ -168,12 +168,12 @@ export default function SearchBar() {
         >
           {results.songs.length > 0 && (
             <div>
-              <div className="px-3 py-1.5 text-xs text-charcoal/30 uppercase tracking-wider">Songs</div>
+              <div className="px-4 py-2 text-xs text-charcoal/30 uppercase tracking-wider">Songs</div>
               {results.songs.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelect(`/song/${encodeURIComponent(s.title.toLowerCase())}${s.artist ? `?artist=${encodeURIComponent(s.artist)}` : ''}`)}
-                  className="block w-full text-left px-3 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
                 >
                   "{s.title}" {s.artist && <span className="text-charcoal/30">— {s.artist}</span>}
                 </button>
@@ -183,12 +183,12 @@ export default function SearchBar() {
 
           {results.artists.length > 0 && (
             <div>
-              <div className="px-3 py-1.5 text-xs text-charcoal/30 uppercase tracking-wider border-t border-charcoal/5">Artists</div>
+              <div className="px-4 py-2 text-xs text-charcoal/30 uppercase tracking-wider border-t border-charcoal/5">Artists</div>
               {results.artists.map((a, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelect(`/artist/${encodeURIComponent(a.toLowerCase())}`)}
-                  className="block w-full text-left px-3 py-2 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-charcoal/70 hover:bg-charcoal/5 transition-colors"
                 >
                   {a}
                 </button>
@@ -198,7 +198,7 @@ export default function SearchBar() {
 
           {results.lyrics.length > 0 && (
             <div>
-              <div className="px-3 py-1.5 text-xs text-charcoal/30 uppercase tracking-wider border-t border-charcoal/5">Lyrics</div>
+              <div className="px-4 py-2 text-xs text-charcoal/30 uppercase tracking-wider border-t border-charcoal/5">Lyrics</div>
               {results.lyrics.map((l) => (
                 <button
                   key={l.id}
@@ -209,7 +209,7 @@ export default function SearchBar() {
                       handleSelect('/explore')
                     }
                   }}
-                  className="block w-full text-left px-3 py-2 text-sm text-charcoal/50 hover:bg-charcoal/5 transition-colors truncate"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-charcoal/50 hover:bg-charcoal/5 transition-colors truncate"
                   style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
                 >
                   {l.content.slice(0, 60)}{l.content.length > 60 ? '...' : ''}

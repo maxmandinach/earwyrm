@@ -116,10 +116,7 @@ export default function MemoryLaneCarousel() {
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <h2
-          className="text-charcoal/40 lowercase"
-          style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
-        >
+        <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide">
           memory lane
         </h2>
         <Link

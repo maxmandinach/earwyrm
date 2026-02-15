@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
@@ -7,6 +7,8 @@ import { searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
 import LyricCard from '../components/LyricCard'
 import SharePageButton from '../components/SharePageButton'
 import HorizontalCardCarousel from '../components/HorizontalCardCarousel'
+import ExploreSearchInput from '../components/ExploreSearchInput'
+import SortDropdown from '../components/SortDropdown'
 
 export default function SongPage() {
   const { slug } = useParams()
@@ -19,6 +21,10 @@ export default function SongPage() {
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
   const [moreSongs, setMoreSongs] = useState([])
   const [coverArt, setCoverArt] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [sortBy, setSortBy] = useState('newest')
+  const searchContainerRef = useRef(null)
 
   const songTitle = decodeURIComponent(slug)
   const artistHint = searchParams.get('artist')
@@ -53,6 +59,19 @@ export default function SongPage() {
       setIsTogglingFollow(false)
     }
   }
+
+  // Close search on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setSearchOpen(false)
+      }
+    }
+    if (searchOpen) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [searchOpen])
 
   useEffect(() => {
     async function fetchLyrics() {
@@ -201,10 +220,7 @@ export default function SongPage() {
               />
             )}
             <div className="flex-1 min-w-0">
-              <h1
-                className="text-2xl text-charcoal"
-                style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
-              >
+              <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
                 "{songTitle}"
               </h1>
               {artistName && (
@@ -226,7 +242,7 @@ export default function SongPage() {
                 <button
                   onClick={handleToggleFollow}
                   disabled={isTogglingFollow}
-                  className={`px-3 py-1 text-xs border transition-colors ${
+                  className={`px-3 py-1 text-xs border rounded-full transition-colors ${
                     currentlyFollowing
                       ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
                       : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
@@ -253,7 +269,7 @@ export default function SongPage() {
         {/* Most Saved Line callout */}
         {topCluster && topCluster.saveCount > 1 && (
           <div className="mb-8">
-            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-3">Most saved line</h2>
+            <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide mb-3">Most saved line</h2>
             <LyricCard
               lyric={topCluster.representative}
               hero
@@ -286,28 +302,86 @@ export default function SongPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
-            {clusters.map((cluster) => (
-              <div key={cluster.id}>
-                <LyricCard
-                  lyric={cluster.representative}
-                  showTimestamp
-                  linkable
-                  className="border border-charcoal/10"
-                  showActions
-                  isAnon={isAnon}
-                  isOwn={user?.id === cluster.representative.user_id}
-                  isPublic={cluster.representative.is_public}
-                  notes={cluster.allNotes.length > 0 ? cluster.allNotes : undefined}
+          <>
+            {/* Search + Sort toolbar */}
+            {searchOpen ? (
+              <div ref={searchContainerRef} className="relative mb-4">
+                <ExploreSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  placeholder="Search lyrics..."
+                  autoFocus
                 />
-                {cluster.saveCount > 1 && (
-                  <p className="text-xs text-charcoal/30 mt-1">
-                    {cluster.saveCount} people saved this
-                  </p>
-                )}
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2 -ml-2 text-charcoal/30 hover:text-charcoal/60 transition-colors"
+                  aria-label="Search"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </button>
+                <div className="flex-1" />
+                <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+              </div>
+            )}
+
+            {(() => {
+              let filtered = clusters
+              // Apply sort
+              if (sortBy === 'newest') {
+                filtered = [...filtered].sort((a, b) =>
+                  new Date(b.representative.created_at) - new Date(a.representative.created_at)
+                )
+              } else if (sortBy === 'resonated') {
+                filtered = [...filtered].sort((a, b) =>
+                  (b.representative.reaction_count || 0) - (a.representative.reaction_count || 0)
+                )
+              } else if (sortBy === 'discussed') {
+                filtered = [...filtered].sort((a, b) =>
+                  (b.representative.comment_count || 0) - (a.representative.comment_count || 0)
+                )
+              }
+              // Apply search
+              if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase()
+                filtered = filtered.filter(c =>
+                  c.representative.content.toLowerCase().includes(q)
+                )
+              }
+              return (
+                <div className="space-y-4">
+                  {filtered.map((cluster) => (
+                    <div key={cluster.id}>
+                      <LyricCard
+                        lyric={cluster.representative}
+                        showTimestamp
+                        linkable
+                        compact
+                        className="border border-charcoal/10"
+                        showActions
+                        isAnon={isAnon}
+                        isOwn={user?.id === cluster.representative.user_id}
+                        isPublic={cluster.representative.is_public}
+                      />
+                      {cluster.saveCount > 1 && (
+                        <p className="text-xs text-charcoal/30 mt-1">
+                          {cluster.saveCount} people saved this
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
+          </>
         )}
 
         {/* More from [Artist] */}

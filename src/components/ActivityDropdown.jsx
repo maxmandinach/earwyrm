@@ -142,13 +142,13 @@ export default function ActivityDropdown() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-72 shadow-lg z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-72 rounded-lg shadow-lg z-50 overflow-hidden"
           style={{
             backgroundColor: 'var(--surface-elevated, #FAF8F5)',
             border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
           }}
         >
-          <div className="px-4 py-3 border-b border-charcoal/10">
+          <div className="px-4 py-2.5 border-b border-charcoal/10">
             <h3 className="text-sm font-medium text-charcoal">Activity</h3>
           </div>
 
@@ -168,7 +168,7 @@ export default function ActivityDropdown() {
                     key={`${activity.type}-${activity.lyric.id}-${i}`}
                     to={getLinkForActivity(activity)}
                     onClick={() => setIsOpen(false)}
-                    className="block px-4 py-3 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0"
+                    className="block px-4 py-2.5 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0"
                   >
                     <div className="flex items-start gap-2">
                       <div className="flex-shrink-0 mt-0.5">
@@ -222,7 +222,7 @@ export default function ActivityDropdown() {
           <Link
             to="/activity"
             onClick={() => setIsOpen(false)}
-            className="block px-4 py-3 text-center text-xs text-charcoal/50 hover:text-charcoal/70 hover:bg-charcoal/5 transition-colors border-t border-charcoal/10"
+            className="block px-4 py-2.5 text-center text-xs text-charcoal/50 hover:text-charcoal/70 hover:bg-charcoal/5 transition-colors border-t border-charcoal/10"
           >
             See all activity
           </Link>

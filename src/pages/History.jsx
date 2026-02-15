@@ -168,7 +168,7 @@ function TimelineEntry({ lyric, note, index }) {
 
   return (
     <div
-      className="mb-6 carousel-card"
+      className="mb-4 carousel-card"
       style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
     >
       <div className="relative">

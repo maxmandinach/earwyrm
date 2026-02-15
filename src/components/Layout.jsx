@@ -91,7 +91,7 @@ export default function Layout() {
 
               {isMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-48 shadow-lg z-50"
+                  className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50"
                   style={{
                     backgroundColor: 'var(--surface-elevated, #FAF8F5)',
                     border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
@@ -101,7 +101,7 @@ export default function Layout() {
                     {/* Your artifact */}
                     <Link
                       to="/home"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       home
                     </Link>
@@ -111,7 +111,7 @@ export default function Layout() {
                     {/* Discover */}
                     <Link
                       to="/explore"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       explore
                     </Link>
@@ -121,13 +121,13 @@ export default function Layout() {
                     {/* Your archive */}
                     <Link
                       to="/history"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       memory lane
                     </Link>
                     <Link
                       to="/collections"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       collections
                     </Link>
@@ -136,7 +136,7 @@ export default function Layout() {
 
                     <button
                       onClick={() => { setShowIdentifyModal(true); setIsMenuOpen(false) }}
-                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       name that tune
                     </button>
@@ -146,13 +146,13 @@ export default function Layout() {
                     {/* Meta */}
                     <Link
                       to="/settings"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       settings
                     </Link>
                     <button
                       onClick={signOut}
-                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       sign out
                     </button>
