@@ -4,11 +4,18 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import { searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
+import { searchByLyrics } from '../lib/genius'
 import LyricCard from '../components/LyricCard'
 import SharePageButton from '../components/SharePageButton'
 import HorizontalCardCarousel from '../components/HorizontalCardCarousel'
 import ExploreSearchInput from '../components/ExploreSearchInput'
 import SortDropdown from '../components/SortDropdown'
+
+const TIME_OPTIONS = [
+  { key: 'all', label: 'all time' },
+  { key: 'week', label: 'this week' },
+  { key: 'today', label: 'today' },
+]
 
 export default function SongPage() {
   const { slug } = useParams()
@@ -24,6 +31,7 @@ export default function SongPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
+  const [timeRange, setTimeRange] = useState('all')
   const searchContainerRef = useRef(null)
 
   const songTitle = decodeURIComponent(slug)
@@ -122,13 +130,22 @@ export default function SongPage() {
     fetchLyrics()
   }, [songTitle])
 
-  // Fallback: fetch cover art from MusicBrainz if none in lyrics
+  // Fallback: fetch cover art from MusicBrainz, then Genius
   useEffect(() => {
     if (coverArt || loading || !artistName) return
-    searchByArtistAndSongWithCoverArt(artistName, songTitle, 1).then(results => {
-      const art = results?.[0]?.coverArtUrl
-      if (art) setCoverArt(art)
-    })
+    async function fetchCoverArt() {
+      // Try MusicBrainz first
+      const mbResults = await searchByArtistAndSongWithCoverArt(artistName, songTitle, 1)
+      const mbArt = mbResults?.[0]?.coverArtUrl
+      if (mbArt) { setCoverArt(mbArt); return }
+      // Fall back to Genius song art
+      const geniusResults = await searchByLyrics(songTitle)
+      const match = geniusResults.find(r =>
+        r.artist?.toLowerCase() === artistName.toLowerCase()
+      ) || geniusResults[0]
+      if (match?.coverArtUrl) setCoverArt(match.coverArtUrl)
+    }
+    fetchCoverArt()
   }, [coverArt, loading, artistName, songTitle])
 
   // Fetch "More from Artist" carousel
@@ -216,7 +233,7 @@ export default function SongPage() {
               <img
                 src={coverArt}
                 alt={songTitle}
-                className="w-16 h-16 rounded object-cover shadow-sm"
+                className="w-20 h-20 rounded object-cover shadow-md"
               />
             )}
             <div className="flex-1 min-w-0">
@@ -328,13 +345,39 @@ export default function SongPage() {
                     <path d="m21 21-4.3-4.3" />
                   </svg>
                 </button>
-                <div className="flex-1" />
+
+                <div className="flex items-center gap-1 flex-1">
+                  {TIME_OPTIONS.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setTimeRange(key)}
+                      className={`px-2 py-1 text-xs transition-colors ${
+                        timeRange === key
+                          ? 'text-charcoal/60'
+                          : 'text-charcoal/25 hover:text-charcoal/40'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
               </div>
             )}
 
             {(() => {
               let filtered = clusters
+              // Apply time range
+              if (timeRange !== 'all') {
+                const now = new Date()
+                const cutoff = timeRange === 'today'
+                  ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
+                  : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                filtered = filtered.filter(c =>
+                  new Date(c.representative.created_at) >= cutoff
+                )
+              }
               // Apply sort
               if (sortBy === 'newest') {
                 filtered = [...filtered].sort((a, b) =>

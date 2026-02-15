@@ -9,6 +9,12 @@ import SharePageButton from '../components/SharePageButton'
 import ExploreSearchInput from '../components/ExploreSearchInput'
 import SortDropdown from '../components/SortDropdown'
 
+const TIME_OPTIONS = [
+  { key: 'all', label: 'all time' },
+  { key: 'week', label: 'this week' },
+  { key: 'today', label: 'today' },
+]
+
 export default function ArtistPage() {
   const { slug } = useParams()
   const { user } = useAuth()
@@ -23,6 +29,7 @@ export default function ArtistPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
+  const [timeRange, setTimeRange] = useState('all')
   const searchContainerRef = useRef(null)
   const PAGE_SIZE = 20
 
@@ -234,7 +241,7 @@ export default function ArtistPage() {
               <img
                 src={artistImage}
                 alt={artistName}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-16 h-16 rounded-full object-cover shadow-md"
               />
             )}
             <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
@@ -269,7 +276,7 @@ export default function ArtistPage() {
                   key={i}
                   src={url}
                   alt=""
-                  className="w-8 h-8 rounded-sm object-cover"
+                  className="w-10 h-10 rounded object-cover shadow-sm"
                 />
               ))}
             </div>
@@ -372,13 +379,39 @@ export default function ArtistPage() {
                     <path d="m21 21-4.3-4.3" />
                   </svg>
                 </button>
-                <div className="flex-1" />
+
+                <div className="flex items-center gap-1 flex-1">
+                  {TIME_OPTIONS.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setTimeRange(key)}
+                      className={`px-2 py-1 text-xs transition-colors ${
+                        timeRange === key
+                          ? 'text-charcoal/60'
+                          : 'text-charcoal/25 hover:text-charcoal/40'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
               </div>
             )}
 
             {(() => {
               let filtered = recentClusters
+              // Apply time range
+              if (timeRange !== 'all') {
+                const now = new Date()
+                const cutoff = timeRange === 'today'
+                  ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
+                  : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                filtered = filtered.filter(c =>
+                  new Date(c.mostRecent.created_at) >= cutoff
+                )
+              }
               // Apply sort
               if (sortBy === 'resonated') {
                 filtered = [...filtered].sort((a, b) => b.totalReactions - a.totalReactions)
