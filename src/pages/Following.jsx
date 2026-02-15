@@ -63,7 +63,7 @@ export default function Following() {
   if (followsLoading || loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12">
-        <p className="text-sm text-charcoal-light/60">Loading...</p>
+        <p className="text-sm text-charcoal/30">Loading...</p>
       </div>
     )
   }

@@ -171,7 +171,7 @@ export default function Settings() {
                            text-charcoal focus:outline-none focus:border-charcoal/40"
                   placeholder="username"
                 />
-                <p className="mt-2 text-xs text-charcoal-light/60">
+                <p className="mt-2 text-xs text-charcoal/30">
                   3-20 characters, letters, numbers, and underscores only
                 </p>
               </div>
@@ -230,7 +230,7 @@ export default function Settings() {
                   <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
                     Make my profile public
                   </span>
-                  <p className="text-xs text-charcoal-light/60 mt-1">
+                  <p className="text-xs text-charcoal/30 mt-1">
                     Your current lyric and note will appear on Explore and at your @username page.
                     New lyrics will automatically be public.
                   </p>
@@ -255,7 +255,7 @@ export default function Settings() {
                       {urlCopied ? 'copied!' : 'copy'}
                     </button>
                   </div>
-                  <p className="mt-2 text-xs text-charcoal-light/60">
+                  <p className="mt-2 text-xs text-charcoal/30">
                     Your public profile URL
                   </p>
                 </div>
@@ -281,7 +281,7 @@ export default function Settings() {
                   <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
                     Auto
                   </span>
-                  <p className="text-xs text-charcoal-light/60">
+                  <p className="text-xs text-charcoal/30">
                     Match your system preference
                   </p>
                 </div>
@@ -300,7 +300,7 @@ export default function Settings() {
                   <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
                     Light
                   </span>
-                  <p className="text-xs text-charcoal-light/60">
+                  <p className="text-xs text-charcoal/30">
                     Warm cream tones
                   </p>
                 </div>
@@ -319,7 +319,7 @@ export default function Settings() {
                   <span className="text-sm text-charcoal group-hover:text-charcoal/80 transition-colors">
                     Dark
                   </span>
-                  <p className="text-xs text-charcoal-light/60">
+                  <p className="text-xs text-charcoal/30">
                     Easy on the eyes at night
                   </p>
                 </div>
@@ -336,9 +336,9 @@ export default function Settings() {
               value={user?.email || ''}
               readOnly
               className="w-full px-4 py-3 text-sm bg-cream-dark border border-charcoal/20
-                       text-charcoal-light cursor-not-allowed"
+                       text-charcoal/40 cursor-not-allowed"
             />
-            <p className="mt-2 text-xs text-charcoal-light/60">
+            <p className="mt-2 text-xs text-charcoal/30">
               Email cannot be changed at this time
             </p>
           </section>
@@ -349,7 +349,7 @@ export default function Settings() {
 
             <form onSubmit={handleUpdatePassword} className="space-y-3">
               <div>
-                <label className="block text-sm text-charcoal-light mb-2">
+                <label className="block text-sm text-charcoal/40 mb-2">
                   Current password
                 </label>
                 <input
@@ -363,7 +363,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <label className="block text-sm text-charcoal-light mb-2">
+                <label className="block text-sm text-charcoal/40 mb-2">
                   New password
                 </label>
                 <input
@@ -377,7 +377,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <label className="block text-sm text-charcoal-light mb-2">
+                <label className="block text-sm text-charcoal/40 mb-2">
                   Confirm new password
                 </label>
                 <input
@@ -415,7 +415,7 @@ export default function Settings() {
           <section className="pb-8">
             <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">delete account</h2>
 
-            <p className="text-sm text-charcoal-light mb-4">
+            <p className="text-sm text-charcoal/40 mb-4">
               To delete your account and all your lyrics, contact us.
             </p>
             <button

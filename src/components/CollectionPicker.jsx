@@ -75,7 +75,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
   }
 
   if (loading) {
-    return <div className="text-sm text-charcoal-light">Loading collections...</div>
+    return <div className="text-sm text-charcoal/30">Loading collections...</div>
   }
 
   const colorMap = {
@@ -90,7 +90,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
   return (
     <div>
       {collections.length === 0 && !showCreateForm ? (
-        <p className="text-sm text-charcoal-light/60 mb-3">
+        <p className="text-sm text-charcoal/30 mb-3">
           No collections yet. Create one to organize your lyrics.
         </p>
       ) : (
@@ -129,7 +129,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
                   </svg>
                 )}
                 {isSmart && (
-                  <span className="text-xs text-charcoal-light/60">auto</span>
+                  <span className="text-xs text-charcoal/30">auto</span>
                 )}
               </button>
             )
@@ -147,7 +147,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
             autoFocus
             className="flex-1 px-3 py-2 text-sm bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
-                       placeholder:text-charcoal-light/50 text-charcoal"
+                       placeholder:text-charcoal/30 text-charcoal"
           />
           <button
             type="submit"
@@ -163,7 +163,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
               setShowCreateForm(false)
               setNewCollectionName('')
             }}
-            className="px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+            className="px-3 py-2 text-sm text-charcoal/40 hover:text-charcoal transition-colors"
           >
             Cancel
           </button>
@@ -172,7 +172,7 @@ export default function CollectionPicker({ lyricId, onToggle }) {
         <button
           type="button"
           onClick={() => setShowCreateForm(true)}
-          className="text-sm text-charcoal-light hover:text-charcoal transition-colors"
+          className="text-sm text-charcoal/40 hover:text-charcoal transition-colors"
         >
           + Create new collection
         </button>

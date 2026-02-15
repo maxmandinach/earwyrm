@@ -114,7 +114,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
               <button
                 type="button"
                 onClick={handleClear}
-                className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
+                className="mt-2 text-xs text-charcoal/40 hover:text-charcoal transition-colors"
               >
                 Clear
               </button>

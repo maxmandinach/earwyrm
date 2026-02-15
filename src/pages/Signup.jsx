@@ -105,7 +105,7 @@ export default function Signup() {
         <div className="space-y-4">
           <div>
             <div className="flex items-center border border-charcoal/20 focus-within:border-charcoal/40">
-              <span className="pl-4 text-charcoal-light">@</span>
+              <span className="pl-4 text-charcoal/30">@</span>
               <input
                 type="text"
                 value={username}
@@ -113,10 +113,10 @@ export default function Signup() {
                 placeholder="username"
                 required
                 className="flex-1 px-2 py-3 bg-transparent focus:outline-none
-                           placeholder:text-charcoal-light/50 text-charcoal"
+                           placeholder:text-charcoal/30 text-charcoal"
               />
             </div>
-            <p className="mt-1 text-xs text-charcoal-light">
+            <p className="mt-1 text-xs text-charcoal/30">
               This will be your public URL: earwyrm.app/@{username || 'username'}
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function Signup() {
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
-                       placeholder:text-charcoal-light/50 text-charcoal"
+                       placeholder:text-charcoal/30 text-charcoal"
           />
 
           <div>
@@ -143,17 +143,17 @@ export default function Signup() {
                 minLength={6}
                 className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
                            focus:border-charcoal/40 focus:outline-none
-                           placeholder:text-charcoal-light/50 text-charcoal"
+                           placeholder:text-charcoal/30 text-charcoal"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal/40 hover:text-charcoal"
               >
                 {showPassword ? 'hide' : 'show'}
               </button>
             </div>
-            <p className="mt-1 text-xs text-charcoal-light">
+            <p className="mt-1 text-xs text-charcoal/30">
               At least 6 characters
             </p>
           </div>
@@ -168,12 +168,12 @@ export default function Signup() {
               minLength={6}
               className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
                          focus:border-charcoal/40 focus:outline-none
-                         placeholder:text-charcoal-light/50 text-charcoal"
+                         placeholder:text-charcoal/30 text-charcoal"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal/40 hover:text-charcoal"
             >
               {showConfirmPassword ? 'hide' : 'show'}
             </button>
@@ -192,7 +192,7 @@ export default function Signup() {
         </button>
       </form>
 
-      <p className="mt-8 text-sm text-charcoal-light">
+      <p className="mt-8 text-sm text-charcoal/40">
         already have an account?{' '}
         <Link to="/login" className="text-charcoal underline hover:no-underline">
           sign in

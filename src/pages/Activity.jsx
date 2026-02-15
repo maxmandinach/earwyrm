@@ -101,7 +101,7 @@ export default function Activity() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-charcoal-light text-sm">Loading...</p>
+        <p className="text-charcoal/30 text-sm">Loading...</p>
       </div>
     )
   }

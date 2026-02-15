@@ -284,7 +284,7 @@ export default function Landing() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center border border-charcoal/20 focus-within:border-charcoal/40">
-                    <span className="pl-4 text-charcoal-light">@</span>
+                    <span className="pl-4 text-charcoal/30">@</span>
                     <input
                       type="text"
                       value={username}
@@ -292,10 +292,10 @@ export default function Landing() {
                       placeholder="username"
                       required
                       className="flex-1 px-2 py-3 bg-transparent focus:outline-none
-                                 placeholder:text-charcoal-light/50 text-charcoal"
+                                 placeholder:text-charcoal/30 text-charcoal"
                     />
                   </div>
-                  <p className="mt-1 text-xs text-charcoal-light">
+                  <p className="mt-1 text-xs text-charcoal/30">
                     This will be your public URL: earwyrm.app/@{username || 'username'}
                     <br />
                     Your profile and lyric are private by default.
@@ -310,7 +310,7 @@ export default function Landing() {
                   required
                   className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                              focus:border-charcoal/40 focus:outline-none
-                             placeholder:text-charcoal-light/50 text-charcoal"
+                             placeholder:text-charcoal/30 text-charcoal"
                 />
 
                 <div>
@@ -324,17 +324,17 @@ export default function Landing() {
                       minLength={6}
                       className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
                                  focus:border-charcoal/40 focus:outline-none
-                                 placeholder:text-charcoal-light/50 text-charcoal"
+                                 placeholder:text-charcoal/30 text-charcoal"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal/40 hover:text-charcoal"
                     >
                       {showPassword ? 'hide' : 'show'}
                     </button>
                   </div>
-                  <p className="mt-1 text-xs text-charcoal-light">
+                  <p className="mt-1 text-xs text-charcoal/30">
                     At least 6 characters
                   </p>
                 </div>
@@ -349,12 +349,12 @@ export default function Landing() {
                     minLength={6}
                     className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
                                focus:border-charcoal/40 focus:outline-none
-                               placeholder:text-charcoal-light/50 text-charcoal"
+                               placeholder:text-charcoal/30 text-charcoal"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal-light hover:text-charcoal"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal/40 hover:text-charcoal"
                   >
                     {showConfirmPassword ? 'hide' : 'show'}
                   </button>
@@ -383,7 +383,7 @@ export default function Landing() {
               >
                 &larr; Edit lyric
               </button>
-              <p className="text-charcoal-light">
+              <p className="text-charcoal/40">
                 already have an account?{' '}
                 <Link to="/login" className="text-charcoal underline hover:no-underline">
                   sign in
@@ -785,7 +785,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="px-4 py-6 border-t border-charcoal/10">
-        <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal-light/60">
+        <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal/30">
           <Link to="/privacy" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Privacy
           </Link>

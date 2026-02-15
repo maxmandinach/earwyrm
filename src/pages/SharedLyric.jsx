@@ -82,7 +82,7 @@ export default function SharedLyric() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent">
-        <div className="text-charcoal-light text-sm">Loading...</div>
+        <div className="text-charcoal/30 text-sm">Loading...</div>
       </div>
     )
   }
@@ -93,7 +93,7 @@ export default function SharedLyric() {
         <p className="text-charcoal mb-4">{error}</p>
         <Link
           to={user ? "/home" : "/"}
-          className="text-sm text-charcoal-light underline hover:no-underline"
+          className="text-sm text-charcoal/40 underline hover:no-underline"
         >
           {user ? 'Go to your page' : 'Explore lyrics'}
         </Link>

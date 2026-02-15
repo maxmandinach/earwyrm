@@ -71,7 +71,7 @@ export default function Layout() {
               <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-3 text-charcoal-light hover:text-charcoal transition-colors"
+                className="p-3 text-charcoal/40 hover:text-charcoal transition-colors"
                 aria-label="Menu"
               >
                 <svg
@@ -111,13 +111,13 @@ export default function Layout() {
                     {/* Discover */}
                     <Link
                       to="/explore"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       explore
                     </Link>
                     <Link
                       to="/following"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       feed
                     </Link>
@@ -127,13 +127,13 @@ export default function Layout() {
                     {/* Your archive */}
                     <Link
                       to="/history"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       memory lane
                     </Link>
                     <Link
                       to="/collections"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       collections
                     </Link>
@@ -142,7 +142,7 @@ export default function Layout() {
 
                     <button
                       onClick={() => { setShowIdentifyModal(true); setIsMenuOpen(false) }}
-                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       name that tune
                     </button>
@@ -152,13 +152,13 @@ export default function Layout() {
                     {/* Meta */}
                     <Link
                       to="/settings"
-                      className="block px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="block px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       settings
                     </Link>
                     <button
                       onClick={signOut}
-                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal-light hover:text-charcoal hover:bg-charcoal/5 transition-colors"
+                      className="w-full text-left px-4 py-3 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
                     >
                       sign out
                     </button>
@@ -178,7 +178,7 @@ export default function Layout() {
       </main>
 
       <footer className="px-4 py-6 border-t border-charcoal/10">
-        <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal-light/60">
+        <div className="flex items-center justify-center gap-4 text-sm sm:text-xs text-charcoal/30">
           <Link to="/privacy" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Privacy
           </Link>

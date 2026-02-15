@@ -9,7 +9,7 @@ export default function Terms() {
         <div className="space-y-6 text-sm text-charcoal leading-relaxed">
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Your Content</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               You retain ownership of all lyrics and content you share on earwyrm. By using this
               service, you grant us permission to store and display your content as needed to
               operate the service.
@@ -18,7 +18,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">User Responsibility</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               You are responsible for the content you post. We are not responsible for user-generated
               content and do not endorse or verify the accuracy of lyrics shared by users.
             </p>
@@ -26,7 +26,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Account Termination</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               We reserve the right to suspend or terminate accounts that violate these terms or
               engage in abusive behavior. You may delete your account at any time through settings.
             </p>
@@ -34,7 +34,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Service "As Is"</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               earwyrm is provided "as is" without warranties of any kind. We strive to keep the
               service running smoothly but cannot guarantee uninterrupted access.
             </p>
@@ -42,7 +42,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Limitation of Liability</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               To the fullest extent permitted by law, earwyrm shall not be liable for any indirect,
               incidental, or consequential damages arising from your use of the service.
             </p>
@@ -50,14 +50,14 @@ export default function Terms() {
 
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Changes to Terms</h2>
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               We may update these terms from time to time. Continued use of the service constitutes
               acceptance of any changes.
             </p>
           </section>
 
           <section className="pt-4">
-            <p className="text-xs text-charcoal-light/60">
+            <p className="text-xs text-charcoal/30">
               Last updated: January 2026
             </p>
           </section>
@@ -65,7 +65,7 @@ export default function Terms() {
 
         <Link
           to="/"
-          className="inline-block mt-12 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+          className="inline-block mt-12 text-sm text-charcoal/40 hover:text-charcoal transition-colors"
         >
           ← Back
         </Link>

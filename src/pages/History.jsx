@@ -348,10 +348,11 @@ export default function History() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
         <div className="text-center space-y-4 max-w-md">
-          <p className="text-sm text-charcoal/40 leading-relaxed">
+          <p className="text-xl mb-2"
+             style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}>
             Your moments will gather here
           </p>
-          <p className="text-xs text-charcoal/30">
+          <p className="text-sm text-charcoal/30">
             Each lyric that moves through your mind leaves a trace
           </p>
         </div>

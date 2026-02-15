@@ -14,7 +14,6 @@
 
   /* Text - warm blacks and grays, no pure black */
   --color-charcoal: #2C2825;
-  --color-charcoal-light: #6B635A;
   --color-charcoal-muted: #9C948A;
 
   /* Accent - soft taupe for brand elements */
@@ -231,7 +230,6 @@ html.dark {
   --color-cream-dark: #1F1D1A;
   --color-cream-deeper: #2D2A27;
   --color-charcoal: #F5F0E8;
-  --color-charcoal-light: #D0C6BC;
   --color-charcoal-muted: #A89E94;
   --color-accent: #C8B8A8;
   --color-paper: #252220;
@@ -278,10 +276,6 @@ html.dark .bg-white {
 /* Text color overrides */
 html.dark .text-charcoal {
   color: var(--text-primary) !important;
-}
-
-html.dark .text-charcoal-light {
-  color: var(--text-secondary) !important;
 }
 
 html.dark .text-charcoal-muted {
@@ -388,16 +382,6 @@ html.dark .text-charcoal\/60 {
 
 html.dark .text-charcoal\/70 {
   color: #DDD6CE !important;
-}
-
-html.dark .text-charcoal-light\/40,
-html.dark .text-charcoal-light\/50 {
-  color: #C0B8AE !important;
-}
-
-html.dark .text-charcoal-light\/60,
-html.dark .text-charcoal-light\/70 {
-  color: #D5CCC2 !important;
 }
 
 /* Border opacity classes */

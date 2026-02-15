@@ -169,7 +169,7 @@ export default function ArtistPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-charcoal-light text-sm">Loading...</p>
+        <p className="text-charcoal/30 text-sm">Loading...</p>
       </div>
     )
   }
@@ -184,7 +184,7 @@ export default function ArtistPage() {
         <div className="mb-6">
           <Link
             to="/explore"
-            className="text-charcoal-light hover:text-charcoal transition-colors text-sm mb-4 inline-block"
+            className="text-charcoal/40 hover:text-charcoal transition-colors text-sm mb-4 inline-block"
           >
             ← Explore
           </Link>

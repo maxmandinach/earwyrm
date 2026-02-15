@@ -121,7 +121,7 @@ export default function SearchBar() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="p-3 text-charcoal-light hover:text-charcoal transition-colors"
+        className="p-3 text-charcoal/40 hover:text-charcoal transition-colors"
         aria-label="Search"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -108,7 +108,7 @@ export default function PublicProfile({ showHistory = false }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent">
-        <div className="text-charcoal-light text-sm">Loading...</div>
+        <div className="text-charcoal/30 text-sm">Loading...</div>
       </div>
     )
   }
@@ -119,7 +119,7 @@ export default function PublicProfile({ showHistory = false }) {
         <p className="text-charcoal mb-4">{error}</p>
         <Link
           to={user ? "/home" : "/"}
-          className="text-sm text-charcoal-light underline hover:no-underline"
+          className="text-sm text-charcoal/40 underline hover:no-underline"
         >
           {user ? 'Go to your page' : 'Explore lyrics'}
         </Link>
@@ -154,7 +154,7 @@ export default function PublicProfile({ showHistory = false }) {
         {isPrivate ? (
           <div className="text-center max-w-md">
             <p className="text-lg text-charcoal mb-2">This lyric is private</p>
-            <p className="text-sm text-charcoal-light">
+            <p className="text-sm text-charcoal/40">
               @{username} hasn't made their current lyric visible yet
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function PublicProfile({ showHistory = false }) {
           </div>
         ) : (
           <div className="text-center max-w-md">
-            <p className="text-charcoal-light">
+            <p className="text-charcoal/40">
               @{username} hasn't shared a lyric yet
             </p>
           </div>

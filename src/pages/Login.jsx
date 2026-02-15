@@ -46,7 +46,7 @@ export default function Login() {
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
-                       placeholder:text-charcoal-light/50 text-charcoal"
+                       placeholder:text-charcoal/30 text-charcoal"
           />
 
           <input
@@ -57,7 +57,7 @@ export default function Login() {
             required
             className="w-full px-4 py-3 bg-transparent border border-charcoal/20
                        focus:border-charcoal/40 focus:outline-none
-                       placeholder:text-charcoal-light/50 text-charcoal"
+                       placeholder:text-charcoal/30 text-charcoal"
           />
         </div>
 
@@ -73,7 +73,7 @@ export default function Login() {
         </button>
       </form>
 
-      <p className="mt-8 text-sm text-charcoal-light">
+      <p className="mt-8 text-sm text-charcoal/40">
         don't have an account?{' '}
         <Link to="/signup" className="text-charcoal underline hover:no-underline">
           sign up

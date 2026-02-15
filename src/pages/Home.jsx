@@ -82,7 +82,7 @@ function EmptyState({ onSetLyric, revealed }) {
       </div>
 
       <p
-        className="mt-12 text-xs text-charcoal-light/60 text-center max-w-sm transition-all duration-500 ease-out"
+        className="mt-12 text-xs text-charcoal/30 text-center max-w-sm transition-all duration-500 ease-out"
         style={{
           opacity: revealed ? 1 : 0,
           transitionDelay: '600ms',

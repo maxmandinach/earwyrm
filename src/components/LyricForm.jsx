@@ -286,7 +286,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             setSongTitle('')
             setArtistName('')
           }}
-          className="mt-2 text-xs text-charcoal-light hover:text-charcoal transition-colors"
+          className="mt-2 text-xs text-charcoal/40 hover:text-charcoal transition-colors"
         >
           Clear
         </button>

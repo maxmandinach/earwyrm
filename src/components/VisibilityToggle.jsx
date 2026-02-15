@@ -6,14 +6,14 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
   return (
     <ModalSheet onClose={onCancel} title="Make this lyric public?" maxWidth="max-w-sm">
       <div className="p-5 sm:p-6">
-        <p className="text-sm text-charcoal-light mb-4">
+        <p className="text-sm text-charcoal/40 mb-4">
           This will share your lyric (and note, if you have one) to:
         </p>
-        <ul className="text-sm text-charcoal-light mb-6 space-y-1 ml-4">
+        <ul className="text-sm text-charcoal/40 mb-6 space-y-1 ml-4">
           <li>• <strong>Explore</strong> — others can discover it</li>
           <li>• <strong>Your profile</strong> — visible at your @username</li>
         </ul>
-        <p className="text-xs text-charcoal-light/60 mb-6">
+        <p className="text-xs text-charcoal/30 mb-6">
           Want all your lyrics to be public by default?{' '}
           <Link to="/settings" className="underline hover:text-charcoal">
             Change in Settings
@@ -22,7 +22,7 @@ function ConfirmPublicModal({ onConfirm, onCancel }) {
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-6 py-2 text-sm text-charcoal-light hover:text-charcoal
+            className="px-6 py-2 text-sm text-charcoal/40 hover:text-charcoal
                        border border-charcoal/20 hover:border-charcoal/40
                        transition-colors"
           >
@@ -49,7 +49,7 @@ export default function VisibilityToggle({ isPublic, profileIsPublic, onChange, 
     return (
       <Link
         to="/settings"
-        className="flex items-center gap-1.5 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+        className="flex items-center gap-1.5 text-sm text-charcoal/40 hover:text-charcoal transition-colors"
         title="Your profile is public. Change in Settings."
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -81,7 +81,7 @@ export default function VisibilityToggle({ isPublic, profileIsPublic, onChange, 
         type="button"
         onClick={handleToggle}
         disabled={disabled}
-        className="flex items-center gap-1.5 text-sm text-charcoal-light hover:text-charcoal
+        className="flex items-center gap-1.5 text-sm text-charcoal/40 hover:text-charcoal
                    transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         title={isPublic ? 'On Explore + your profile' : 'Only visible via share link'}
       >
