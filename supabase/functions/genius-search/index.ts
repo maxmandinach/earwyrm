@@ -41,6 +41,7 @@ serve(async (req) => {
       title: hit.result?.title,
       artist: hit.result?.primary_artist?.name,
       albumArt: hit.result?.song_art_image_thumbnail_url,
+      artistImageUrl: hit.result?.primary_artist?.image_url,
       geniusUrl: hit.result?.url,
     }))
 

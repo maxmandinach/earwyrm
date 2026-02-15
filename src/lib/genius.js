@@ -32,3 +32,37 @@ export async function searchByLyrics(lyrics) {
     return []
   }
 }
+
+/**
+ * Search Genius for an artist image by artist name.
+ * Returns the first result's artist image URL, or null.
+ */
+export async function searchArtistImage(artistName) {
+  if (!artistName || artistName.trim().length < 2) return null
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/genius-search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ lyrics: artistName.trim() }),
+    })
+
+    if (!res.ok) return null
+
+    const data = await res.json()
+    const results = data.results || []
+    if (results.length === 0) return null
+
+    // Find first result whose artist name matches (case-insensitive)
+    const match = results.find(r =>
+      r.artist?.toLowerCase() === artistName.trim().toLowerCase()
+    )
+    return match?.artistImageUrl || results[0]?.artistImageUrl || null
+  } catch (err) {
+    console.error('Genius artist image search error:', err)
+    return null
+  }
+}

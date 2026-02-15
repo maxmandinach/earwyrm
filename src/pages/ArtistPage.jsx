@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
+import { searchArtistImage } from '../lib/genius'
 import LyricCard from '../components/LyricCard'
 import SharePageButton from '../components/SharePageButton'
 
@@ -16,6 +17,7 @@ export default function ArtistPage() {
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
+  const [artistImage, setArtistImage] = useState(null)
   const PAGE_SIZE = 20
 
   const artistName = decodeURIComponent(slug)
@@ -23,6 +25,19 @@ export default function ArtistPage() {
 
   // Get unique users count
   const uniqueUsers = new Set(lyrics.map(l => l.user_id)).size
+
+  // Aggregate stats
+  const totalResonances = lyrics.reduce((sum, l) => sum + (l.reaction_count || 0), 0)
+  const totalComments = lyrics.reduce((sum, l) => sum + (l.comment_count || 0), 0)
+
+  // Get unique album covers from lyrics
+  const albumCovers = useMemo(() => {
+    const seen = new Set()
+    return lyrics
+      .filter(l => l.cover_art_url && !seen.has(l.cover_art_url) && seen.add(l.cover_art_url))
+      .map(l => l.cover_art_url)
+      .slice(0, 5)
+  }, [lyrics])
 
   // Get unique songs
   const songMap = {}
@@ -50,6 +65,13 @@ export default function ArtistPage() {
       setIsTogglingFollow(false)
     }
   }
+
+  // Fetch artist image from Genius
+  useEffect(() => {
+    searchArtistImage(artistName).then(url => {
+      if (url) setArtistImage(url)
+    })
+  }, [artistName])
 
   useEffect(() => {
     async function fetchLyrics() {
@@ -189,6 +211,13 @@ export default function ArtistPage() {
             ← Explore
           </Link>
           <div className="flex items-center gap-3 mb-2">
+            {artistImage && (
+              <img
+                src={artistImage}
+                alt={artistName}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            )}
             <h1
               className="text-2xl text-charcoal"
               style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
@@ -196,23 +225,46 @@ export default function ArtistPage() {
               {artistName}
             </h1>
             {user && (
-              <button
-                onClick={handleToggleFollow}
-                disabled={isTogglingFollow}
-                className={`px-3 py-1 text-xs border transition-colors ${
-                  currentlyFollowing
-                    ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
-                    : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
-                }`}
-              >
-                {currentlyFollowing ? 'following' : 'follow'}
-              </button>
+              <div className="flex flex-col items-start">
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={isTogglingFollow}
+                  className={`px-3 py-1 text-xs border transition-colors ${
+                    currentlyFollowing
+                      ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
+                      : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
+                  }`}
+                >
+                  {currentlyFollowing ? 'following' : 'follow'}
+                </button>
+                {!currentlyFollowing && (
+                  <span className="text-[10px] text-charcoal/20 mt-0.5">new lyrics appear in your feed</span>
+                )}
+              </div>
             )}
             <SharePageButton title={`${artistName} lyrics on earwyrm`} />
           </div>
+
+          {/* Album covers row */}
+          {albumCovers.length > 0 && (
+            <div className="flex gap-1.5 mb-2">
+              {albumCovers.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="w-8 h-8 rounded-sm object-cover"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Aggregate stats */}
           <p className="text-xs text-charcoal/30">
-            {lyrics.length} {lyrics.length === 1 ? 'lyric' : 'lyrics'} shared
-            {uniqueUsers > 1 ? ` by ${uniqueUsers} people` : ''}
+            {lyrics.length} {lyrics.length === 1 ? 'lyric' : 'lyrics'}
+            {uniqueUsers > 1 ? ` · ${uniqueUsers} people` : ''}
+            {totalResonances > 0 ? ` · ${totalResonances} resonance${totalResonances === 1 ? '' : 's'}` : ''}
+            {totalComments > 0 ? ` · ${totalComments} comment${totalComments === 1 ? '' : 's'}` : ''}
           </p>
         </div>
 

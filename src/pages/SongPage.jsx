@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
+import { searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
 import LyricCard from '../components/LyricCard'
 import SharePageButton from '../components/SharePageButton'
 import HorizontalCardCarousel from '../components/HorizontalCardCarousel'
@@ -17,6 +18,7 @@ export default function SongPage() {
   const [loading, setLoading] = useState(true)
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
   const [moreSongs, setMoreSongs] = useState([])
+  const [coverArt, setCoverArt] = useState(null)
 
   const songTitle = decodeURIComponent(slug)
   const artistHint = searchParams.get('artist')
@@ -24,6 +26,17 @@ export default function SongPage() {
 
   // Derive artist name from first lyric if not in query param
   const artistName = artistHint || (lyrics.length > 0 ? lyrics[0].artist_name : null)
+
+  // Album name from first lyric that has one
+  const albumName = useMemo(() => {
+    const withAlbum = lyrics.find(l => l.album_name)
+    return withAlbum?.album_name || null
+  }, [lyrics])
+
+  // Aggregate stats
+  const totalResonances = lyrics.reduce((sum, l) => sum + (l.reaction_count || 0), 0)
+  const totalComments = lyrics.reduce((sum, l) => sum + (l.comment_count || 0), 0)
+  const uniqueUsers = new Set(lyrics.map(l => l.user_id)).size
 
   async function handleToggleFollow() {
     if (!user || isTogglingFollow) return
@@ -56,6 +69,12 @@ export default function SongPage() {
         if (error) throw error
         setLyrics(data || [])
 
+        // Extract cover art from first lyric that has one
+        const withCover = (data || []).find(l => l.cover_art_url)
+        if (withCover) {
+          setCoverArt(withCover.cover_art_url)
+        }
+
         // Fetch all public notes for these lyrics
         if (data && data.length > 0) {
           const lyricIds = data.map(l => l.id)
@@ -83,6 +102,15 @@ export default function SongPage() {
 
     fetchLyrics()
   }, [songTitle])
+
+  // Fallback: fetch cover art from MusicBrainz if none in lyrics
+  useEffect(() => {
+    if (coverArt || loading || !artistName) return
+    searchByArtistAndSongWithCoverArt(artistName, songTitle, 1).then(results => {
+      const art = results?.[0]?.coverArtUrl
+      if (art) setCoverArt(art)
+    })
+  }, [coverArt, loading, artistName, songTitle])
 
   // Fetch "More from Artist" carousel
   useEffect(() => {
@@ -165,39 +193,60 @@ export default function SongPage() {
             </Link>
           )}
           <div className="flex items-center gap-3 mb-2">
-            <h1
-              className="text-2xl text-charcoal"
-              style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
-            >
-              "{songTitle}"
-            </h1>
-            {user && (
-              <button
-                onClick={handleToggleFollow}
-                disabled={isTogglingFollow}
-                className={`px-3 py-1 text-xs border transition-colors ${
-                  currentlyFollowing
-                    ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
-                    : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
-                }`}
+            {coverArt && (
+              <img
+                src={coverArt}
+                alt={songTitle}
+                className="w-16 h-16 rounded object-cover shadow-sm"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <h1
+                className="text-2xl text-charcoal"
+                style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
               >
-                {currentlyFollowing ? 'following' : 'follow'}
-              </button>
+                "{songTitle}"
+              </h1>
+              {artistName && (
+                <p className="text-sm text-charcoal/50">
+                  <Link
+                    to={`/artist/${encodeURIComponent(artistName.toLowerCase())}`}
+                    className="hover:text-charcoal transition-colors"
+                  >
+                    {artistName}
+                  </Link>
+                </p>
+              )}
+              {albumName && (
+                <p className="text-xs text-charcoal/30 italic">from {albumName}</p>
+              )}
+            </div>
+            {user && (
+              <div className="flex flex-col items-start shrink-0">
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={isTogglingFollow}
+                  className={`px-3 py-1 text-xs border transition-colors ${
+                    currentlyFollowing
+                      ? 'border-charcoal/30 text-charcoal/50 hover:border-charcoal/50'
+                      : 'border-charcoal/20 text-charcoal/40 hover:border-charcoal/40 hover:text-charcoal/60'
+                  }`}
+                >
+                  {currentlyFollowing ? 'following' : 'follow'}
+                </button>
+                {!currentlyFollowing && (
+                  <span className="text-[10px] text-charcoal/20 mt-0.5">new lyrics appear in your feed</span>
+                )}
+              </div>
             )}
             <SharePageButton title={`"${songTitle}" lyrics on earwyrm`} />
           </div>
-          {artistName && (
-            <p className="text-sm text-charcoal/50 mb-1">
-              <Link
-                to={`/artist/${encodeURIComponent(artistName.toLowerCase())}`}
-                className="hover:text-charcoal transition-colors"
-              >
-                {artistName}
-              </Link>
-            </p>
-          )}
+          {/* Aggregate stats */}
           <p className="text-xs text-charcoal/30">
             {lyrics.length} {lyrics.length === 1 ? 'lyric' : 'lyrics'} shared
+            {uniqueUsers > 1 ? ` · ${uniqueUsers} people` : ''}
+            {totalResonances > 0 ? ` · ${totalResonances} resonance${totalResonances === 1 ? '' : 's'}` : ''}
+            {totalComments > 0 ? ` · ${totalComments} comment${totalComments === 1 ? '' : 's'}` : ''}
           </p>
         </div>
 

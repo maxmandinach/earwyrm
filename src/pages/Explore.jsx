@@ -11,7 +11,7 @@ export default function Explore() {
   const { filterType, filterValue } = useParams()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
-  const { isFollowing, follow, unfollow } = useFollow()
+  const { isFollowing, follow, unfollow, follows } = useFollow()
   const [lyrics, setLyrics] = useState([])
   const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
@@ -20,6 +20,7 @@ export default function Explore() {
   const [isTogglingFollow, setIsTogglingFollow] = useState(false)
   const [trendingTags, setTrendingTags] = useState([])
   const [sortBy, setSortBy] = useState('newest')
+  const [scope, setScope] = useState('all')
 
   const decodedFilterValue = filterValue ? decodeURIComponent(filterValue) : null
   const songArtist = filterType === 'song' && lyrics.length > 0 ? lyrics[0].artist_name : null
@@ -27,6 +28,9 @@ export default function Explore() {
   const currentlyFollowing = filterType && decodedFilterValue
     ? isFollowing(filterType, decodedFilterValue)
     : false
+
+  // Determine if scope toggle should show
+  const showScopeToggle = !filterType && user && follows.length > 0
 
   async function handleToggleFollow() {
     if (!filterType || !decodedFilterValue || isTogglingFollow) return
@@ -64,7 +68,7 @@ export default function Explore() {
           })
           const sorted = Object.entries(tagCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 20)
+            .slice(0, 10)
             .map(([tag, count]) => ({ tag, count }))
           setTrendingTags(sorted)
         }
@@ -154,7 +158,8 @@ export default function Explore() {
     return 'explore'
   }
 
-  const displayedLyrics = searchQuery.trim()
+  // Apply search filter
+  let displayedLyrics = searchQuery.trim()
     ? lyrics.filter(l =>
         l.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
         l.song_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -162,6 +167,20 @@ export default function Explore() {
         l.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : lyrics
+
+  // Apply scope filter (my follows)
+  if (scope === 'follows' && !filterType) {
+    const artistFollows = follows.filter(f => f.filter_type === 'artist').map(f => f.filter_value)
+    const songFollows = follows.filter(f => f.filter_type === 'song').map(f => f.filter_value)
+    const tagFollows = follows.filter(f => f.filter_type === 'tag').map(f => f.filter_value)
+
+    displayedLyrics = displayedLyrics.filter(l => {
+      if (artistFollows.some(a => l.artist_name?.toLowerCase() === a.toLowerCase())) return true
+      if (songFollows.some(s => l.song_title?.toLowerCase() === s.toLowerCase())) return true
+      if (tagFollows.some(t => l.tags?.some(lt => lt.toLowerCase() === t.toLowerCase()))) return true
+      return false
+    })
+  }
 
   const isAnon = !user
 
@@ -268,6 +287,29 @@ export default function Explore() {
           )}
         </div>
 
+        {/* Scope toggle — only on main explore for logged-in users with follows */}
+        {showScopeToggle && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xs text-charcoal/30">show:</span>
+            {[
+              { key: 'all', label: 'all' },
+              { key: 'follows', label: 'my follows' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setScope(key)}
+                className={`px-3 py-1 text-xs border transition-colors ${
+                  scope === key
+                    ? 'border-charcoal/40 text-charcoal/70'
+                    : 'border-charcoal/10 text-charcoal/30 hover:border-charcoal/20'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Moods / trending tags - only show on main explore page */}
         {!filterType && trendingTags.length > 0 && (
           <div className="mb-4">
@@ -336,11 +378,13 @@ export default function Explore() {
               color: 'var(--text-secondary, #6B635A)',
             }}
           >
-            {searchQuery ? 'No matches' : filterType ? 'No lyrics here yet' : 'Nothing to explore yet'}
+            {searchQuery ? 'No matches' : scope === 'follows' ? 'Nothing from your follows yet' : filterType ? 'No lyrics here yet' : 'Nothing to explore yet'}
           </p>
           <p className="text-sm text-charcoal/30">
             {searchQuery
               ? 'Try a different search'
+              : scope === 'follows'
+              ? 'Switch to "all" or follow more artists and tags'
               : filterType
               ? 'Be the first to share one'
               : 'Lyrics shared publicly will appear here'}
