@@ -11,6 +11,12 @@ import ModalSheet from './ModalSheet'
 const PAGE_SIZE = 20
 const INLINE_THRESHOLD = 6
 
+const TIME_OPTIONS = [
+  { key: 'all', label: 'all time' },
+  { key: 'week', label: 'this week' },
+  { key: 'today', label: 'today' },
+]
+
 export default function ExploreFollowing() {
   const { user } = useAuth()
   const { follows, loading: followsLoading } = useFollow()
@@ -20,6 +26,7 @@ export default function ExploreFollowing() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
+  const [timeRange, setTimeRange] = useState('all')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [activeFilterIds, setActiveFilterIds] = useState(null) // null = all
   const [showFilterSheet, setShowFilterSheet] = useState(false)
@@ -119,6 +126,17 @@ export default function ExploreFollowing() {
         l._matchingFollowIds.some(id => activeFilterIds.has(id))
       )
 
+  // Apply time range filter
+  if (timeRange !== 'all') {
+    const now = new Date()
+    const cutoff = timeRange === 'today'
+      ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    displayedLyrics = displayedLyrics.filter(l =>
+      new Date(l.created_at) >= cutoff
+    )
+  }
+
   // Apply search filter
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase()
@@ -170,6 +188,7 @@ export default function ExploreFollowing() {
   }
 
   const activeCount = activeFilterIds === null ? follows.length : activeFilterIds.size
+  const hasActiveFilter = activeFilterIds !== null
 
   // Chip display label
   function getChipLabel(f) {
@@ -192,7 +211,9 @@ export default function ExploreFollowing() {
               onClick={() => handleToggleFilter(f.id)}
               className={`px-3 py-2 text-xs border rounded-full transition-colors whitespace-nowrap shrink-0 ${
                 isChipActive(f)
-                  ? 'border-charcoal/40 text-charcoal/70 bg-charcoal/5'
+                  ? hasActiveFilter
+                    ? 'border-charcoal/40 text-charcoal/70 bg-charcoal/5'
+                    : 'border-charcoal/10 text-charcoal/50 bg-transparent'
                   : 'border-charcoal/10 text-charcoal/30 bg-transparent'
               }`}
             >
@@ -243,7 +264,7 @@ export default function ExploreFollowing() {
           />
         </div>
       ) : (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => setSearchOpen(true)}
             className="p-2 -ml-2 text-charcoal/30 hover:text-charcoal/60 transition-colors"
@@ -256,6 +277,24 @@ export default function ExploreFollowing() {
               <path d="m21 21-4.3-4.3" />
             </svg>
           </button>
+
+          {/* Time range pills */}
+          <div className="flex items-center gap-1 flex-1">
+            {TIME_OPTIONS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTimeRange(key)}
+                className={`px-2 py-1 text-xs transition-colors ${
+                  timeRange === key
+                    ? 'text-charcoal/60'
+                    : 'text-charcoal/25 hover:text-charcoal/40'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
         </div>
       )}
@@ -283,10 +322,10 @@ export default function ExploreFollowing() {
             className="text-xl mb-2"
             style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
           >
-            {searchQuery ? 'No matches' : activeCount === 0 ? 'No filters selected' : 'Nothing new yet'}
+            {searchQuery ? 'No matches' : activeCount === 0 ? 'No filters selected' : timeRange !== 'all' ? 'Nothing recent' : 'Nothing new yet'}
           </p>
           <p className="text-sm text-charcoal/30">
-            {searchQuery ? 'Try a different search' : activeCount === 0 ? 'Select some follows to see their lyrics' : 'New public lyrics from your follows will appear here'}
+            {searchQuery ? 'Try a different search' : activeCount === 0 ? 'Select some follows to see their lyrics' : timeRange !== 'all' ? 'Try expanding the time range' : 'New public lyrics from your follows will appear here'}
           </p>
         </div>
       ) : (
