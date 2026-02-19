@@ -31,6 +31,7 @@ export default function SharedLyric() {
   const { token } = useParams()
   const [searchParams] = useSearchParams()
   const ref = searchParams.get('ref')
+  const highlightCommentId = searchParams.get('cid')
   const { user } = useAuth()
   const [lyric, setLyric] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -151,6 +152,7 @@ export default function SharedLyric() {
               profileIsPublic={profile?.is_public}
               initialShowComments={ref === 'comment'}
               highlightRef={ref}
+              highlightCommentId={highlightCommentId}
             />
           )}
         </div>

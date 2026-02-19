@@ -70,7 +70,9 @@ function getNotificationText(n) {
 
 function getNotificationLink(n) {
   if (n.share_token) {
-    const ref = n.type === 'comment' ? '?ref=comment' : n.type === 'reaction' ? '?ref=reaction' : ''
+    const ref = n.type === 'comment'
+      ? `?ref=comment${n.comment_id ? `&cid=${n.comment_id}` : ''}`
+      : n.type === 'reaction' ? '?ref=reaction' : ''
     return `/s/${n.share_token}${ref}`
   }
   if (n.type === 'collection_add' && n.collection_id) {

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { formatRelativeTime } from '../lib/utils'
 
-export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt }) {
+export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt, highlightCommentId = null }) {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(startOpen)
   const [comments, setComments] = useState([])
@@ -12,6 +12,15 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [highlightedId, setHighlightedId] = useState(highlightCommentId)
+
+  useEffect(() => {
+    if (highlightCommentId) {
+      setHighlightedId(highlightCommentId)
+      const timer = setTimeout(() => setHighlightedId(null), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightCommentId])
 
   useEffect(() => {
     if (!isOpen || !lyricId) return
@@ -114,7 +123,11 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
       {/* Comments first */}
       <div className="space-y-3">
         {topLevel.map((comment) => (
-          <div key={comment.id}>
+          <div
+            key={comment.id}
+            className={comment.id === highlightedId ? 'notification-highlight rounded-lg' : ''}
+            style={comment.id === highlightedId ? { padding: '6px 8px', margin: '-6px -8px' } : undefined}
+          >
             <div className="flex gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -164,7 +177,11 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
             {replies[comment.id] && (
               <div className="ml-6 mt-2 space-y-2 border-l border-charcoal/5 pl-3">
                 {replies[comment.id].map((reply) => (
-                  <div key={reply.id}>
+                  <div
+                    key={reply.id}
+                    className={reply.id === highlightedId ? 'notification-highlight rounded-lg' : ''}
+                    style={reply.id === highlightedId ? { padding: '4px 6px', margin: '-4px -6px' } : undefined}
+                  >
                     <div className="flex items-center gap-2">
                       {reply.profiles?.username && (
                         <Link

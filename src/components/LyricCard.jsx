@@ -40,6 +40,7 @@ export default function LyricCard({
   // Notification click-through
   initialShowComments = false,
   highlightRef = null,
+  highlightCommentId = null,
 }) {
   const theme = signatureStyle
   const { ref: revealRef, revealed } = useRevealOnScroll()
@@ -412,6 +413,7 @@ export default function LyricCard({
             initialCount={lyric.comment_count || 0}
             startOpen
             onSignupPrompt={isAnon ? () => setShowSignup(true) : undefined}
+            highlightCommentId={highlightCommentId}
           />
         </div>
       )}
