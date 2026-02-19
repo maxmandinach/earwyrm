@@ -37,6 +37,9 @@ export default function LyricCard({
   // Visual variant
   hero = false,
   compact = false,
+  // Notification click-through
+  initialShowComments = false,
+  highlightRef = null,
 }) {
   const theme = signatureStyle
   const { ref: revealRef, revealed } = useRevealOnScroll()
@@ -49,8 +52,17 @@ export default function LyricCard({
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
   const [isSaving, setIsSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
-  const [showComments, setShowComments] = useState(false)
+  const [showComments, setShowComments] = useState(initialShowComments)
   const [showSignup, setShowSignup] = useState(false)
+  const [highlighted, setHighlighted] = useState(!!highlightRef)
+
+  // Remove highlight class after animation completes
+  useEffect(() => {
+    if (highlightRef) {
+      const timer = setTimeout(() => setHighlighted(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightRef])
 
   // Reset local state when lyric changes or editing starts
   useEffect(() => {
@@ -122,7 +134,7 @@ export default function LyricCard({
       }}
     >
       <div
-        className={`w-full max-w-lg mx-auto relative ${compact ? 'p-4 sm:p-5' : hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${className}`}
+        className={`w-full max-w-lg mx-auto relative ${compact ? 'p-4 sm:p-5' : hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${highlighted ? 'notification-highlight' : ''} ${className}`}
         style={{
           ...cardStyle,
           overflow: 'visible',
@@ -378,6 +390,7 @@ export default function LyricCard({
                 onReplace={onReplace}
                 onToggleComments={() => setShowComments(!showComments)}
                 username={username}
+                highlightRef={highlightRef}
               />
             )}
           </>

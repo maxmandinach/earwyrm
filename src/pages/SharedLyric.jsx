@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import LyricCard from '../components/LyricCard'
@@ -29,6 +29,8 @@ function AnonymousFooter() {
 
 export default function SharedLyric() {
   const { token } = useParams()
+  const [searchParams] = useSearchParams()
+  const ref = searchParams.get('ref')
   const { user } = useAuth()
   const [lyric, setLyric] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -147,6 +149,8 @@ export default function SharedLyric() {
               isOwn={user?.id === lyric.user_id}
               username={profile?.username}
               profileIsPublic={profile?.is_public}
+              initialShowComments={ref === 'comment'}
+              highlightRef={ref}
             />
           )}
         </div>

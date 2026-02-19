@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import useResonate from '../hooks/useResonate'
 import OverflowMenu from './OverflowMenu'
@@ -56,6 +56,7 @@ export default function CardActionBar({
   onReplace,
   onToggleComments,
   username,
+  highlightRef = null,
 }) {
   const { hasReacted, count, animating, toggle } = useResonate(lyric.id, lyric.reaction_count || 0)
   const [showSave, setShowSave] = useState(false)
@@ -65,6 +66,16 @@ export default function CardActionBar({
   const [commentPop, setCommentPop] = useState(false)
   const [bookmarkSettle, setBookmarkSettle] = useState(false)
   const [signupIntent, setSignupIntent] = useState(null)
+  const [reactionHighlight, setReactionHighlight] = useState(highlightRef === 'reaction')
+  const [reactionFadeOut, setReactionFadeOut] = useState(false)
+
+  useEffect(() => {
+    if (highlightRef === 'reaction') {
+      const fadeTimer = setTimeout(() => setReactionFadeOut(true), 600)
+      const removeTimer = setTimeout(() => setReactionHighlight(false), 1600)
+      return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer) }
+    }
+  }, [highlightRef])
 
   function handleShare() {
     setShareNudge(true)
@@ -116,7 +127,7 @@ export default function CardActionBar({
                 : hasReacted
                   ? 'text-charcoal/70'
                   : 'text-charcoal/30 hover:text-charcoal/50'
-            }`}
+            } ${reactionHighlight ? `reaction-highlight${reactionFadeOut ? ' fade-out' : ''}` : ''}`}
             style={{
               transform: animating ? 'scale(1.1)' : 'scale(1)',
               transition: 'transform 0.3s ease',
