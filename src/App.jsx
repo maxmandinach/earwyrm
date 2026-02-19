@@ -17,6 +17,7 @@ import Explore from './pages/Explore'
 import ArtistPage from './pages/ArtistPage'
 import SongPage from './pages/SongPage'
 import Activity from './pages/Activity'
+import EmailConfirmed from './pages/EmailConfirmed'
 import LoadingScreen from './components/LoadingScreen'
 
 function ProtectedRoute({ children }) {
@@ -112,14 +113,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="collections/:id"
-          element={
-            <ProtectedRoute>
-              <CollectionDetail />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="collections/:id" element={<CollectionDetail />} />
         <Route
           path="settings"
           element={
@@ -157,6 +151,7 @@ export default function App() {
         <Route path="following" element={<Navigate to="/explore?tab=following" replace />} />
         <Route path="artist/:slug" element={<ArtistPage />} />
         <Route path="song/:slug" element={<SongPage />} />
+        <Route path="confirmed" element={<EmailConfirmed />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="terms" element={<Terms />} />
 

@@ -2,48 +2,90 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useCollection } from '../contexts/CollectionContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
 import { supabase } from '../lib/supabase-wrapper'
 
 export default function CollectionDetail() {
   const { id } = useParams()
-  const { collections, getLyricsInCollection, addLyricToCollection, removeLyricFromCollection } = useCollection()
+  const { collections, getLyricsInCollection, addLyricToCollection, removeLyricFromCollection, updateCollection } = useCollection()
   const { user } = useAuth()
+  const { isFollowing, follow, unfollow } = useFollow()
   const [collection, setCollection] = useState(null)
   const [lyrics, setLyrics] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isPublicView, setIsPublicView] = useState(false)
   const [showAddLyrics, setShowAddLyrics] = useState(false)
   const [availableLyrics, setAvailableLyrics] = useState([])
   const [loadingAvailable, setLoadingAvailable] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+
+  const isOwner = user && collection && collection.user_id === user.id
+  const following = collection ? isFollowing('collection', collection.id) : false
 
   useEffect(() => {
     async function loadCollection() {
       setLoading(true)
 
+      // First try to find in user's own collections
       const foundCollection = collections.find(c => c.id === id)
-      setCollection(foundCollection)
+      if (foundCollection) {
+        setCollection(foundCollection)
+        setIsPublicView(false)
 
-      if (!foundCollection) {
-        setLoading(false)
+        try {
+          const lyricsData = await getLyricsInCollection(id)
+          const sortedLyrics = [...lyricsData].sort((a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+          )
+          setLyrics(sortedLyrics)
+        } catch (err) {
+          console.error('Error loading collection:', err)
+        } finally {
+          setLoading(false)
+        }
         return
       }
 
+      // Not found in user's collections — try fetching as public
       try {
-        const lyricsData = await getLyricsInCollection(id)
-        const sortedLyrics = [...lyricsData].sort((a, b) =>
-          new Date(b.created_at) - new Date(a.created_at)
-        )
-        setLyrics(sortedLyrics)
+        const { data: publicCollection, error } = await supabase
+          .from('collections')
+          .select('*')
+          .eq('id', id)
+          .eq('is_public', true)
+          .maybeSingle()
+
+        if (error || !publicCollection) {
+          setCollection(null)
+          setLoading(false)
+          return
+        }
+
+        setCollection(publicCollection)
+        setIsPublicView(true)
+
+        // Fetch lyrics in the public collection via junction table
+        const { data: junctionData, error: junctionError } = await supabase
+          .from('lyric_collections')
+          .select('lyric_id, lyrics(*)')
+          .eq('collection_id', id)
+
+        if (!junctionError && junctionData) {
+          const collectionLyrics = junctionData
+            .map(item => item.lyrics)
+            .filter(Boolean)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          setLyrics(collectionLyrics)
+        }
       } catch (err) {
-        console.error('Error loading collection:', err)
+        console.error('Error loading public collection:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    if (collections.length > 0) {
-      loadCollection()
-    }
+    loadCollection()
   }, [id, collections, getLyricsInCollection])
 
   async function fetchAvailableLyrics() {
@@ -72,7 +114,6 @@ export default function CollectionDetail() {
   async function handleAddLyric(lyricId) {
     try {
       await addLyricToCollection(lyricId, collection.id)
-      // Move from available to collection list
       const added = availableLyrics.find(l => l.id === lyricId)
       if (added) {
         setLyrics(prev => [added, ...prev])
@@ -100,6 +141,32 @@ export default function CollectionDetail() {
     fetchAvailableLyrics()
   }
 
+  async function handleTogglePublic() {
+    if (!collection || !isOwner) return
+    try {
+      const updated = await updateCollection(collection.id, { is_public: !collection.is_public })
+      setCollection(updated)
+    } catch (err) {
+      console.error('Error toggling public:', err)
+    }
+  }
+
+  async function handleFollowToggle() {
+    if (!user || !collection) return
+    setFollowLoading(true)
+    try {
+      if (following) {
+        await unfollow('collection', collection.id)
+      } else {
+        await follow('collection', collection.id)
+      }
+    } catch (err) {
+      console.error('Error toggling follow:', err)
+    } finally {
+      setFollowLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12">
@@ -113,7 +180,7 @@ export default function CollectionDetail() {
       <div className="max-w-lg mx-auto px-4 py-12">
         <p className="text-charcoal/40 mb-4">Collection not found</p>
         <Link to="/collections" className="text-sm text-charcoal/50 hover:text-charcoal transition-colors">
-          ← back to collections
+          &larr; back to collections
         </Link>
       </div>
     )
@@ -122,12 +189,14 @@ export default function CollectionDetail() {
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
       {/* Back link */}
-      <Link
-        to="/collections"
-        className="inline-flex items-center text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors mb-6"
-      >
-        ← back to collections
-      </Link>
+      {isOwner && (
+        <Link
+          to="/collections"
+          className="inline-flex items-center text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors mb-6"
+        >
+          &larr; back to collections
+        </Link>
+      )}
 
       {/* Collection header */}
       <div className="mb-8">
@@ -135,14 +204,40 @@ export default function CollectionDetail() {
           <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">
             {collection.name}
           </h1>
-          {!collection.is_smart && (
-            <button
-              onClick={handleOpenAddLyrics}
-              className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors"
-            >
-              + add lyrics
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Public toggle for owner */}
+            {isOwner && (
+              <button
+                onClick={handleTogglePublic}
+                className={`text-xs transition-colors ${collection.is_public ? 'text-charcoal/60' : 'text-charcoal/30 hover:text-charcoal/50'}`}
+              >
+                {collection.is_public ? 'public' : 'make public'}
+              </button>
+            )}
+            {/* Add lyrics for owner of non-smart collections */}
+            {isOwner && !collection.is_smart && (
+              <button
+                onClick={handleOpenAddLyrics}
+                className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors"
+              >
+                + add lyrics
+              </button>
+            )}
+            {/* Follow button for non-owners on public collections */}
+            {!isOwner && isPublicView && user && (
+              <button
+                onClick={handleFollowToggle}
+                disabled={followLoading}
+                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                  following
+                    ? 'bg-charcoal text-white'
+                    : 'bg-charcoal/5 text-charcoal/50 hover:bg-charcoal/10'
+                }`}
+              >
+                {following ? 'Following' : 'Follow'}
+              </button>
+            )}
+          </div>
         </div>
         {collection.description && (
           <p className="text-sm text-charcoal/40">
@@ -163,9 +258,11 @@ export default function CollectionDetail() {
             No lyrics in this collection yet
           </p>
           <p className="text-sm text-charcoal/25">
-            {collection.is_smart
-              ? `Tag lyrics with #${collection.smart_tag} to add them here`
-              : 'Tap "+ add lyrics" above, or save lyrics from anywhere in the app'
+            {isOwner
+              ? (collection.is_smart
+                ? `Tag lyrics with #${collection.smart_tag} to add them here`
+                : 'Tap "+ add lyrics" above, or save lyrics from anywhere in the app')
+              : 'Check back later for new additions'
             }
           </p>
         </div>
@@ -174,7 +271,7 @@ export default function CollectionDetail() {
           {lyrics.map((lyric) => (
             <div key={lyric.id} className="relative group">
               <LyricCard lyric={lyric} skipReveal />
-              {!collection.is_smart && (
+              {isOwner && !collection.is_smart && (
                 <button
                   onClick={() => handleRemoveLyric(lyric.id)}
                   className="absolute top-3 right-3 text-xs text-charcoal/20 hover:text-charcoal/50 transition-colors opacity-0 group-hover:opacity-100"
@@ -187,7 +284,7 @@ export default function CollectionDetail() {
         </div>
       )}
 
-      {/* Add lyrics modal — tap to add, no checkboxes */}
+      {/* Add lyrics modal */}
       {showAddLyrics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/15">
           <div

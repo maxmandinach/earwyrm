@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 
 const AuthContext = createContext({})
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -35,6 +37,10 @@ export function AuthProvider({ children }) {
         setUser(session?.user ?? null)
         if (session?.user) {
           await fetchProfile(session.user.id)
+          // Redirect to confirmation page on email verification
+          if (event === 'SIGNED_IN' && window.location.hash.includes('type=signup')) {
+            navigate('/confirmed', { replace: true })
+          }
         } else {
           setProfile(null)
           setLoading(false)

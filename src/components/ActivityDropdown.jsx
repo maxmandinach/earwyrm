@@ -1,14 +1,92 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
+import { useNotification } from '../contexts/NotificationContext'
 import { formatRelativeTime } from '../lib/utils'
+
+function NotificationIcon({ type, className = '' }) {
+  if (type === 'reaction') {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={className}>
+        {[
+          { x: 4, h: 8 },
+          { x: 8, h: 14 },
+          { x: 12, h: 18 },
+          { x: 16, h: 14 },
+          { x: 20, h: 8 },
+        ].map((bar, i) => (
+          <line
+            key={i}
+            x1={bar.x} y1={12 - bar.h / 2}
+            x2={bar.x} y2={12 + bar.h / 2}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        ))}
+      </svg>
+    )
+  }
+  if (type === 'comment') {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      </svg>
+    )
+  }
+  if (type === 'new_lyric') {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+    )
+  }
+  // collection_add
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function getNotificationText(n) {
+  switch (n.type) {
+    case 'reaction':
+      return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} resonated`
+    case 'comment':
+      return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} commented`
+    case 'new_lyric':
+      if (n.follow_type === 'tag') return `New lyric for #${n.follow_value}`
+      if (n.follow_type === 'artist') return `New lyric from ${n.artist_name}`
+      return `New lyric for ${n.song_title}`
+    case 'collection_add':
+      return `New lyric in ${n.collection_name}`
+    default:
+      return 'New activity'
+  }
+}
+
+function getNotificationLink(n) {
+  if (n.share_token) {
+    const ref = n.type === 'comment' ? '?ref=comment' : n.type === 'reaction' ? '?ref=reaction' : ''
+    return `/s/${n.share_token}${ref}`
+  }
+  if (n.type === 'collection_add' && n.collection_id) {
+    return `/collections/${n.collection_id}`
+  }
+  if (n.song_title) {
+    return `/song/${encodeURIComponent(n.song_title.toLowerCase())}`
+  }
+  return '/activity'
+}
 
 export default function ActivityDropdown() {
   const { user } = useAuth()
+  const { unreadCount, notifications, fetchNotifications, loading } = useNotification()
   const [isOpen, setIsOpen] = useState(false)
-  const [activities, setActivities] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [fetched, setFetched] = useState(false)
   const dropdownRef = useRef(null)
 
   // Close when clicking outside
@@ -25,98 +103,23 @@ export default function ActivityDropdown() {
     }
   }, [isOpen])
 
-  // Fetch activity when dropdown opens
+  // Fetch notifications when dropdown opens for the first time
   useEffect(() => {
-    if (!isOpen || !user) return
-
-    async function fetchActivity() {
-      setLoading(true)
-      try {
-        const { data: reactionData } = await supabase
-          .from('reactions')
-          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id, share_token)')
-          .eq('lyrics.user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(20)
-
-        const { data: commentData } = await supabase
-          .from('comments')
-          .select('*, lyrics!inner(id, content, song_title, artist_name, user_id, share_token), profiles:user_id(username)')
-          .eq('lyrics.user_id', user.id)
-          .neq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(20)
-
-        const items = []
-
-        if (reactionData) {
-          const byLyric = {}
-          reactionData.forEach(r => {
-            const key = r.lyrics.id
-            if (!byLyric[key]) byLyric[key] = { lyric: r.lyrics, count: 0, latest: r.created_at }
-            byLyric[key].count++
-          })
-
-          Object.values(byLyric).forEach(({ lyric, count, latest }) => {
-            const snippet = lyric.content.length > 40
-              ? lyric.content.substring(0, 40) + '...'
-              : lyric.content
-            items.push({
-              type: 'reaction',
-              lyric,
-              count,
-              created_at: latest,
-              text: `${count} resonated`,
-              snippet,
-            })
-          })
-        }
-
-        if (commentData) {
-          commentData.forEach(c => {
-            const snippet = c.lyrics.content.length > 40
-              ? c.lyrics.content.substring(0, 40) + '...'
-              : c.lyrics.content
-            items.push({
-              type: 'comment',
-              lyric: c.lyrics,
-              username: c.profiles?.username,
-              created_at: c.created_at,
-              text: c.profiles?.username ? `@${c.profiles.username}` : 'Someone',
-              snippet,
-            })
-          })
-        }
-
-        items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        setActivities(items.slice(0, 8))
-      } catch (err) {
-        console.error('Error fetching activity:', err)
-      } finally {
-        setLoading(false)
-      }
+    if (isOpen && !fetched) {
+      fetchNotifications({ limit: 5 })
+      setFetched(true)
     }
-
-    fetchActivity()
-  }, [isOpen, user?.id])
-
-  function getLinkForActivity(activity) {
-    if (activity.lyric.share_token) {
-      return `/s/${activity.lyric.share_token}`
-    }
-    if (activity.lyric.song_title) {
-      return `/song/${encodeURIComponent(activity.lyric.song_title.toLowerCase())}`
-    }
-    return '/home'
-  }
+  }, [isOpen, fetched, fetchNotifications])
 
   if (!user) return null
+
+  const displayItems = notifications.slice(0, 5)
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-charcoal/40 hover:text-charcoal/70 transition-colors"
+        className="p-2 text-charcoal/40 hover:text-charcoal/70 transition-colors relative"
         aria-label="Activity"
         title="Activity"
       >
@@ -138,6 +141,11 @@ export default function ActivityDropdown() {
             />
           ))}
         </svg>
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
       {isOpen && (
@@ -153,64 +161,42 @@ export default function ActivityDropdown() {
           </div>
 
           <div className="max-h-80 overflow-y-auto">
-            {loading ? (
+            {loading && !fetched ? (
               <div className="px-4 py-6 text-center">
                 <p className="text-xs text-charcoal/40">Loading...</p>
               </div>
-            ) : activities.length === 0 ? (
+            ) : displayItems.length === 0 ? (
               <div className="px-4 py-6 text-center">
                 <p className="text-xs text-charcoal/40">No activity yet</p>
               </div>
             ) : (
               <div>
-                {activities.map((activity, i) => (
+                {displayItems.map((n) => (
                   <Link
-                    key={`${activity.type}-${activity.lyric.id}-${i}`}
-                    to={getLinkForActivity(activity)}
+                    key={n.id}
+                    to={getNotificationLink(n)}
                     onClick={() => setIsOpen(false)}
                     className="block px-4 py-2.5 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0"
                   >
                     <div className="flex items-start gap-2">
                       <div className="flex-shrink-0 mt-0.5">
-                        {activity.type === 'reaction' ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-charcoal/40">
-                            {[
-                              { x: 4, h: 8 },
-                              { x: 8, h: 14 },
-                              { x: 12, h: 18 },
-                              { x: 16, h: 14 },
-                              { x: 20, h: 8 },
-                            ].map((bar, j) => (
-                              <line
-                                key={j}
-                                x1={bar.x} y1={12 - bar.h / 2}
-                                x2={bar.x} y2={12 + bar.h / 2}
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                              />
-                            ))}
-                          </svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40">
-                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                          </svg>
-                        )}
+                        <NotificationIcon type={n.type} className="text-charcoal/40" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-charcoal/70">
-                          <span className="font-medium">{activity.text}</span>
-                          {activity.type === 'comment' && ' commented'}
+                          <span className="font-medium">{getNotificationText(n)}</span>
                         </p>
-                        <p
-                          className="text-xs text-charcoal/40 mt-0.5 truncate"
-                          style={{ fontFamily: "'Caveat', cursive" }}
-                        >
-                          "{activity.snippet}"
-                        </p>
+                        {n.lyric_snippet && (
+                          <p
+                            className="text-xs text-charcoal/40 mt-0.5 truncate"
+                            style={{ fontFamily: "'Caveat', cursive" }}
+                          >
+                            "{n.lyric_snippet}"
+                          </p>
+                        )}
                       </div>
                       <span className="text-xs text-charcoal/25 flex-shrink-0">
-                        {formatRelativeTime(activity.created_at)}
+                        {formatRelativeTime(n.created_at)}
                       </span>
                     </div>
                   </Link>

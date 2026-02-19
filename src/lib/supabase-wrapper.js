@@ -26,7 +26,7 @@ supabaseAuth.auth.onAuthStateChange((event, session) => {
 async function dbQuery(table, {
   select, insert, update, upsert, delete: doDelete,
   eq, single, limit, order, contains, ilike, inFilter,
-  isFilter, neqFilter, orFilter, notFilter, rangeFilter, textSearchFilter
+  isFilter, neqFilter, gtFilter, orFilter, notFilter, rangeFilter, textSearchFilter
 } = {}) {
   const headers = {
     'apikey': supabaseAnonKey,
@@ -78,6 +78,12 @@ async function dbQuery(table, {
     if (neqFilter) {
       for (const [key, value] of Object.entries(neqFilter)) {
         params.append(key, `neq.${value}`)
+      }
+    }
+    // Support .gt() for greater-than
+    if (gtFilter) {
+      for (const [key, value] of Object.entries(gtFilter)) {
+        params.append(key, `gt.${value}`)
       }
     }
     // Support .or() for OR conditions
@@ -174,11 +180,15 @@ async function dbQuery(table, {
 export const supabase = {
   auth: supabaseAuth.auth,
 
+  // Expose Realtime channels (WebSocket-based, not PostgREST, so no React 19 issue)
+  channel: (name) => supabaseAuth.channel(name),
+  removeChannel: (ch) => supabaseAuth.removeChannel(ch),
+
   from: (table) => ({
     select: (columns = '*') => {
       // Build a chainable query object with all filter options
       const buildQuery = (filters = {}) => {
-        const { eqFilters = {}, containsFilters = {}, ilikeFilters = {}, inFilters = {}, isFilters = {}, neqFilters = {}, orFilterVal = null, notFilters = [], rangeVal = null, textSearchVal = null, orderBy = [], limitVal = null } = filters
+        const { eqFilters = {}, containsFilters = {}, ilikeFilters = {}, inFilters = {}, isFilters = {}, neqFilters = {}, gtFilters = {}, orFilterVal = null, notFilters = [], rangeVal = null, textSearchVal = null, orderBy = [], limitVal = null } = filters
 
         const queryObj = {
           eq: (key, value) => buildQuery({
@@ -204,6 +214,10 @@ export const supabase = {
           neq: (key, value) => buildQuery({
             ...filters,
             neqFilters: { ...neqFilters, [key]: value }
+          }),
+          gt: (key, value) => buildQuery({
+            ...filters,
+            gtFilters: { ...gtFilters, [key]: value }
           }),
           or: (conditions) => buildQuery({
             ...filters,
@@ -238,6 +252,7 @@ export const supabase = {
               inFilter: Object.keys(inFilters).length ? inFilters : undefined,
               isFilter: Object.keys(isFilters).length ? isFilters : undefined,
               neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              gtFilter: Object.keys(gtFilters).length ? gtFilters : undefined,
               orFilter: orFilterVal || undefined,
               notFilter: notFilters.length ? notFilters : undefined,
               rangeFilter: rangeVal || undefined,
@@ -258,6 +273,7 @@ export const supabase = {
               inFilter: Object.keys(inFilters).length ? inFilters : undefined,
               isFilter: Object.keys(isFilters).length ? isFilters : undefined,
               neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              gtFilter: Object.keys(gtFilters).length ? gtFilters : undefined,
               orFilter: orFilterVal || undefined,
               notFilter: notFilters.length ? notFilters : undefined,
               rangeFilter: rangeVal || undefined,
@@ -283,6 +299,7 @@ export const supabase = {
               inFilter: Object.keys(inFilters).length ? inFilters : undefined,
               isFilter: Object.keys(isFilters).length ? isFilters : undefined,
               neqFilter: Object.keys(neqFilters).length ? neqFilters : undefined,
+              gtFilter: Object.keys(gtFilters).length ? gtFilters : undefined,
               orFilter: orFilterVal || undefined,
               notFilter: notFilters.length ? notFilters : undefined,
               rangeFilter: rangeVal || undefined,

@@ -33,8 +33,12 @@ export default function ArtistPage() {
   const searchContainerRef = useRef(null)
   const PAGE_SIZE = 20
 
-  const artistName = decodeURIComponent(slug)
-  const currentlyFollowing = isFollowing('artist', artistName)
+  const artistSlug = decodeURIComponent(slug)
+  // Use original casing from lyrics data when available, fall back to slug
+  const artistName = lyrics.length > 0
+    ? lyrics[0].artist_name || artistSlug
+    : artistSlug
+  const currentlyFollowing = isFollowing('artist', artistSlug)
 
   // Get unique users count
   const uniqueUsers = new Set(lyrics.map(l => l.user_id)).size
@@ -68,9 +72,9 @@ export default function ArtistPage() {
     setIsTogglingFollow(true)
     try {
       if (currentlyFollowing) {
-        await unfollow('artist', artistName)
+        await unfollow('artist', artistSlug)
       } else {
-        await follow('artist', artistName)
+        await follow('artist', artistSlug)
       }
     } catch (err) {
       console.error('Error toggling follow:', err)
@@ -94,10 +98,10 @@ export default function ArtistPage() {
 
   // Fetch artist image from Genius
   useEffect(() => {
-    searchArtistImage(artistName).then(url => {
+    searchArtistImage(artistSlug).then(url => {
       if (url) setArtistImage(url)
     })
-  }, [artistName])
+  }, [artistSlug])
 
   useEffect(() => {
     async function fetchLyrics() {
@@ -107,7 +111,7 @@ export default function ArtistPage() {
           .from('lyrics')
           .select('*')
           .eq('is_public', true)
-          .ilike('artist_name', artistName)
+          .ilike('artist_name', artistSlug)
           .order('created_at', { ascending: false })
           .range(0, 49)
 
@@ -141,7 +145,7 @@ export default function ArtistPage() {
     }
 
     fetchLyrics()
-  }, [artistName])
+  }, [artistSlug])
 
   async function loadMore() {
     const nextPage = page + 1

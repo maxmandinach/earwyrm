@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { LyricProvider } from './contexts/LyricContext'
 import { CollectionProvider } from './contexts/CollectionContext'
 import { FollowProvider } from './contexts/FollowContext'
@@ -18,13 +19,15 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ErrorBoundary>
         <AuthProvider>
-          <LyricProvider>
-            <CollectionProvider>
-              <FollowProvider>
-                <App />
-              </FollowProvider>
-            </CollectionProvider>
-          </LyricProvider>
+          <NotificationProvider>
+            <LyricProvider>
+              <CollectionProvider>
+                <FollowProvider>
+                  <App />
+                </FollowProvider>
+              </CollectionProvider>
+            </LyricProvider>
+          </NotificationProvider>
         </AuthProvider>
       </ErrorBoundary>
     </BrowserRouter>
