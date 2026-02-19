@@ -1,24 +1,27 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Landing from './pages/Landing'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import History from './pages/History'
-import Settings from './pages/Settings'
-import PublicProfile from './pages/PublicProfile'
-import Privacy from './pages/Privacy'
-import Terms from './pages/Terms'
-import SharedLyric from './pages/SharedLyric'
-import Collections from './pages/Collections'
-import CollectionDetail from './pages/CollectionDetail'
-import Explore from './pages/Explore'
-import ArtistPage from './pages/ArtistPage'
-import SongPage from './pages/SongPage'
-import Activity from './pages/Activity'
-import EmailConfirmed from './pages/EmailConfirmed'
 import LoadingScreen from './components/LoadingScreen'
+
+// Lazy-loaded routes
+const Login = lazy(() => import('./pages/Login'))
+const Signup = lazy(() => import('./pages/Signup'))
+const History = lazy(() => import('./pages/History'))
+const Settings = lazy(() => import('./pages/Settings'))
+const PublicProfile = lazy(() => import('./pages/PublicProfile'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const SharedLyric = lazy(() => import('./pages/SharedLyric'))
+const Collections = lazy(() => import('./pages/Collections'))
+const CollectionDetail = lazy(() => import('./pages/CollectionDetail'))
+const Explore = lazy(() => import('./pages/Explore'))
+const ArtistPage = lazy(() => import('./pages/ArtistPage'))
+const SongPage = lazy(() => import('./pages/SongPage'))
+const Activity = lazy(() => import('./pages/Activity'))
+const EmailConfirmed = lazy(() => import('./pages/EmailConfirmed'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -83,6 +86,7 @@ function RedirectToSong() {
 
 export default function App() {
   return (
+    <Suspense fallback={<LoadingScreen />}>
     <Routes>
       {/* Landing page - standalone, no layout */}
       <Route path="/" element={<IndexRoute />} />
@@ -165,5 +169,6 @@ export default function App() {
       <Route path="u/:username" element={<PublicProfile />} />
       <Route path="*" element={<AtUsernameRedirect />} />
     </Routes>
+    </Suspense>
   )
 }
