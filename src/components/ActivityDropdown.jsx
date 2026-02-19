@@ -27,7 +27,7 @@ function NotificationIcon({ type, className = '' }) {
       </svg>
     )
   }
-  if (type === 'comment') {
+  if (type === 'comment' || type === 'reply') {
     return (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -57,6 +57,8 @@ function getNotificationText(n) {
       return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} resonated`
     case 'comment':
       return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} commented`
+    case 'reply':
+      return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} replied`
     case 'new_lyric':
       if (n.follow_type === 'tag') return `New lyric for #${n.follow_value}`
       if (n.follow_type === 'artist') return `New lyric from ${n.artist_name}`
@@ -70,7 +72,7 @@ function getNotificationText(n) {
 
 function getNotificationLink(n) {
   if (n.share_token) {
-    const ref = n.type === 'comment'
+    const ref = (n.type === 'comment' || n.type === 'reply')
       ? `?ref=comment${n.comment_id ? `&cid=${n.comment_id}` : ''}`
       : n.type === 'reaction' ? '?ref=reaction' : ''
     return `/s/${n.share_token}${ref}`

@@ -6,7 +6,7 @@ import { formatRelativeTime } from '../lib/utils'
 const TABS = [
   { key: 'all', label: 'All', types: null },
   { key: 'resonances', label: 'Resonances', types: 'reaction' },
-  { key: 'comments', label: 'Comments', types: 'comment' },
+  { key: 'comments', label: 'Comments', types: ['comment', 'reply'] },
   { key: 'follows', label: 'Follows', types: ['new_lyric', 'collection_add'] },
 ]
 
@@ -35,7 +35,7 @@ function NotificationIcon({ type, className = '' }) {
       </svg>
     )
   }
-  if (type === 'comment') {
+  if (type === 'comment' || type === 'reply') {
     return (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -61,7 +61,7 @@ function NotificationIcon({ type, className = '' }) {
 
 function getNotificationLink(n) {
   if (n.share_token) {
-    const ref = n.type === 'comment'
+    const ref = (n.type === 'comment' || n.type === 'reply')
       ? `?ref=comment${n.comment_id ? `&cid=${n.comment_id}` : ''}`
       : n.type === 'reaction' ? '?ref=reaction' : ''
     return `/s/${n.share_token}${ref}`
@@ -117,6 +117,8 @@ function getGroupedText(n) {
       return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} resonated`
     case 'comment':
       return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} commented`
+    case 'reply':
+      return `${n.actor_username ? `@${n.actor_username}` : 'Someone'} replied to your comment`
     case 'new_lyric':
       if (n.follow_type === 'tag') return `New lyric for #${n.follow_value}`
       if (n.follow_type === 'artist') return `New lyric from ${n.artist_name}`
@@ -225,7 +227,7 @@ export default function Activity() {
                         "{n.lyric_snippet}"
                       </p>
                     )}
-                    {n.type === 'comment' && n.comment_content && (
+                    {(n.type === 'comment' || n.type === 'reply') && n.comment_content && (
                       <p className={`text-xs mt-1 italic truncate ${isRead ? 'text-charcoal/20' : 'text-charcoal/30'}`}>
                         "{n.comment_content}"
                       </p>
