@@ -88,6 +88,23 @@ export function NotificationProvider({ children }) {
     }
   }, [user?.id])
 
+  // Mark a single notification as read
+  const markAsRead = useCallback(async (notificationId) => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', notificationId)
+      .is('read_at', null)
+
+    if (!error) {
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read_at: n.read_at || new Date().toISOString() } : n)
+      )
+    }
+  }, [user?.id])
+
   // Fetch unread count on mount and when profile changes
   useEffect(() => {
     fetchUnreadCount()
@@ -130,6 +147,7 @@ export function NotificationProvider({ children }) {
     hasMore,
     fetchNotifications,
     markAsSeen,
+    markAsRead,
   }
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

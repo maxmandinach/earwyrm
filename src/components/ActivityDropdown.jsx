@@ -86,7 +86,7 @@ function getNotificationLink(n) {
 
 export default function ActivityDropdown() {
   const { user } = useAuth()
-  const { unreadCount, notifications, fetchNotifications, loading } = useNotification()
+  const { unreadCount, notifications, fetchNotifications, loading, markAsRead } = useNotification()
   const [isOpen, setIsOpen] = useState(false)
   const [fetched, setFetched] = useState(false)
   const dropdownRef = useRef(null)
@@ -173,24 +173,26 @@ export default function ActivityDropdown() {
               </div>
             ) : (
               <div>
-                {displayItems.map((n) => (
+                {displayItems.map((n) => {
+                  const isRead = !!n.read_at
+                  return (
                   <Link
                     key={n.id}
                     to={getNotificationLink(n)}
-                    onClick={() => setIsOpen(false)}
-                    className="block px-4 py-2.5 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0"
+                    onClick={() => { markAsRead(n.id); setIsOpen(false) }}
+                    className={`block px-4 py-2.5 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0 ${!isRead ? 'bg-charcoal/[0.03]' : ''}`}
                   >
                     <div className="flex items-start gap-2">
                       <div className="flex-shrink-0 mt-0.5">
-                        <NotificationIcon type={n.type} className="text-charcoal/40" />
+                        <NotificationIcon type={n.type} className={isRead ? 'text-charcoal/25' : 'text-charcoal/50'} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-charcoal/70">
-                          <span className="font-medium">{getNotificationText(n)}</span>
+                        <p className={`text-xs ${isRead ? 'text-charcoal/40' : 'text-charcoal/70 font-medium'}`}>
+                          {getNotificationText(n)}
                         </p>
                         {n.lyric_snippet && (
                           <p
-                            className="text-xs text-charcoal/40 mt-0.5 truncate"
+                            className={`text-xs mt-0.5 truncate ${isRead ? 'text-charcoal/25' : 'text-charcoal/40'}`}
                             style={{ fontFamily: "'Caveat', cursive" }}
                           >
                             "{n.lyric_snippet}"
@@ -202,7 +204,8 @@ export default function ActivityDropdown() {
                       </span>
                     </div>
                   </Link>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

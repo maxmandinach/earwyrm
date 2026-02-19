@@ -129,7 +129,7 @@ function getGroupedText(n) {
 }
 
 export default function Activity() {
-  const { notifications, loading, hasMore, fetchNotifications, markAsSeen } = useNotification()
+  const { notifications, loading, hasMore, fetchNotifications, markAsSeen, markAsRead } = useNotification()
   const [activeTab, setActiveTab] = useState('all')
   const [offset, setOffset] = useState(0)
 
@@ -202,28 +202,31 @@ export default function Activity() {
           </div>
         ) : (
           <div className="space-y-1">
-            {displayItems.map((n, i) => (
+            {displayItems.map((n, i) => {
+              const isRead = !!n.read_at
+              return (
               <Link
                 key={n.id || `grouped-${n.lyric_id}-${i}`}
                 to={getNotificationLink(n)}
-                className="block px-4 py-4 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0"
+                onClick={() => n.id && markAsRead(n.id)}
+                className={`block px-4 py-4 hover:bg-charcoal/5 transition-colors border-b border-charcoal/5 last:border-b-0 ${!isRead ? 'bg-charcoal/[0.03]' : ''}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-0.5">
-                    <NotificationIcon type={n.type} className="text-charcoal/40" />
+                    <NotificationIcon type={n.type} className={isRead ? 'text-charcoal/25' : 'text-charcoal/50'} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-charcoal/70">{getGroupedText(n)}</p>
+                    <p className={`text-sm ${isRead ? 'text-charcoal/40' : 'text-charcoal/70 font-medium'}`}>{getGroupedText(n)}</p>
                     {n.lyric_snippet && (
                       <p
-                        className="text-sm text-charcoal/40 mt-1 truncate"
+                        className={`text-sm mt-1 truncate ${isRead ? 'text-charcoal/25' : 'text-charcoal/40'}`}
                         style={{ fontFamily: "'Caveat', cursive" }}
                       >
                         "{n.lyric_snippet}"
                       </p>
                     )}
                     {n.type === 'comment' && n.comment_content && (
-                      <p className="text-xs text-charcoal/30 mt-1 italic truncate">
+                      <p className={`text-xs mt-1 italic truncate ${isRead ? 'text-charcoal/20' : 'text-charcoal/30'}`}>
                         "{n.comment_content}"
                       </p>
                     )}
@@ -233,7 +236,8 @@ export default function Activity() {
                   </span>
                 </div>
               </Link>
-            ))}
+              )
+            })}
 
             {/* Load more button */}
             {hasMore && (
