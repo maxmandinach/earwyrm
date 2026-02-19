@@ -19,12 +19,18 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
     async function fetchComments() {
       const { data, error } = await supabase
         .from('comments')
-        .select('*, profiles:user_id(username)')
+        .select('*')
         .eq('lyric_id', lyricId)
         .order('created_at', { ascending: true })
 
       if (!error && data) {
-        setComments(data)
+        // Fetch usernames for all unique comment authors
+        const userIds = [...new Set(data.map(c => c.user_id))]
+        const { data: profiles } = userIds.length > 0
+          ? await supabase.from('profiles').select('id, username').in('id', userIds)
+          : { data: [] }
+        const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
+        setComments(data.map(c => ({ ...c, profiles: profileMap[c.user_id] || null })))
       }
     }
     fetchComments()
@@ -44,12 +50,19 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
           content: newComment.trim(),
           parent_comment_id: replyTo || null,
         })
-        .select('*, profiles:user_id(username)')
+        .select('*')
         .single()
 
       if (error) throw error
 
-      setComments(prev => [...prev, data])
+      // Attach current user's profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('id', user.id)
+        .single()
+
+      setComments(prev => [...prev, { ...data, profiles: profile }])
       setCount(prev => prev + 1)
       setNewComment('')
       setReplyTo(null)
@@ -107,7 +120,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
             onChange={(e) => setNewComment(e.target.value.slice(0, 280))}
             placeholder={replyTo ? 'Reply...' : 'Share a thought...'}
             autoFocus
-            className="flex-1 px-3 py-2 text-sm bg-transparent border border-charcoal/10 text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
+            className="flex-1 px-4 py-2 text-sm bg-transparent border border-charcoal/10 rounded-full text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
             style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
           />
           <button

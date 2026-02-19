@@ -40,11 +40,19 @@ export default function CompactCommentModal({ lyricId, shareToken, onClose, onCo
       try {
         const { data, error } = await supabase
           .from('comments')
-          .select('*, profiles:user_id(username)')
+          .select('*')
           .eq('lyric_id', lyricId)
           .order('created_at', { ascending: false })
+          .limit(3)
 
-        if (!error && data) setComments(data.slice(0, 3))
+        if (!error && data) {
+          const userIds = [...new Set(data.map(c => c.user_id))]
+          const { data: profiles } = userIds.length > 0
+            ? await supabase.from('profiles').select('id, username').in('id', userIds)
+            : { data: [] }
+          const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
+          setComments(data.map(c => ({ ...c, profiles: profileMap[c.user_id] || null })))
+        }
       } catch (err) {
         console.error('Error fetching comments:', err)
       } finally {
