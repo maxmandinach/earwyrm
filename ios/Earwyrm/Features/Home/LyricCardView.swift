@@ -25,6 +25,10 @@ struct LyricCardView: View {
     // For comment section
     var currentUserId: UUID?
 
+    // Note (optional — only on hero/own card)
+    var note: LyricNote?
+    var onTapNote: (() -> Void)?
+
     var body: some View {
         VStack(spacing: 0) {
             // Card
@@ -88,6 +92,29 @@ struct LyricCardView: View {
                         .foregroundStyle(Theme.Light.muted)
                         .opacity(0.4)
                         .padding(.top, hero ? Theme.Spacing.lg : Theme.Spacing.md)
+                }
+
+                // Note — inline on card
+                if let note, hero {
+                    Button {
+                        onTapNote?()
+                    } label: {
+                        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                            Rectangle()
+                                .fill(Theme.Light.accent.opacity(0.3))
+                                .frame(width: 2)
+
+                            Text(note.content)
+                                .font(Theme.caveat(18))
+                                .foregroundStyle(Theme.Light.secondary)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, Theme.Spacing.md)
                 }
 
                 // Action bar
