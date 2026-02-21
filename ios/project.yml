@@ -1,0 +1,40 @@
+name: Earwyrm
+options:
+  bundleIdPrefix: com.earwyrm
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.0.0"
+
+targets:
+  Earwyrm:
+    type: application
+    platform: iOS
+    sources:
+      - path: Earwyrm
+    info:
+      path: Earwyrm/Info.plist
+      properties:
+        UIAppFonts:
+          - Caveat-Variable.ttf
+          - DMSans-Variable.ttf
+          - DMSans-Italic-Variable.ttf
+        UILaunchScreen: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.earwyrm.app
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: Earwyrm/Info.plist
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: 1
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - package: Supabase
+        product: Supabase

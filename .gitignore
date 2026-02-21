@@ -38,3 +38,12 @@ screenshots/
 *.jpeg
 *.png
 supabase/.temp/
+
+# Xcode
+ios/Earwyrm.xcodeproj/xcuserdata/
+ios/Earwyrm.xcodeproj/project.xcworkspace/xcuserdata/
+ios/Earwyrm.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
