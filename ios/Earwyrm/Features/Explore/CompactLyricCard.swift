@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CompactLyricCard: View {
     let lyric: Lyric
+    var username: String?
+    var onShare: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -44,7 +46,7 @@ struct CompactLyricCard: View {
                 }
             }
 
-            // Inline counts row: waveform + comments + timestamp
+            // Inline counts row: waveform + comments + share + username + timestamp
             HStack(spacing: Theme.Spacing.md) {
                 HStack(spacing: 4) {
                     ResonateIcon(isActive: false, isAnimating: false, size: 14)
@@ -62,7 +64,24 @@ struct CompactLyricCard: View {
                         .foregroundStyle(Theme.Light.muted)
                 }
 
+                if let username {
+                    NavigationLink(value: ProfileDestination(userId: lyric.userId, username: username)) {
+                        Text("@\(username)")
+                            .font(Theme.dmSans(11))
+                            .foregroundStyle(Theme.Light.accent)
+                    }
+                }
+
                 Spacer()
+
+                if let onShare {
+                    Button(action: onShare) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.Light.muted)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                }
 
                 Text(relativeDate(lyric.createdAt))
                     .font(Theme.dmSans(11))

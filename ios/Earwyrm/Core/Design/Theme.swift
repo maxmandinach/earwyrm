@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum Theme {
     // MARK: - Colors (Light)
@@ -45,6 +46,11 @@ enum Theme {
         .custom("DM Sans", size: size).italic()
     }
 
+    /// Cochin — used for notes (personal reflections)
+    static func noteFont(_ size: CGFloat = 16) -> Font {
+        .custom("Cochin", size: size)
+    }
+
     // MARK: - Spacing
     enum Spacing {
         static let xs: CGFloat = 4
@@ -59,6 +65,91 @@ enum Theme {
     static let cardShadow: some ShapeStyle = Color.black.opacity(0.08)
     static let cardShadowRadius: CGFloat = 12
     static let cardShadowY: CGFloat = 4
+}
+
+// MARK: - Brand Header Modifier
+
+/// Adds the persistent "earwyrm" wordmark to the navigation bar's leading position.
+/// Apply inside a NavigationStack on the root content view.
+struct EarwyrmBrandHeader: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    CaveatText(text: "earwyrm", size: 24, weight: .semibold, color: Theme.Light.secondary)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+extension View {
+    func earwyrmBranding() -> some View {
+        modifier(EarwyrmBrandHeader())
+    }
+}
+
+// MARK: - CaveatText (UIKit-rendered to avoid SwiftUI clipping)
+
+/// Renders Caveat text through UIKit to prevent SwiftUI's Text view from
+/// clipping glyphs that extend past the font's reported metrics.
+/// Use for short text: section headers, initials, brand marks.
+struct CaveatText: View {
+    let text: String
+    let size: CGFloat
+    var weight: CaveatWeight = .medium
+    var color: Color = .primary
+
+    enum CaveatWeight {
+        case medium, semibold, bold
+
+        var fontName: String {
+            switch self {
+            case .medium: "Caveat-Medium"
+            case .semibold: "Caveat-SemiBold"
+            case .bold: "Caveat-Bold"
+            }
+        }
+    }
+
+    var body: some View {
+        Image(uiImage: renderText())
+            .renderingMode(.template)
+            .foregroundStyle(color)
+    }
+
+    private func renderText() -> UIImage {
+        let font = UIFont(name: weight.fontName, size: size * 3)
+            ?? UIFont(name: "Caveat", size: size * 3)
+            ?? UIFont.systemFont(ofSize: size * 3)
+
+        let nsText = text as NSString
+        let attrs: [NSAttributedString.Key: Any] = [.font: font]
+        let textSize = nsText.size(withAttributes: attrs)
+
+        let padding: CGFloat = size * 0.5
+        let canvasSize = CGSize(
+            width: textSize.width + padding * 2,
+            height: textSize.height + padding * 2
+        )
+
+        let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        let image = renderer.image { _ in
+            nsText.draw(at: CGPoint(x: padding, y: padding), withAttributes: attrs)
+        }
+
+        let targetHeight = size * 1.3
+        let scaleFactor = targetHeight / canvasSize.height
+        let targetSize = CGSize(
+            width: canvasSize.width * scaleFactor,
+            height: targetHeight
+        )
+
+        let resizeRenderer = UIGraphicsImageRenderer(size: targetSize)
+        return resizeRenderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+    }
 }
 
 // MARK: - Color Hex Extension

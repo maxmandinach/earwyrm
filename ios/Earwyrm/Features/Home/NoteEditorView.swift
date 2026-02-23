@@ -26,14 +26,14 @@ struct NoteEditorSheet: View {
                 ZStack(alignment: .topLeading) {
                     if text.isEmpty {
                         Text(placeholder)
-                            .font(Theme.caveat(22))
+                            .font(Theme.noteFont(18))
                             .foregroundStyle(Theme.Light.muted)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 8)
                     }
 
                     TextEditor(text: $text)
-                        .font(Theme.caveat(22))
+                        .font(Theme.noteFont(18))
                         .foregroundStyle(Theme.Light.text)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 100)

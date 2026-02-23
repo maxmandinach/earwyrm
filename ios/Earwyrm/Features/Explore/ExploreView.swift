@@ -17,8 +17,12 @@ struct SongDestination: Hashable {
 struct ExploreView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
+    @Environment(NotificationManager.self) private var notificationManager
     @State private var viewModel = ExploreViewModel()
     @State private var selectedTab = 0
+    @State private var shareLyric: Lyric?
+    @State private var shareUsername: String?
+    @State private var shareOwnerId: UUID?
 
     var body: some View {
         NavigationStack {
@@ -27,27 +31,25 @@ struct ExploreView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Text("explore")
-                            .font(Theme.caveat(32))
-                            .foregroundStyle(Theme.Light.text)
-                        Spacer()
-                    }
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.top, Theme.Spacing.sm)
-                    .padding(.bottom, Theme.Spacing.xs)
-
                     // Underline tab bar
                     tabBar
+                        .padding(.top, Theme.Spacing.xs)
                         .padding(.bottom, Theme.Spacing.sm)
 
                     // Content
                     ScrollView {
                         if selectedTab == 0 {
-                            ExploreForYouView(viewModel: viewModel)
+                            ExploreForYouView(viewModel: viewModel) { lyric, username in
+                                shareLyric = lyric
+                                shareUsername = username
+                                shareOwnerId = lyric.userId
+                            }
                         } else {
-                            ExploreFollowingView(viewModel: viewModel)
+                            ExploreFollowingView(viewModel: viewModel) { lyric, username in
+                                shareLyric = lyric
+                                shareUsername = username
+                                shareOwnerId = lyric.userId
+                            }
                         }
                     }
                     .refreshable {
@@ -69,6 +71,31 @@ struct ExploreView: View {
                     coverArtUrl: dest.coverArtUrl
                 )
             }
+            .navigationDestination(for: ProfileDestination.self) { dest in
+                PublicProfileView(userId: dest.userId, username: dest.username)
+            }
+            .earwyrmBranding()
+        }
+        .sheet(item: $shareLyric) { lyric in
+            ShareModalView(
+                lyric: lyric,
+                note: nil,
+                username: shareUsername,
+                onShareCompleted: {
+                    Task {
+                        guard let actorId = auth.userId,
+                              let actorUsername = auth.profile?.username,
+                              let ownerId = shareOwnerId else { return }
+                        await notificationManager.sendShareNotification(
+                            lyricOwnerId: ownerId,
+                            actorId: actorId,
+                            actorUsername: actorUsername,
+                            lyric: lyric
+                        )
+                    }
+                }
+            )
+            .presentationDetents([.large])
         }
         .task {
             await viewModel.fetchPublicLyrics()

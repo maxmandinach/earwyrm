@@ -22,12 +22,11 @@ struct LyricCardView: View {
     var showComments: Bool = false
     var onToggleComments: (() -> Void)?
 
+    // Note (read-only display)
+    var note: LyricNote?
+
     // For comment section
     var currentUserId: UUID?
-
-    // Note (optional — only on hero/own card)
-    var note: LyricNote?
-    var onTapNote: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -94,26 +93,20 @@ struct LyricCardView: View {
                         .padding(.top, hero ? Theme.Spacing.lg : Theme.Spacing.md)
                 }
 
-                // Note — inline on card
-                if let note, hero {
-                    Button {
-                        onTapNote?()
-                    } label: {
-                        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                            Rectangle()
-                                .fill(Theme.Light.accent.opacity(0.3))
-                                .frame(width: 2)
+                // Note (read-only)
+                if let note {
+                    HStack(spacing: 6) {
+                        Rectangle()
+                            .fill(Theme.Light.accent.opacity(0.4))
+                            .frame(width: 2)
 
-                            Text(note.content)
-                                .font(Theme.caveat(18))
-                                .foregroundStyle(Theme.Light.secondary)
-                                .lineLimit(3)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .fixedSize(horizontal: false, vertical: true)
+                        Text(note.content)
+                            .font(Theme.noteFont(15))
+                            .foregroundStyle(Theme.Light.secondary)
+                            .lineSpacing(4)
+                            .multilineTextAlignment(.leading)
                     }
-                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, Theme.Spacing.md)
                 }
 

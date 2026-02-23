@@ -44,8 +44,8 @@ struct CommentSectionView: View {
             }
         } label: {
             Text(count > 0
-                 ? "\(count) \(count == 1 ? "thought" : "thoughts")"
-                 : "add a thought")
+                 ? "\(count) \(count == 1 ? "comment" : "comments")"
+                 : "add a comment")
                 .font(Theme.dmSans(12))
                 .foregroundStyle(Theme.Light.muted.opacity(0.6))
                 .padding(.vertical, 4)
@@ -76,7 +76,7 @@ struct CommentSectionView: View {
                         isOpen = false
                     }
                 } label: {
-                    Text("hide thoughts")
+                    Text("hide comments")
                         .font(Theme.dmSans(12))
                         .foregroundStyle(Theme.Light.muted.opacity(0.4))
                 }
@@ -198,7 +198,7 @@ struct CommentSectionView: View {
 
             HStack(spacing: 8) {
                 TextField(
-                    replyTo != nil ? "Reply..." : "Share a thought...",
+                    replyTo != nil ? "Reply..." : "Write a comment...",
                     text: $newComment
                 )
                 .font(Theme.caveat(18))

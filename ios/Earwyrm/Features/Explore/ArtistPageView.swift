@@ -128,9 +128,7 @@ struct ArtistPageView: View {
                     Circle()
                         .fill(Theme.Light.accent.opacity(0.3))
                         .overlay(
-                            Text(artistName.prefix(1).uppercased())
-                                .font(Theme.caveat(36, weight: .bold))
-                                .foregroundStyle(Theme.Light.text)
+                            CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.Light.text)
                         )
                 }
                 .frame(width: 80, height: 80)
@@ -141,9 +139,7 @@ struct ArtistPageView: View {
                     .fill(Theme.Light.accent.opacity(0.3))
                     .frame(width: 80, height: 80)
                     .overlay(
-                        Text(artistName.prefix(1).uppercased())
-                            .font(Theme.caveat(36, weight: .bold))
-                            .foregroundStyle(Theme.Light.text)
+                        CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.Light.text)
                     )
             }
 

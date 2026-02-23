@@ -46,7 +46,7 @@ final class HomeViewModel {
     var followFeedLyrics: [LyricWithProfile] = []
     var currentNote: LyricNote?
 
-    private static let lyricColumns = """
+    static let lyricColumns = """
         id, user_id, content, song_title, artist_name, cover_art_url, \
         album_name, is_current, is_public, tags, share_token, \
         canonical_lyric_id, musicbrainz_recording_id, musicbrainz_release_id, \

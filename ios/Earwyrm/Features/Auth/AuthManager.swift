@@ -59,6 +59,11 @@ final class AuthManager {
         )
     }
 
+    func refreshProfile() async {
+        guard let userId = self.userId else { return }
+        await fetchProfile(userId: userId)
+    }
+
     func signOut() async throws {
         try await supabase.auth.signOut()
         session = nil

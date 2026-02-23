@@ -3,12 +3,17 @@ import Supabase
 
 struct EditLyricView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthManager.self) private var auth
     let lyric: Lyric
     let onSaved: () -> Void
 
     @State private var content: String
     @State private var songTitle: String
     @State private var artistName: String
+    @State private var noteContent: String = ""
+    @State private var noteIsPublic: Bool = false
+    @State private var showNoteField: Bool = false
+    @State private var existingNote: LyricNote?
     @State private var isSaving = false
     @State private var error: String?
 
@@ -41,11 +46,34 @@ struct EditLyricView: View {
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                         .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
 
+                    // Lyric soft guidance counter
+                    if content.count >= 300 {
+                        let count = content.count
+                        let counterColor: Color = count >= 500
+                            ? .orange
+                            : count >= 400
+                                ? Theme.Light.accent
+                                : Theme.Light.muted
+                        let counterOpacity: Double = count < 400
+                            ? Double(count - 300) / 100.0
+                            : 1.0
+                        Text("\(count) chars")
+                            .font(Theme.dmSans(12))
+                            .foregroundStyle(counterColor)
+                            .opacity(counterOpacity)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 4)
+                            .animation(.easeInOut(duration: 0.2), value: count)
+                    }
+
                     // Song + Artist
                     VStack(spacing: Theme.Spacing.sm) {
                         editField("song", text: $songTitle)
                         editField("artist", text: $artistName)
                     }
+
+                    // Note
+                    noteSection
 
                     if let error {
                         Text(error)
@@ -80,6 +108,108 @@ struct EditLyricView: View {
                 }
             }
             .toolbarBackground(Theme.Light.card, for: .navigationBar)
+            .task {
+                await loadNote()
+            }
+        }
+    }
+
+    // MARK: - Note Section
+
+    private var noteSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            if showNoteField {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    TextEditor(text: $noteContent)
+                        .font(Theme.noteFont(16))
+                        .foregroundStyle(Theme.Light.secondary)
+                        .lineSpacing(6)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 60)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .overlay(alignment: .topLeading) {
+                            if noteContent.isEmpty {
+                                Text("why does this one stay with you?")
+                                    .font(Theme.noteFont(16))
+                                    .foregroundStyle(Theme.Light.muted.opacity(0.5))
+                                    .padding(.horizontal, 17)
+                                    .padding(.vertical, 16)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Theme.Light.divider, lineWidth: 1)
+                        )
+                        .onChange(of: noteContent) { _, newValue in
+                            if newValue.count > 500 {
+                                noteContent = String(newValue.prefix(500))
+                            }
+                        }
+
+                    // Visibility toggle + note counter
+                    HStack {
+                        Button {
+                            Haptics.light()
+                            noteIsPublic.toggle()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: noteIsPublic ? "eye" : "eye.slash")
+                                    .font(.system(size: 11))
+                                Text(noteIsPublic ? "visible on explore" : "private note")
+                                    .font(Theme.dmSans(12))
+                            }
+                            .foregroundStyle(Theme.Light.muted)
+                            .padding(.leading, 4)
+                        }
+
+                        Spacer()
+
+                        Text("\(noteContent.count)/500")
+                            .font(Theme.dmSans(12))
+                            .foregroundStyle(noteContent.count > 450 ? Theme.Light.accent : Theme.Light.muted)
+                            .padding(.trailing, 4)
+                    }
+                }
+            } else {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showNoteField = true
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "note.text")
+                            .font(.system(size: 13))
+                        Text("add a note")
+                            .font(Theme.dmSans(13))
+                    }
+                    .foregroundStyle(Theme.Light.muted)
+                }
+            }
+        }
+    }
+
+    private func loadNote() async {
+        guard let userId = auth.userId else { return }
+        do {
+            let notes: [LyricNote] = try await supabase
+                .from("lyric_notes")
+                .select("id, lyric_id, user_id, content, is_public, created_at, updated_at")
+                .eq("lyric_id", value: lyric.id.uuidString)
+                .eq("user_id", value: userId.uuidString)
+                .limit(1)
+                .execute()
+                .value
+
+            if let note = notes.first {
+                existingNote = note
+                noteContent = note.content
+                noteIsPublic = note.isPublic ?? false
+                showNoteField = true
+            }
+        } catch {
+            print("Load note error: \(error)")
         }
     }
 
@@ -105,6 +235,7 @@ struct EditLyricView: View {
         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedSong = songTitle.trimmingCharacters(in: .whitespaces)
         let trimmedArtist = artistName.trimmingCharacters(in: .whitespaces)
+        let trimmedNote = noteContent.trimmingCharacters(in: .whitespacesAndNewlines)
 
         Task {
             do {
@@ -119,6 +250,29 @@ struct EditLyricView: View {
                     .eq("id", value: lyric.id.uuidString)
                     .execute()
 
+                // Save note if content exists
+                if !trimmedNote.isEmpty, let userId = auth.userId {
+                    if let existing = existingNote {
+                        let noteUpdate = NoteContentUpdate(content: trimmedNote, isPublic: noteIsPublic)
+                        try await supabase
+                            .from("lyric_notes")
+                            .update(noteUpdate)
+                            .eq("id", value: existing.id.uuidString)
+                            .execute()
+                    } else {
+                        let insert = NoteInsert(
+                            lyricId: lyric.id,
+                            userId: userId,
+                            content: trimmedNote,
+                            isPublic: noteIsPublic
+                        )
+                        try await supabase
+                            .from("lyric_notes")
+                            .insert(insert)
+                            .execute()
+                    }
+                }
+
                 Haptics.success()
                 onSaved()
                 dismiss()
@@ -128,6 +282,16 @@ struct EditLyricView: View {
                 isSaving = false
             }
         }
+    }
+}
+
+private struct NoteContentUpdate: Encodable {
+    let content: String
+    let isPublic: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case content
+        case isPublic = "is_public"
     }
 }
 

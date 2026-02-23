@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SocialLyricCard: View {
     let item: LyricWithProfile
+    var onShare: (() -> Void)?
 
     private var lyric: Lyric { item.lyric }
 
@@ -27,7 +28,7 @@ struct SocialLyricCard: View {
                     .lineLimit(1)
             }
 
-            // Username + resonation count
+            // Username + share + resonation count
             HStack {
                 if let username = item.username {
                     Text("@\(username)")
@@ -36,6 +37,16 @@ struct SocialLyricCard: View {
                 }
 
                 Spacer()
+
+                if let onShare {
+                    Button {
+                        onShare()
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Theme.Light.muted)
+                    }
+                }
 
                 if let count = lyric.reactionCount, count > 0 {
                     HStack(spacing: 3) {

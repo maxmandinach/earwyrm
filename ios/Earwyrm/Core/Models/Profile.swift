@@ -7,6 +7,7 @@ struct Profile: Codable, Identifiable {
     let bio: String?
     let avatarUrl: String?
     let isPublic: Bool?
+    let lastActivitySeenAt: Date?
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -17,6 +18,7 @@ struct Profile: Codable, Identifiable {
         case bio
         case avatarUrl = "avatar_url"
         case isPublic = "is_public"
+        case lastActivitySeenAt = "last_activity_seen_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

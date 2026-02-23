@@ -22,11 +22,13 @@ struct LyricNote: Codable, Identifiable {
 
 struct NoteInsert: Encodable {
     let lyricId: UUID
+    let userId: UUID
     let content: String
     let isPublic: Bool
 
     enum CodingKeys: String, CodingKey {
         case lyricId = "lyric_id"
+        case userId = "user_id"
         case content
         case isPublic = "is_public"
     }

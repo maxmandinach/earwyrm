@@ -2,23 +2,22 @@ import SwiftUI
 import UIKit
 
 struct HomeView: View {
+    @Binding var navigationPath: NavigationPath
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
+    @Environment(NotificationManager.self) private var notificationManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
     @State private var showEditSheet = false
-    @State private var showShareSheet = false
+    @State private var showShareModal = false
     @State private var showComments = false
-    @State private var showNoteEditor = false
     @State private var resonateVM: ResonateViewModel?
-
-    private var shareURL: URL? {
-        guard let token = viewModel.currentLyric?.shareToken else { return nil }
-        return URL(string: "https://earwyrm.app/s/\(token)")
-    }
+    @State private var shareCarouselLyric: Lyric?
+    @State private var shareCarouselUsername: String?
+    @State private var shareCarouselOwnerId: UUID?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
@@ -59,7 +58,7 @@ struct HomeView: View {
                                 showActions: true,
                                 isPublic: lyric.isPublic ?? false,
                                 isOwn: lyric.userId == auth.userId,
-                                onShare: { showShareSheet = true },
+                                onShare: { showShareModal = true },
                                 onReplace: { showPostSheet = true },
                                 onEdit: { showEditSheet = true },
                                 onVisibilityChange: { newValue in
@@ -72,9 +71,8 @@ struct HomeView: View {
                                 commentCount: lyric.commentCount ?? 0,
                                 showComments: showComments,
                                 onToggleComments: { showComments.toggle() },
-                                currentUserId: auth.userId,
                                 note: viewModel.currentNote,
-                                onTapNote: { showNoteEditor = true }
+                                currentUserId: auth.userId
                             )
                             .padding(.horizontal, Theme.Spacing.md)
                             .padding(.top, Theme.Spacing.md)
@@ -85,12 +83,20 @@ struct HomeView: View {
                                 .cascadeReveal(delay: 0.4)
 
                             // Trending
-                            TrendingSection(lyrics: viewModel.trendingLyrics)
-                                .cascadeReveal(delay: 0.6)
+                            TrendingSection(lyrics: viewModel.trendingLyrics) { item in
+                                shareCarouselLyric = item.lyric
+                                shareCarouselUsername = item.username
+                                shareCarouselOwnerId = item.lyric.userId
+                            }
+                            .cascadeReveal(delay: 0.6)
 
                             // From Your Follows
-                            FollowFeedSection(lyrics: viewModel.followFeedLyrics)
-                                .cascadeReveal(delay: 0.8)
+                            FollowFeedSection(lyrics: viewModel.followFeedLyrics) { item in
+                                shareCarouselLyric = item.lyric
+                                shareCarouselUsername = item.username
+                                shareCarouselOwnerId = item.lyric.userId
+                            }
+                            .cascadeReveal(delay: 0.8)
 
                             // Bottom padding for FAB
                             Spacer()
@@ -112,6 +118,18 @@ struct HomeView: View {
             .navigationDestination(for: LyricWithProfile.self) { item in
                 LyricDetailDestination(item: item)
             }
+            .navigationDestination(for: DeepLinkDestination.self) { destination in
+                switch destination {
+                case .sharedLyric(let token):
+                    SharedLyricDetailView(shareToken: token)
+                case .profile(let username):
+                    ProfileUsernameResolver(username: username)
+                }
+            }
+            .navigationDestination(for: ProfileDestination.self) { dest in
+                PublicProfileView(userId: dest.userId, username: dest.username)
+            }
+            .earwyrmBranding()
         }
         .task {
             if let userId = auth.userId {
@@ -129,11 +147,11 @@ struct HomeView: View {
                 )
                 Task {
                     await resonateVM?.checkInitialState()
+                    await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
                     await viewModel.loadAllSections(
                         userId: userId,
                         follows: followManager.follows
                     )
-                    await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
                 }
             } else {
                 resonateVM = nil
@@ -158,26 +176,44 @@ struct HomeView: View {
                     Task {
                         if let userId = auth.userId {
                             await viewModel.refreshCurrentLyric(userId: userId)
+                            if let refreshedLyric = viewModel.currentLyric {
+                                await viewModel.fetchNote(lyricId: refreshedLyric.id, userId: userId)
+                            }
                         }
                     }
                 }
             }
         }
-        .sheet(isPresented: $showShareSheet) {
-            if let url = shareURL {
-                ShareSheet(items: [url])
-                    .presentationDetents([.medium])
+        .sheet(isPresented: $showShareModal) {
+            if let lyric = viewModel.currentLyric {
+                ShareModalView(
+                    lyric: lyric,
+                    note: viewModel.currentNote,
+                    username: auth.profile?.username
+                )
+                .presentationDetents([.large])
             }
         }
-        .sheet(isPresented: $showNoteEditor) {
-            if let lyric = viewModel.currentLyric, let userId = auth.userId {
-                NoteEditorSheet(
-                    lyricId: lyric.id,
-                    userId: userId,
-                    viewModel: viewModel
-                )
-                .presentationDetents([.medium])
-            }
+        .sheet(item: $shareCarouselLyric) { lyric in
+            ShareModalView(
+                lyric: lyric,
+                note: nil,
+                username: shareCarouselUsername,
+                onShareCompleted: {
+                    Task {
+                        guard let actorId = auth.userId,
+                              let actorUsername = auth.profile?.username,
+                              let ownerId = shareCarouselOwnerId else { return }
+                        await notificationManager.sendShareNotification(
+                            lyricOwnerId: ownerId,
+                            actorId: actorId,
+                            actorUsername: actorUsername,
+                            lyric: lyric
+                        )
+                    }
+                }
+            )
+            .presentationDetents([.large])
         }
     }
 
@@ -226,6 +262,44 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Profile Username Resolver (deep link)
+
+private struct ProfileUsernameResolver: View {
+    let username: String
+    @State private var profile: Profile?
+    @State private var isLoading = true
+
+    var body: some View {
+        Group {
+            if let profile {
+                PublicProfileView(userId: profile.id, username: profile.username)
+            } else if isLoading {
+                ProgressView()
+                    .tint(Theme.Light.accent)
+            } else {
+                Text("User not found")
+                    .font(Theme.dmSans(15))
+                    .foregroundStyle(Theme.Light.muted)
+            }
+        }
+        .task {
+            do {
+                let result: Profile = try await supabase
+                    .from("profiles")
+                    .select()
+                    .eq("username", value: username)
+                    .single()
+                    .execute()
+                    .value
+                profile = result
+            } catch {
+                print("Resolve username error: \(error)")
+            }
+            isLoading = false
+        }
+    }
+}
+
 // MARK: - Lyric Detail Destination
 
 private struct LyricDetailDestination: View {
@@ -251,26 +325,20 @@ private struct LyricDetailDestination: View {
                 .padding(.horizontal, Theme.Spacing.md)
 
                 if let username = item.username {
-                    Text("posted by @\(username)")
-                        .font(Theme.dmSans(14))
-                        .foregroundStyle(Theme.Light.secondary)
+                    NavigationLink(value: ProfileDestination(userId: item.lyric.userId, username: username)) {
+                        Text("posted by @\(username)")
+                            .font(Theme.dmSans(14))
+                            .foregroundStyle(Theme.Light.accent)
+                    }
                 }
             }
             .padding(.top, Theme.Spacing.md)
         }
         .background(Theme.Light.background)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: ProfileDestination.self) { dest in
+            PublicProfileView(userId: dest.userId, username: dest.username)
+        }
     }
 }
 
-// MARK: - Native Share Sheet
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}

@@ -4,6 +4,7 @@ struct ExploreFollowingView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
     let viewModel: ExploreViewModel
+    var onShare: ((Lyric, String?) -> Void)?
 
     @State private var search = ""
     @State private var timeRange: TimeRange = .all
@@ -57,8 +58,12 @@ struct ExploreFollowingView: View {
                         .padding(.top, Theme.Spacing.xl)
                 } else {
                     ForEach(feed) { lyric in
-                        CompactLyricCard(lyric: lyric)
-                            .padding(.horizontal, Theme.Spacing.md)
+                        CompactLyricCard(
+                            lyric: lyric,
+                            username: viewModel.profileMap[lyric.userId],
+                            onShare: onShare != nil ? { onShare?(lyric, viewModel.profileMap[lyric.userId]) } : nil
+                        )
+                        .padding(.horizontal, Theme.Spacing.md)
                     }
 
                     if hasMore {

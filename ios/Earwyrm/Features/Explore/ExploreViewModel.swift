@@ -37,6 +37,7 @@ struct TrendingTag: Identifiable {
 @MainActor
 final class ExploreViewModel {
     var allLyrics: [Lyric] = []
+    var profileMap: [UUID: String] = [:]
     var trendingTags: [TrendingTag] = []
     var isLoading = false
     var error: String?
@@ -63,6 +64,20 @@ final class ExploreViewModel {
                 .execute()
                 .value
             allLyrics = lyrics
+
+            // Batch-fetch profiles for usernames
+            let userIds = Array(Set(lyrics.map(\.userId)))
+            if !userIds.isEmpty {
+                let profiles: [CommentProfile] = try await supabase
+                    .from("profiles")
+                    .select("id, username")
+                    .in("id", values: userIds.map(\.uuidString))
+                    .execute()
+                    .value
+                for p in profiles {
+                    profileMap[p.id] = p.username
+                }
+            }
         } catch {
             self.error = error.localizedDescription
             print("Fetch public lyrics error: \(error)")
