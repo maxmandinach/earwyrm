@@ -116,6 +116,7 @@ struct CaveatText: View {
         Image(uiImage: renderText())
             .renderingMode(.template)
             .foregroundStyle(color)
+            .accessibilityLabel(text)
     }
 
     private func renderText() -> UIImage {

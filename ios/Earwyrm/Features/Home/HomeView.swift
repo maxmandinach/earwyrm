@@ -3,9 +3,11 @@ import UIKit
 
 struct HomeView: View {
     @Binding var navigationPath: NavigationPath
+    var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
     @Environment(NotificationManager.self) private var notificationManager
+    @Environment(CollectionManager.self) private var collectionManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
     @State private var showEditSheet = false
@@ -15,12 +17,16 @@ struct HomeView: View {
     @State private var shareCarouselLyric: Lyric?
     @State private var shareCarouselUsername: String?
     @State private var shareCarouselOwnerId: UUID?
+    @State private var bookmarkLyricId: UUID?
+    @State private var showCollectionPicker = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
+                        Color.clear.frame(height: 0).id("home-top")
                         if viewModel.isLoading {
                             Spacer()
                                 .frame(height: 100)
@@ -71,12 +77,21 @@ struct HomeView: View {
                                 commentCount: lyric.commentCount ?? 0,
                                 showComments: showComments,
                                 onToggleComments: { showComments.toggle() },
+                                onSave: {
+                                    bookmarkLyricId = lyric.id
+                                    showCollectionPicker = true
+                                },
+                                isSaved: collectionManager.isLyricSaved(lyric.id),
                                 note: viewModel.currentNote,
                                 currentUserId: auth.userId
                             )
                             .padding(.horizontal, Theme.Spacing.md)
                             .padding(.top, Theme.Spacing.md)
                             .cascadeReveal(delay: 0.2)
+
+                            // Collections carousel
+                            CollectionsCarouselSection(collections: collectionManager.collections)
+                                .cascadeReveal(delay: 0.3)
 
                             // Memory Lane
                             MemoryLaneSection(lyrics: viewModel.pastLyrics)
@@ -108,7 +123,17 @@ struct HomeView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+                .refreshable {
+                    if let userId = auth.userId {
+                        await viewModel.refreshCurrentLyric(userId: userId)
+                        await collectionManager.fetchCollections(userId: userId)
+                    }
+                }
                 .background(Theme.Light.background)
+                .onChange(of: scrollToTop) { _, _ in
+                    withAnimation { proxy.scrollTo("home-top", anchor: .top) }
+                }
+                } // ScrollViewReader
 
                 // FAB — only show when there's content or empty state (not loading/error)
                 if !viewModel.isLoading && viewModel.error == nil {
@@ -117,6 +142,9 @@ struct HomeView: View {
             }
             .navigationDestination(for: LyricWithProfile.self) { item in
                 LyricDetailDestination(item: item)
+            }
+            .navigationDestination(for: Collection.self) { collection in
+                CollectionDetailView(collection: collection)
             }
             .navigationDestination(for: DeepLinkDestination.self) { destination in
                 switch destination {
@@ -182,6 +210,8 @@ struct HomeView: View {
                         }
                     }
                 }
+                .interactiveDismissDisabled()
+                .presentationDragIndicator(.visible)
             }
         }
         .sheet(isPresented: $showShareModal) {
@@ -192,6 +222,7 @@ struct HomeView: View {
                     username: auth.profile?.username
                 )
                 .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
         }
         .sheet(item: $shareCarouselLyric) { lyric in
@@ -214,6 +245,14 @@ struct HomeView: View {
                 }
             )
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showCollectionPicker) {
+            if let lyricId = bookmarkLyricId {
+                CollectionPickerSheet(lyricId: lyricId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 

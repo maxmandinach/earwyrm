@@ -15,6 +15,7 @@ struct SongDestination: Hashable {
 // MARK: - Explore View
 
 struct ExploreView: View {
+    var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
     @Environment(NotificationManager.self) private var notificationManager
@@ -37,7 +38,9 @@ struct ExploreView: View {
                         .padding(.bottom, Theme.Spacing.sm)
 
                     // Content
+                    ScrollViewReader { proxy in
                     ScrollView {
+                        Color.clear.frame(height: 0).id("explore-top")
                         if selectedTab == 0 {
                             ExploreForYouView(viewModel: viewModel) { lyric, username in
                                 shareLyric = lyric
@@ -59,6 +62,10 @@ struct ExploreView: View {
                             await followManager.fetchFollows(userId: userId)
                         }
                     }
+                    .onChange(of: scrollToTop) { _, _ in
+                        withAnimation { proxy.scrollTo("explore-top", anchor: .top) }
+                    }
+                    } // ScrollViewReader
                 }
             }
             .navigationDestination(for: ArtistDestination.self) { dest in
@@ -96,6 +103,7 @@ struct ExploreView: View {
                 }
             )
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .task {
             await viewModel.fetchPublicLyrics()

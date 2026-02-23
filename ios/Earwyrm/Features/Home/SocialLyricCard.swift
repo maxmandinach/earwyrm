@@ -3,6 +3,8 @@ import SwiftUI
 struct SocialLyricCard: View {
     let item: LyricWithProfile
     var onShare: (() -> Void)?
+    var onSave: (() -> Void)?
+    var isSaved: Bool = false
 
     private var lyric: Lyric { item.lyric }
 
@@ -38,6 +40,16 @@ struct SocialLyricCard: View {
 
                 Spacer()
 
+                if let onSave {
+                    Button {
+                        onSave()
+                    } label: {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(isSaved ? Theme.Light.accent : Theme.Light.muted)
+                    }
+                }
+
                 if let onShare {
                     Button {
                         onShare()
@@ -64,5 +76,24 @@ struct SocialLyricCard: View {
         .background(Theme.Light.card)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
+        .contextMenu {
+            if let onShare {
+                Button { onShare() } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+            }
+            if let onSave {
+                Button { onSave() } label: {
+                    Label(isSaved ? "Remove from Collection" : "Save to Collection", systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                }
+            }
+            if let username = item.username {
+                Button {
+                    // Navigation handled by parent
+                } label: {
+                    Label("View @\(username)", systemImage: "person")
+                }
+            }
+        }
     }
 }

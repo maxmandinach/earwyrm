@@ -43,8 +43,25 @@ struct PostLyricView: View {
                         .transition(.opacity)
                     }
 
-                    // Artist + Song fields with cover art
-                    metadataFields
+                    // Artist + Song — only after Genius confirms or user opts in
+                    if viewModel.shouldShowMetadata {
+                        metadataFields
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else if !viewModel.shouldShowGenius {
+                        Button {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                viewModel.showManualMetadata = true
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "music.note")
+                                    .font(.system(size: 13))
+                                Text("add artist & song")
+                                    .font(Theme.dmSans(13))
+                            }
+                            .foregroundStyle(Theme.Light.muted)
+                        }
+                    }
 
                     // Note field
                     noteField
@@ -70,6 +87,14 @@ struct PostLyricView: View {
             .navigationTitle("new lyric")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                    .font(Theme.dmSans(15, weight: .medium))
+                    .foregroundStyle(Theme.Light.accent)
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         viewModel.cancelAllTasks()
@@ -102,6 +127,7 @@ struct PostLyricView: View {
             }
             .animation(.easeInOut(duration: 0.25), value: viewModel.shouldShowGenius)
             .animation(.easeInOut(duration: 0.2), value: viewModel.suggestMatches.isEmpty)
+            .animation(.easeOut(duration: 0.25), value: viewModel.shouldShowMetadata)
         }
     }
 
@@ -207,69 +233,108 @@ struct PostLyricView: View {
 
     private var metadataFields: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(alignment: .top, spacing: 12) {
-                CoverArtPreview(url: viewModel.coverArtUrl)
+            if viewModel.isMetadataConfirmed {
+                confirmedMetadataPill
+            } else {
+                editableMetadataFields
+            }
+        }
+    }
 
-                VStack(spacing: Theme.Spacing.sm) {
-                    // Artist field
-                    VStack(alignment: .leading, spacing: 0) {
-                        CustomFocusTextField(
-                            placeholder: "artist",
-                            text: $viewModel.artistName,
-                            onChange: { viewModel.artistFieldChanged() },
-                            onFocusChange: { focused in
-                                if !focused {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                        viewModel.showArtistAutocomplete = false
-                                    }
+    private var confirmedMetadataPill: some View {
+        HStack(spacing: 12) {
+            CoverArtPreview(url: viewModel.coverArtUrl)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(viewModel.songTitle)
+                    .font(Theme.dmSans(15, weight: .medium))
+                    .foregroundStyle(Theme.Light.text)
+                    .lineLimit(1)
+                Text(viewModel.artistName)
+                    .font(Theme.dmSans(13))
+                    .foregroundStyle(Theme.Light.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button {
+                Haptics.light()
+                viewModel.editMetadata()
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.Light.muted)
+            }
+        }
+        .padding(12)
+        .background(Theme.Light.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var editableMetadataFields: some View {
+        HStack(alignment: .top, spacing: 12) {
+            CoverArtPreview(url: viewModel.coverArtUrl)
+
+            VStack(spacing: Theme.Spacing.sm) {
+                // Artist field
+                VStack(alignment: .leading, spacing: 0) {
+                    CustomFocusTextField(
+                        placeholder: "artist",
+                        text: $viewModel.artistName,
+                        onChange: { viewModel.artistFieldChanged() },
+                        onFocusChange: { focused in
+                            if !focused {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    viewModel.showArtistAutocomplete = false
                                 }
                             }
-                        )
-
-                        if viewModel.showArtistAutocomplete
-                            && (!viewModel.artistResults.isEmpty || viewModel.isArtistSearching) {
-                            ArtistAutocompleteView(
-                                artists: viewModel.artistResults,
-                                isLoading: viewModel.isArtistSearching,
-                                onSelect: {
-                                    Haptics.light()
-                                    viewModel.selectArtist($0)
-                                }
-                            )
-                            .zIndex(10)
                         }
+                    )
+
+                    if viewModel.showArtistAutocomplete
+                        && (!viewModel.artistResults.isEmpty || viewModel.isArtistSearching) {
+                        ArtistAutocompleteView(
+                            artists: viewModel.artistResults,
+                            isLoading: viewModel.isArtistSearching,
+                            onSelect: {
+                                Haptics.light()
+                                viewModel.selectArtist($0)
+                            }
+                        )
+                        .zIndex(10)
                     }
+                }
 
-                    // Song field
-                    VStack(alignment: .leading, spacing: 0) {
-                        CustomFocusTextField(
-                            placeholder: "song",
-                            text: $viewModel.songTitle,
-                            onChange: {
-                                viewModel.songFieldChanged()
-                                viewModel.triggerMatchSearchFromSong()
-                            },
-                            onFocusChange: { focused in
-                                if !focused {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                        viewModel.showSongAutocomplete = false
-                                    }
+                // Song field
+                VStack(alignment: .leading, spacing: 0) {
+                    CustomFocusTextField(
+                        placeholder: "song",
+                        text: $viewModel.songTitle,
+                        onChange: {
+                            viewModel.songFieldChanged()
+                            viewModel.triggerMatchSearchFromSong()
+                        },
+                        onFocusChange: { focused in
+                            if !focused {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    viewModel.showSongAutocomplete = false
                                 }
                             }
-                        )
-
-                        if viewModel.showSongAutocomplete
-                            && (!viewModel.songResults.isEmpty || viewModel.isSongSearching) {
-                            SongAutocompleteView(
-                                recordings: viewModel.songResults,
-                                isLoading: viewModel.isSongSearching,
-                                onSelect: {
-                                    Haptics.light()
-                                    viewModel.selectRecording($0)
-                                }
-                            )
-                            .zIndex(10)
                         }
+                    )
+
+                    if viewModel.showSongAutocomplete
+                        && (!viewModel.songResults.isEmpty || viewModel.isSongSearching) {
+                        SongAutocompleteView(
+                            recordings: viewModel.songResults,
+                            isLoading: viewModel.isSongSearching,
+                            onSelect: {
+                                Haptics.light()
+                                viewModel.selectRecording($0)
+                            }
+                        )
+                        .zIndex(10)
                     }
                 }
             }
@@ -428,22 +493,3 @@ struct CustomFocusTextField: View {
     }
 }
 
-// MARK: - Haptics
-
-enum Haptics {
-    static func light() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-    }
-
-    static func medium() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-    }
-
-    static func success() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-    }
-
-    static func error() {
-        UINotificationFeedbackGenerator().notificationOccurred(.error)
-    }
-}

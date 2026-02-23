@@ -9,6 +9,8 @@ struct CardActionBar: View {
     let onEdit: () -> Void
     let onVisibilityChange: (Bool) -> Void
     let onToggleComments: () -> Void
+    var onSave: (() -> Void)?
+    var isSaved: Bool = false
 
     // Resonate state — passed in from parent
     let hasReacted: Bool
@@ -52,6 +54,9 @@ struct CardActionBar: View {
                         .foregroundStyle(Theme.Light.muted)
                         .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                     }
+                    .accessibilityLabel("Comments")
+                    .accessibilityValue(commentCount > 0 ? "\(commentCount) comments" : "No comments")
+                    .accessibilityHint("Toggle comments section")
 
                     // Visibility — own lyric only
                     if isOwn {
@@ -71,6 +76,20 @@ struct CardActionBar: View {
 
                 // Right group
                 HStack(spacing: 0) {
+                    // Bookmark / Save
+                    if let onSave {
+                        Button {
+                            Haptics.light()
+                            onSave()
+                        } label: {
+                            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                                .font(.system(size: 14))
+                                .foregroundStyle(isSaved ? Theme.Light.accent : Theme.Light.muted)
+                                .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                        }
+                        .accessibilityLabel(isSaved ? "Remove from collection" : "Save to collection")
+                    }
+
                     // Share
                     shareButton
 
@@ -121,6 +140,9 @@ struct CardActionBar: View {
             .foregroundStyle(hasReacted ? Theme.Light.accent : Theme.Light.muted)
             .frame(minWidth: touchMinWidth, minHeight: touchHeight)
         }
+        .accessibilityLabel("Resonate")
+        .accessibilityValue("\(reactionCount) resonations")
+        .accessibilityHint(hasReacted ? "Remove resonation" : "Add resonation")
     }
 
     // MARK: - Share Button

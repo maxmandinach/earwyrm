@@ -107,8 +107,10 @@ struct LoginView: View {
         Task {
             do {
                 try await auth.signIn(email: email, password: password)
+                Haptics.success()
             } catch {
                 errorMessage = error.localizedDescription
+                Haptics.error()
             }
             isLoading = false
         }

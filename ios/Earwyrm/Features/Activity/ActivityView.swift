@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ActivityView: View {
+    var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
     @Environment(NotificationManager.self) private var notificationManager
     @State private var selectedFilter = 0
@@ -29,7 +30,9 @@ struct ActivityView: View {
                         .padding(.bottom, Theme.Spacing.sm)
 
                     // Notification list
+                    ScrollViewReader { proxy in
                     ScrollView {
+                        Color.clear.frame(height: 0).id("activity-top")
                         if notificationManager.isLoading && notificationManager.notifications.isEmpty {
                             ProgressView()
                                 .tint(Theme.Light.accent)
@@ -75,6 +78,15 @@ struct ActivityView: View {
 
                         Spacer().frame(height: Theme.Spacing.xl)
                     }
+                    .refreshable {
+                        if let userId = auth.userId {
+                            await notificationManager.fetchNotifications(userId: userId)
+                        }
+                    }
+                    .onChange(of: scrollToTop) { _, _ in
+                        withAnimation { proxy.scrollTo("activity-top", anchor: .top) }
+                    }
+                    } // ScrollViewReader
                 }
             }
             .navigationDestination(for: ActivityDestination.self) { dest in

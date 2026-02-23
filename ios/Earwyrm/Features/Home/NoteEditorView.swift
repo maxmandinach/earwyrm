@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct NoteEditorSheet: View {
     let lyricId: UUID
@@ -82,6 +83,14 @@ struct NoteEditorSheet: View {
             .navigationTitle("note")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                    .font(Theme.dmSans(15, weight: .medium))
+                    .foregroundStyle(Theme.Light.accent)
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .font(Theme.dmSans(14))
@@ -89,6 +98,7 @@ struct NoteEditorSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        Haptics.success()
                         save()
                         dismiss()
                     }

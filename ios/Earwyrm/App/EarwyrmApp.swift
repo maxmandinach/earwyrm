@@ -3,10 +3,12 @@ import UIKit
 
 @main
 struct EarwyrmApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var authManager = AuthManager()
     @State private var followManager = FollowManager()
     @State private var userFollowManager = UserFollowManager()
     @State private var notificationManager = NotificationManager()
+    @State private var collectionManager = CollectionManager()
     @State private var navigationCoordinator = NavigationCoordinator()
 
     init() {
@@ -26,6 +28,7 @@ struct EarwyrmApp: App {
                 .environment(followManager)
                 .environment(userFollowManager)
                 .environment(notificationManager)
+                .environment(collectionManager)
                 .environment(navigationCoordinator)
                 .onOpenURL { url in
                     navigationCoordinator.handle(url: url)

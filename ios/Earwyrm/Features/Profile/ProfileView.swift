@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProfileView: View {
+    var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
     @Environment(UserFollowManager.self) private var userFollowManager
@@ -10,7 +11,9 @@ struct ProfileView: View {
     @State private var followerCount: Int = 0
     @State private var followingCount: Int = 0
 
-    private let tabs = ["lyrics", "resonated", "notes", "following"]
+    @Environment(CollectionManager.self) private var collectionManager
+
+    private let tabs = ["lyrics", "resonated", "notes", "collections", "following"]
 
     var body: some View {
         NavigationStack {
@@ -29,7 +32,9 @@ struct ProfileView: View {
                         .padding(.bottom, Theme.Spacing.sm)
 
                     // Tab content
+                    ScrollViewReader { proxy in
                     ScrollView {
+                        Color.clear.frame(height: 0).id("profile-top")
                         switch selectedTab {
                         case 0:
                             ProfileLyricsView(lyrics: viewModel.allLyrics)
@@ -38,6 +43,8 @@ struct ProfileView: View {
                         case 2:
                             ProfileNotesView(notes: viewModel.notes)
                         case 3:
+                            ProfileCollectionsView()
+                        case 4:
                             ProfileFollowingView()
                         default:
                             EmptyView()
@@ -52,10 +59,17 @@ struct ProfileView: View {
                             await followManager.fetchFollows(userId: userId)
                         }
                     }
+                    .onChange(of: scrollToTop) { _, _ in
+                        withAnimation { proxy.scrollTo("profile-top", anchor: .top) }
+                    }
+                    } // ScrollViewReader
                 }
             }
             .navigationDestination(for: LyricWithProfile.self) { item in
                 ProfileLyricDetail(item: item)
+            }
+            .navigationDestination(for: Collection.self) { collection in
+                CollectionDetailView(collection: collection)
             }
             .navigationDestination(for: ProfileDestination.self) { dest in
                 PublicProfileView(userId: dest.userId, username: dest.username)
@@ -83,6 +97,7 @@ struct ProfileView: View {
             if let userId = auth.userId {
                 await viewModel.loadAll(userId: userId)
                 await followManager.fetchFollows(userId: userId)
+                await collectionManager.fetchCollections(userId: userId)
                 let counts = await userFollowManager.fetchCounts(userId: userId)
                 followerCount = counts.followers
                 followingCount = counts.following
@@ -125,14 +140,14 @@ struct ProfileView: View {
             // Follower / following counts (visible only to profile owner)
             HStack(spacing: Theme.Spacing.md) {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 3 }
+                    withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 4 }
                 } label: {
                     Text("\(followerCount) followers")
                         .font(Theme.dmSans(13))
                         .foregroundStyle(Theme.Light.muted)
                 }
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 3 }
+                    withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 4 }
                 } label: {
                     Text("\(followingCount) following")
                         .font(Theme.dmSans(13))

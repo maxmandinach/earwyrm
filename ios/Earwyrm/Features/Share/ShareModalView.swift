@@ -95,6 +95,7 @@ struct ShareModalView: View {
 
                 // Primary action — Share
                 Button {
+                    Haptics.success()
                     renderer.format = .square
                     rerender()
                     showActivitySheet = true

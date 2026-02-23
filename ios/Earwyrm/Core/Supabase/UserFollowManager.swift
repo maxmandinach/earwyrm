@@ -76,6 +76,23 @@ final class UserFollowManager {
         followingIds.contains(targetUserId)
     }
 
+    // MARK: - Fetch Followers
+
+    func fetchFollowerIds(userId: UUID) async -> [UUID] {
+        do {
+            let result: [UserFollow] = try await supabase
+                .from("user_follows")
+                .select("id, follower_id, following_id, created_at")
+                .eq("following_id", value: userId.uuidString)
+                .execute()
+                .value
+            return result.map(\.followerId)
+        } catch {
+            print("Fetch followers error: \(error)")
+            return []
+        }
+    }
+
     // MARK: - Counts (for profile owner only)
 
     struct FollowCounts {

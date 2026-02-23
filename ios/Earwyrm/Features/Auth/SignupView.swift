@@ -136,9 +136,11 @@ struct SignupView: View {
         Task {
             do {
                 try await auth.signUp(email: email, password: password, username: username)
+                Haptics.success()
                 showConfirmation = true
             } catch {
                 errorMessage = error.localizedDescription
+                Haptics.error()
             }
             isLoading = false
         }

@@ -91,6 +91,18 @@
 		E1E2E3E4E5E6E7E8E9F0F1F3 /* UserFollowButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E2E3E4E5E6E7E8E9F0F1F2 /* UserFollowButton.swift */; };
 		F1F2F3F4F5F6F7F8F9A0A1A3 /* PublicProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F2F3F4F5F6F7F8F9A0A1A2 /* PublicProfileView.swift */; };
 		AABB11CC22DD33EE44FF5567 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11CC22DD33EE44FF5566 /* SettingsViewModel.swift */; };
+		DA01DA01DA01DA01DA01DA01 /* Collection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA01CA01CA01CA01CA01CA01 /* Collection.swift */; };
+		DB02DB02DB02DB02DB02DB02 /* LyricCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB02CB02CB02CB02CB02CB02 /* LyricCollection.swift */; };
+		DC03DC03DC03DC03DC03DC03 /* CollectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC03CC03CC03CC03CC03CC03 /* CollectionManager.swift */; };
+		DD04DD04DD04DD04DD04DD04 /* ProfileCollectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD04CD04CD04CD04CD04CD04 /* ProfileCollectionsView.swift */; };
+		DE05DE05DE05DE05DE05DE05 /* CollectionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE05CE05CE05CE05CE05CE05 /* CollectionDetailView.swift */; };
+		DF06DF06DF06DF06DF06DF06 /* CreateCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF06CF06CF06CF06CF06CF06 /* CreateCollectionSheet.swift */; };
+		DA07DA07DA07DA07DA07DA07 /* CollectionPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA07CA07CA07CA07CA07CA07 /* CollectionPickerSheet.swift */; };
+		DB08DB08DB08DB08DB08DB08 /* CollectionsCarouselSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB08CB08CB08CB08CB08CB08 /* CollectionsCarouselSection.swift */; };
+		DC09DC09DC09DC09DC09DC09 /* CollectionCarouselCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */; };
+		28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47946B7ED7858D8588F43FA0 /* Haptics.swift */; };
+		C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70DFC9C9290DB250677A38F /* AppDelegate.swift */; };
+		3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB134CEA61598146E3A6A8FA /* PushManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -180,6 +192,18 @@
 		D1D2D3D4D5D6D7D8D9E0E1E2 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		E1E2E3E4E5E6E7E8E9F0F1F2 /* UserFollowButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserFollowButton.swift; sourceTree = "<group>"; };
 		F1F2F3F4F5F6F7F8F9A0A1A2 /* PublicProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicProfileView.swift; sourceTree = "<group>"; };
+		CA01CA01CA01CA01CA01CA01 /* Collection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collection.swift; sourceTree = "<group>"; };
+		CB02CB02CB02CB02CB02CB02 /* LyricCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricCollection.swift; sourceTree = "<group>"; };
+		CC03CC03CC03CC03CC03CC03 /* CollectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionManager.swift; sourceTree = "<group>"; };
+		CD04CD04CD04CD04CD04CD04 /* ProfileCollectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCollectionsView.swift; sourceTree = "<group>"; };
+		CE05CE05CE05CE05CE05CE05 /* CollectionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionDetailView.swift; sourceTree = "<group>"; };
+		CF06CF06CF06CF06CF06CF06 /* CreateCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateCollectionSheet.swift; sourceTree = "<group>"; };
+		CA07CA07CA07CA07CA07CA07 /* CollectionPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPickerSheet.swift; sourceTree = "<group>"; };
+		CB08CB08CB08CB08CB08CB08 /* CollectionsCarouselSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsCarouselSection.swift; sourceTree = "<group>"; };
+		CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionCarouselCard.swift; sourceTree = "<group>"; };
+		47946B7ED7858D8588F43FA0 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		D70DFC9C9290DB250677A38F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		CB134CEA61598146E3A6A8FA /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +223,7 @@
 			children = (
 				B7F28FF874B698D620DC89AA /* Activity */,
 				DA9D3DDAF2D69C1191B6BD8E /* Auth */,
+				EA10EA10EA10EA10EA10EA10 /* Collections */,
 				2F1577A94BC90F8F1298D549 /* Explore */,
 				C1D0D988353B259E23C87711 /* Home */,
 				3C120E489D1D131214F1B12C /* PostLyric */,
@@ -278,6 +303,7 @@
 		3D2E74907024A7D4C9CD41D5 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				D70DFC9C9290DB250677A38F /* AppDelegate.swift */,
 				76E58E33E881452824C13EBE /* ContentView.swift */,
 				9DCDB8A9BF7C073BED9C072A /* EarwyrmApp.swift */,
 				5D003504DBF6AB934A30C416 /* MainTabView.swift */,
@@ -288,6 +314,7 @@
 		402C4564BF5763AB04F08CC8 /* Profile */ = {
 			isa = PBXGroup;
 			children = (
+				CD04CD04CD04CD04CD04CD04 /* ProfileCollectionsView.swift */,
 				E5F6A7B8C9D0E1F2A3B4C5D6 /* ProfileFollowingView.swift */,
 				B2C3D4E5F6A7B8C9D0E1F2A3 /* ProfileLyricsView.swift */,
 				D4E5F6A7B8C9D0E1F2A3B4C5 /* ProfileNotesView.swift */,
@@ -334,6 +361,7 @@
 		9B63760EBE5C7C1E5C3F245A /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				47946B7ED7858D8588F43FA0 /* Haptics.swift */,
 				00EDCDA3576B454DD2084818 /* Theme.swift */,
 			);
 			path = Design;
@@ -342,12 +370,24 @@
 		ADA4477418648E83AF2524C1 /* Supabase */ = {
 			isa = PBXGroup;
 			children = (
+				CC03CC03CC03CC03CC03CC03 /* CollectionManager.swift */,
 				A920A37284BB75D6088EB9E0 /* FollowManager.swift */,
 				D1D2D3D4D5D6D7D8D9E0E1E2 /* NotificationManager.swift */,
+				CB134CEA61598146E3A6A8FA /* PushManager.swift */,
 				8A2916AE98AF104B879940F7 /* SupabaseClient.swift */,
 				C1C2C3C4C5C6C7C8C9D0D1D2 /* UserFollowManager.swift */,
 			);
 			path = Supabase;
+			sourceTree = "<group>";
+		};
+		EA10EA10EA10EA10EA10EA10 /* Collections */ = {
+			isa = PBXGroup;
+			children = (
+				CE05CE05CE05CE05CE05CE05 /* CollectionDetailView.swift */,
+				CA07CA07CA07CA07CA07CA07 /* CollectionPickerSheet.swift */,
+				CF06CF06CF06CF06CF06CF06 /* CreateCollectionSheet.swift */,
+			);
+			path = Collections;
 			sourceTree = "<group>";
 		};
 		B7F28FF874B698D620DC89AA /* Activity */ = {
@@ -363,6 +403,8 @@
 			children = (
 				22CF1A9892564262EA88E5FC /* CardActionBar.swift */,
 				3DE142801B13AF5FD6011BEE /* CascadeModifier.swift */,
+				CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */,
+				CB08CB08CB08CB08CB08CB08 /* CollectionsCarouselSection.swift */,
 				00FAE7BC822CB9DF633CD43E /* CommentSectionView.swift */,
 				05316E5BDE6687C3FA1553E8 /* EditLyricView.swift */,
 				85A07512787F9142F9183696 /* FollowFeedSection.swift */,
@@ -391,10 +433,12 @@
 		D14C32545551A6044405DC04 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CA01CA01CA01CA01CA01CA01 /* Collection.swift */,
 				41E2D41B9ADD76E09352ADB0 /* Comment.swift */,
 				13E393D761C12E15A59F0C47 /* Follow.swift */,
 				BB62FB279F96F6B029E206DD /* GeniusModels.swift */,
 				DBE08B59FAEAE445F852DC58 /* Lyric.swift */,
+				CB02CB02CB02CB02CB02CB02 /* LyricCollection.swift */,
 				A0641D180E1670482EC11618 /* LyricInsert.swift */,
 				6C49EAC692A5CD72318E2F19 /* LyricNote.swift */,
 				BE5954695A912C6918E842E8 /* MusicBrainzModels.swift */,
@@ -590,6 +634,18 @@
 				D1D2D3D4D5D6D7D8D9E0E1E3 /* NotificationManager.swift in Sources */,
 				E1E2E3E4E5E6E7E8E9F0F1F3 /* UserFollowButton.swift in Sources */,
 				F1F2F3F4F5F6F7F8F9A0A1A3 /* PublicProfileView.swift in Sources */,
+				DA01DA01DA01DA01DA01DA01 /* Collection.swift in Sources */,
+				DB02DB02DB02DB02DB02DB02 /* LyricCollection.swift in Sources */,
+				DC03DC03DC03DC03DC03DC03 /* CollectionManager.swift in Sources */,
+				DD04DD04DD04DD04DD04DD04 /* ProfileCollectionsView.swift in Sources */,
+				DE05DE05DE05DE05DE05DE05 /* CollectionDetailView.swift in Sources */,
+				DF06DF06DF06DF06DF06DF06 /* CreateCollectionSheet.swift in Sources */,
+				DA07DA07DA07DA07DA07DA07 /* CollectionPickerSheet.swift in Sources */,
+				DB08DB08DB08DB08DB08DB08 /* CollectionsCarouselSection.swift in Sources */,
+				DC09DC09DC09DC09DC09DC09 /* CollectionCarouselCard.swift in Sources */,
+				28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */,
+				C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */,
+				3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

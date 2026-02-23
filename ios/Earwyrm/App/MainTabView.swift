@@ -5,29 +5,40 @@ struct MainTabView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(UserFollowManager.self) private var userFollowManager
+    @Environment(CollectionManager.self) private var collectionManager
     @State private var selectedTab = 0
     @State private var homePath = NavigationPath()
+    @State private var scrollToTopTrigger: [Int: Bool] = [0: false, 1: false, 2: false, 3: false]
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView(navigationPath: $homePath)
+            HomeView(
+                navigationPath: $homePath,
+                scrollToTop: scrollToTopTrigger[0] ?? false
+            )
                 .toolbar(.hidden, for: .tabBar)
                 .tag(0)
 
-            ExploreView()
+            ExploreView(scrollToTop: scrollToTopTrigger[1] ?? false)
                 .toolbar(.hidden, for: .tabBar)
                 .tag(1)
 
-            ActivityView()
+            ActivityView(scrollToTop: scrollToTopTrigger[2] ?? false)
                 .toolbar(.hidden, for: .tabBar)
                 .tag(2)
 
-            ProfileView()
+            ProfileView(scrollToTop: scrollToTopTrigger[3] ?? false)
                 .toolbar(.hidden, for: .tabBar)
                 .tag(3)
         }
         .safeAreaInset(edge: .bottom) {
-            EarwyrmTabBar(selectedTab: $selectedTab, hasUnreadActivity: notificationManager.unreadCount > 0)
+            EarwyrmTabBar(
+                selectedTab: $selectedTab,
+                hasUnreadActivity: notificationManager.unreadCount > 0,
+                onSameTabTapped: { tab in
+                    scrollToTopTrigger[tab]?.toggle()
+                }
+            )
         }
         .task {
             if let userId = auth.userId {
@@ -36,6 +47,8 @@ struct MainTabView: View {
                     userId: userId,
                     lastSeenAt: auth.profile?.lastActivitySeenAt
                 )
+                await collectionManager.fetchCollections(userId: userId)
+                PushManager.shared.requestPermission()
             }
         }
         .onChange(of: selectedTab) { _, newTab in
@@ -64,6 +77,7 @@ struct MainTabView: View {
 struct EarwyrmTabBar: View {
     @Binding var selectedTab: Int
     var hasUnreadActivity: Bool = false
+    var onSameTabTapped: ((Int) -> Void)?
 
     var body: some View {
         HStack(spacing: 0) {
@@ -95,6 +109,7 @@ struct EarwyrmTabBar: View {
                         }
                     }
             }
+            .accessibilityValue(hasUnreadActivity ? "unread notifications" : "")
 
             // Profile — person
             tabButton(index: 3, label: "Profile") {
@@ -117,7 +132,11 @@ struct EarwyrmTabBar: View {
         @ViewBuilder icon: () -> Icon
     ) -> some View {
         Button {
-            selectedTab = index
+            if selectedTab == index {
+                onSameTabTapped?(index)
+            } else {
+                selectedTab = index
+            }
             Haptics.light()
         } label: {
             VStack(spacing: 2) {
@@ -129,6 +148,7 @@ struct EarwyrmTabBar: View {
             .foregroundStyle(selectedTab == index ? Theme.Light.accent : Theme.Light.muted)
             .frame(maxWidth: .infinity)
         }
+        .accessibilityLabel(label)
     }
 }
 

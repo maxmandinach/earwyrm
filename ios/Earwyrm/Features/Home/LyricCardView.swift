@@ -22,6 +22,10 @@ struct LyricCardView: View {
     var showComments: Bool = false
     var onToggleComments: (() -> Void)?
 
+    // Save/bookmark state
+    var onSave: (() -> Void)?
+    var isSaved: Bool = false
+
     // Note (read-only display)
     var note: LyricNote?
 
@@ -41,6 +45,7 @@ struct LyricCardView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, hero ? Theme.Spacing.lg : Theme.Spacing.md)
+                    .accessibilityLabel(lyricAccessibilityLabel)
 
                 // Signature: thin accent rule + metadata
                 if lyric.songTitle != nil || lyric.artistName != nil {
@@ -123,6 +128,8 @@ struct LyricCardView: View {
                         onEdit: onEdit,
                         onVisibilityChange: onVisibilityChange,
                         onToggleComments: onToggleComments,
+                        onSave: onSave,
+                        isSaved: isSaved,
                         hasReacted: hasReacted,
                         reactionCount: reactionCount,
                         isResonateAnimating: isResonateAnimating,
@@ -138,6 +145,30 @@ struct LyricCardView: View {
             // Hero: deeper shadow with more presence
             .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
             .shadow(color: .black.opacity(hero ? 0.1 : 0.08), radius: hero ? 24 : 12, y: hero ? 8 : 4)
+            .contextMenu {
+                if let onShare {
+                    Button { onShare() } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                }
+                if let onSave {
+                    Button { onSave() } label: {
+                        Label(isSaved ? "Remove from Collection" : "Save to Collection", systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                    }
+                }
+                if isOwn {
+                    if let onEdit {
+                        Button { onEdit() } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                    }
+                    if let onReplace {
+                        Button { onReplace() } label: {
+                            Label("Replace Lyric", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                    }
+                }
+            }
 
             // Comment section — below the card
             if showComments {
@@ -152,6 +183,13 @@ struct LyricCardView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: showComments)
+    }
+
+    private var lyricAccessibilityLabel: String {
+        var parts = ["Lyric: \(lyric.content)"]
+        if let song = lyric.songTitle { parts.append("Song: \(song)") }
+        if let artist = lyric.artistName { parts.append("Artist: \(artist)") }
+        return parts.joined(separator: ". ")
     }
 
     @ViewBuilder

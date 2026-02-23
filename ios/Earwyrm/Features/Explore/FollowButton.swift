@@ -5,7 +5,10 @@ struct FollowButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            Haptics.medium()
+            action()
+        }) {
             Text(isFollowing ? "following" : "follow")
                 .font(Theme.dmSans(13, weight: .medium))
                 .foregroundStyle(isFollowing ? Theme.Light.text : .white)
@@ -24,5 +27,6 @@ struct FollowButton: View {
                 )
         }
         .animation(.easeInOut(duration: 0.2), value: isFollowing)
+        .accessibilityLabel(isFollowing ? "Unfollow" : "Follow")
     }
 }

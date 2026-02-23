@@ -215,6 +215,16 @@ struct CommentSectionView: View {
                         newComment = String(value.prefix(maxLength))
                     }
                 }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
+                        .font(Theme.dmSans(15, weight: .medium))
+                        .foregroundStyle(Theme.Light.accent)
+                    }
+                }
 
                 Button {
                     submitComment()
@@ -331,7 +341,7 @@ struct CommentSectionView: View {
                     username: profiles.first?.username
                 )
 
-                Haptics.light()
+                Haptics.success()
                 comments.append(withProfile)
                 count += 1
                 newComment = ""

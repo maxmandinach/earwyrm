@@ -4,6 +4,8 @@ struct CompactLyricCard: View {
     let lyric: Lyric
     var username: String?
     var onShare: (() -> Void)?
+    var onSave: (() -> Void)?
+    var isSaved: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -74,6 +76,15 @@ struct CompactLyricCard: View {
 
                 Spacer()
 
+                if let onSave {
+                    Button(action: onSave) {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(isSaved ? Theme.Light.accent : Theme.Light.muted)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                }
+
                 if let onShare {
                     Button(action: onShare) {
                         Image(systemName: "square.and.arrow.up")
@@ -93,6 +104,18 @@ struct CompactLyricCard: View {
         .background(Theme.Light.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+        .contextMenu {
+            if let onShare {
+                Button { onShare() } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+            }
+            if let onSave {
+                Button { onSave() } label: {
+                    Label(isSaved ? "Remove from Collection" : "Save to Collection", systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                }
+            }
+        }
     }
 
     private func relativeDate(_ date: Date) -> String {

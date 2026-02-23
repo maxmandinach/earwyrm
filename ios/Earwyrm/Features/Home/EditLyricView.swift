@@ -89,6 +89,14 @@ struct EditLyricView: View {
             .navigationTitle("edit lyric")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                    .font(Theme.dmSans(15, weight: .medium))
+                    .foregroundStyle(Theme.Light.accent)
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .font(Theme.dmSans(15))

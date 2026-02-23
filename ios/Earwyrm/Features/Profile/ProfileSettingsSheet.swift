@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ProfileSettingsSheet: View {
     @Environment(AuthManager.self) private var auth
@@ -16,6 +17,7 @@ struct ProfileSettingsSheet: View {
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         editProfileSection
+                        notificationsSection
                         privacySection
                         accountSection
                         signOutButton
@@ -191,6 +193,56 @@ struct ProfileSettingsSheet: View {
             Text("3-20 chars, letters/numbers/underscores")
                 .font(Theme.dmSans(12))
                 .foregroundStyle(.red.opacity(0.8))
+        }
+    }
+
+    // MARK: - Notifications
+
+    private var notificationsSection: some View {
+        settingsSection("notifications") {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("push notifications")
+                        .font(Theme.dmSans(15))
+                        .foregroundStyle(Theme.Light.text)
+                    Text(pushStatusText)
+                        .font(Theme.dmSans(12))
+                        .foregroundStyle(Theme.Light.muted)
+                }
+                Spacer()
+                if PushManager.shared.permissionStatus == .denied {
+                    Button("Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .font(Theme.dmSans(13, weight: .medium))
+                    .foregroundStyle(Theme.Light.accent)
+                } else if PushManager.shared.permissionStatus == .notDetermined {
+                    Button("Enable") {
+                        PushManager.shared.requestPermission()
+                    }
+                    .font(Theme.dmSans(13, weight: .medium))
+                    .foregroundStyle(Theme.Light.accent)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green.opacity(0.7))
+                }
+            }
+        }
+        .task {
+            await PushManager.shared.checkPermission()
+        }
+    }
+
+    private var pushStatusText: String {
+        switch PushManager.shared.permissionStatus {
+        case .authorized: return "enabled"
+        case .denied: return "disabled — tap Settings to enable"
+        case .provisional: return "provisional"
+        case .notDetermined: return "not set up yet"
+        case .ephemeral: return "enabled"
+        @unknown default: return "unknown"
         }
     }
 
@@ -433,6 +485,7 @@ struct ProfileSettingsSheet: View {
     private func signOut() {
         isSigningOut = true
         Task {
+            await PushManager.shared.removeToken()
             try? await auth.signOut()
             isSigningOut = false
         }
