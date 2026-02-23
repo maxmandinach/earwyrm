@@ -44,6 +44,15 @@ final class PostLyricViewModel {
     var suggestMatches: [SuggestMatch] = []
     var selectedMatchId: UUID?
 
+    // MARK: - Ghost Text (LRCLIB) State
+
+    var fullLyrics: String?
+    var ghostText: String?
+    var isLoadingLyrics = false
+    private var lyricsArtist = ""
+    private var lyricsSong = ""
+    private var lyricsFetchTask: Task<Void, Never>?
+
     // MARK: - Save State
 
     var isSaving = false
@@ -82,6 +91,7 @@ final class PostLyricViewModel {
         geniusDismissed = false
         triggerGeniusSearch()
         triggerMatchSearch()
+        computeGhostText()
     }
 
     // MARK: - Genius Pipeline
@@ -123,6 +133,7 @@ final class PostLyricViewModel {
         geniusDismissed = true
         showArtistAutocomplete = false
         showSongAutocomplete = false
+        fetchLyricsIfNeeded()
     }
 
     func dismissGenius() {
@@ -222,6 +233,8 @@ final class PostLyricViewModel {
             isCoverArtLoading = false
             coverArtUrl = url
         }
+
+        fetchLyricsIfNeeded()
     }
 
     // MARK: - Suggest Matches
@@ -307,6 +320,7 @@ final class PostLyricViewModel {
             songTitle = match.songTitle ?? ""
             canonicalLyricId = match.id
             isContentLocked = true
+            ghostText = nil
         } else {
             selectedMatchId = nil
             canonicalLyricId = nil
@@ -367,6 +381,7 @@ final class PostLyricViewModel {
             if !trimmedNote.isEmpty, let newLyricId = insertedLyrics.first?.id {
                 let noteInsert = NoteInsert(
                     lyricId: newLyricId,
+                    userId: userId,
                     content: trimmedNote,
                     isPublic: noteIsPublic
                 )
@@ -385,6 +400,134 @@ final class PostLyricViewModel {
         }
     }
 
+    // MARK: - Ghost Text (LRCLIB)
+
+    private func fetchLyricsIfNeeded() {
+        let artist = artistName.trimmingCharacters(in: .whitespaces)
+        let song = songTitle.trimmingCharacters(in: .whitespaces)
+        guard !artist.isEmpty, !song.isEmpty else { return }
+        guard artist != lyricsArtist || song != lyricsSong else { return }
+
+        lyricsArtist = artist
+        lyricsSong = song
+        isLoadingLyrics = true
+
+        lyricsFetchTask?.cancel()
+        lyricsFetchTask = Task {
+            let lyrics = await LRCLIBService.fetchLyrics(artist: artist, title: song)
+            guard !Task.isCancelled else { return }
+            fullLyrics = lyrics
+            isLoadingLyrics = false
+            computeGhostText()
+        }
+    }
+
+    func computeGhostText() {
+        guard let lyrics = fullLyrics,
+              !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !isContentLocked else {
+            ghostText = nil
+            return
+        }
+
+        let normalizedContent = normalize(content)
+        let normalizedLyrics = normalize(lyrics)
+
+        // Take last 40 chars of user's normalized text as search key
+        let searchLength = min(40, normalizedContent.count)
+        guard searchLength >= 5 else {
+            ghostText = nil
+            return
+        }
+        let searchKey = String(normalizedContent.suffix(searchLength))
+
+        // Find search key in normalized lyrics
+        guard let matchRange = normalizedLyrics.range(of: searchKey) else {
+            ghostText = nil
+            return
+        }
+
+        // Map match end back to original lyrics
+        let matchEndOffset = normalizedLyrics.distance(
+            from: normalizedLyrics.startIndex,
+            to: matchRange.upperBound
+        )
+        let originalIndex = mapNormalizedOffset(matchEndOffset, in: lyrics)
+
+        // Find next verse break (\n\n) from that position
+        let remaining = String(lyrics[originalIndex...])
+        let verseBreak: String.Index
+        if let breakRange = remaining.range(of: "\n\n") {
+            verseBreak = breakRange.lowerBound
+        } else {
+            verseBreak = remaining.endIndex
+        }
+
+        var ghost = String(remaining[remaining.startIndex..<verseBreak])
+
+        // Trim leading newline — user's current line is already complete
+        if ghost.hasPrefix("\n") {
+            ghost = String(ghost.dropFirst())
+        }
+
+        ghostText = ghost.isEmpty ? nil : ghost
+    }
+
+    @discardableResult
+    func acceptGhostText() -> Bool {
+        guard let ghost = ghostText, !ghost.isEmpty else { return false }
+        content += ghost
+        ghostText = nil
+        computeGhostText()
+        return true
+    }
+
+    // MARK: - Normalization Helpers
+
+    private func normalize(_ text: String) -> String {
+        text.lowercased()
+            .replacingOccurrences(
+                of: "[^a-z0-9\\s]",
+                with: "",
+                options: .regularExpression
+            )
+            .replacingOccurrences(
+                of: "\\s+",
+                with: " ",
+                options: .regularExpression
+            )
+            .trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Map a character offset in the normalized string back to the corresponding
+    /// index in the original string.
+    private func mapNormalizedOffset(_ offset: Int, in original: String) -> String.Index {
+        var normalizedCount = 0
+        var lastValidIndex = original.startIndex
+        var prevWasSpace = false
+
+        for index in original.indices {
+            if normalizedCount >= offset { return index }
+
+            let char = original[index]
+            let lower = char.lowercased()
+
+            if char.isWhitespace {
+                if !prevWasSpace {
+                    normalizedCount += 1
+                    prevWasSpace = true
+                }
+            } else if lower.rangeOfCharacter(from: CharacterSet.alphanumerics) != nil {
+                normalizedCount += 1
+                prevWasSpace = false
+            }
+            // punctuation is stripped — doesn't advance normalizedCount
+
+            lastValidIndex = original.index(after: index)
+        }
+        return lastValidIndex
+    }
+
     // MARK: - Cleanup
 
     func cancelAllTasks() {
@@ -392,5 +535,6 @@ final class PostLyricViewModel {
         artistDebounceTask?.cancel()
         songDebounceTask?.cancel()
         matchDebounceTask?.cancel()
+        lyricsFetchTask?.cancel()
     }
 }

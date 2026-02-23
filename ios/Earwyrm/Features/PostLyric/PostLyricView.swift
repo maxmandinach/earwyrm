@@ -123,13 +123,71 @@ struct PostLyricView: View {
                 .frame(minHeight: 150)
                 .padding(Theme.Spacing.md)
                 .background(Theme.Light.card)
+                .overlay(alignment: .topLeading) {
+                    if let ghost = viewModel.ghostText, !ghost.isEmpty {
+                        Text(viewModel.content + ghost)
+                            .font(Theme.caveat(30))
+                            .lineSpacing(10)
+                            .foregroundStyle(.clear)
+                            .overlay(alignment: .topLeading) {
+                                // Re-render with styled attributed string
+                                ghostTextView(typed: viewModel.content, ghost: ghost)
+                            }
+                            .padding(Theme.Spacing.md)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 8)
+                            .allowsHitTesting(false)
+                    }
+                }
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                 .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
                 .opacity(viewModel.isContentLocked ? 0.7 : 1)
+                .onKeyPress(.tab) {
+                    if viewModel.acceptGhostText() {
+                        return .handled
+                    }
+                    return .ignored
+                }
                 .onChange(of: viewModel.content) { _, _ in
                     viewModel.contentDidChange()
                 }
+
+            // Lyric soft guidance counter — fades in at 300 chars
+            if viewModel.content.count >= 300 {
+                let count = viewModel.content.count
+                let counterColor: Color = count >= 500
+                    ? .orange
+                    : count >= 400
+                        ? Theme.Light.accent
+                        : Theme.Light.muted
+                let counterOpacity: Double = count < 400
+                    ? Double(count - 300) / 100.0
+                    : 1.0
+                Text("\(count) chars")
+                    .font(Theme.dmSans(12))
+                    .foregroundStyle(counterColor)
+                    .opacity(counterOpacity)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 4)
+                    .animation(.easeInOut(duration: 0.2), value: count)
+            }
+
+            if viewModel.ghostText != nil {
+                Button {
+                    Haptics.light()
+                    viewModel.acceptGhostText()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.turn.down.left")
+                            .font(.system(size: 11))
+                        Text("tap to complete")
+                            .font(Theme.dmSans(12))
+                    }
+                    .foregroundStyle(Theme.Light.muted)
+                }
+                .padding(.leading, 4)
+            }
 
             if viewModel.isContentLocked {
                 Button {
@@ -225,7 +283,7 @@ struct PostLyricView: View {
             if viewModel.showNoteField {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     TextEditor(text: $viewModel.noteContent)
-                        .font(Theme.caveat(20))
+                        .font(Theme.noteFont(16))
                         .foregroundStyle(Theme.Light.secondary)
                         .lineSpacing(6)
                         .scrollContentBackground(.hidden)
@@ -235,7 +293,7 @@ struct PostLyricView: View {
                         .overlay(alignment: .topLeading) {
                             if viewModel.noteContent.isEmpty {
                                 Text("why does this one stay with you?")
-                                    .font(Theme.caveat(20))
+                                    .font(Theme.noteFont(16))
                                     .foregroundStyle(Theme.Light.muted.opacity(0.5))
                                     .padding(.horizontal, 17)
                                     .padding(.vertical, 16)
@@ -246,20 +304,34 @@ struct PostLyricView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Theme.Light.divider, lineWidth: 1)
                         )
-
-                    // Visibility toggle
-                    Button {
-                        Haptics.light()
-                        viewModel.noteIsPublic.toggle()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: viewModel.noteIsPublic ? "eye" : "eye.slash")
-                                .font(.system(size: 11))
-                            Text(viewModel.noteIsPublic ? "visible on explore" : "private note")
-                                .font(Theme.dmSans(12))
+                        .onChange(of: viewModel.noteContent) { _, newValue in
+                            if newValue.count > 500 {
+                                viewModel.noteContent = String(newValue.prefix(500))
+                            }
                         }
-                        .foregroundStyle(Theme.Light.muted)
-                        .padding(.leading, 4)
+
+                    // Visibility toggle + note counter
+                    HStack {
+                        Button {
+                            Haptics.light()
+                            viewModel.noteIsPublic.toggle()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: viewModel.noteIsPublic ? "eye" : "eye.slash")
+                                    .font(.system(size: 11))
+                                Text(viewModel.noteIsPublic ? "visible on explore" : "private note")
+                                    .font(Theme.dmSans(12))
+                            }
+                            .foregroundStyle(Theme.Light.muted)
+                            .padding(.leading, 4)
+                        }
+
+                        Spacer()
+
+                        Text("\(viewModel.noteContent.count)/500")
+                            .font(Theme.dmSans(12))
+                            .foregroundStyle(viewModel.noteContent.count > 450 ? Theme.Light.accent : Theme.Light.muted)
+                            .padding(.trailing, 4)
                     }
                 }
             } else {
@@ -278,6 +350,26 @@ struct PostLyricView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Ghost Text Helper
+
+    private func ghostTextView(typed: String, ghost: String) -> some View {
+        Text(buildGhostAttributedString(typed: typed, ghost: ghost))
+            .lineSpacing(10)
+            .allowsHitTesting(false)
+    }
+
+    private func buildGhostAttributedString(typed: String, ghost: String) -> AttributedString {
+        var typedPart = AttributedString(typed)
+        typedPart.foregroundColor = .clear
+        typedPart.font = Theme.caveat(30)
+
+        var ghostPart = AttributedString(ghost)
+        ghostPart.foregroundColor = Theme.Light.muted.opacity(0.35)
+        ghostPart.font = Theme.caveat(30)
+
+        return typedPart + ghostPart
     }
 
     // MARK: - Save
