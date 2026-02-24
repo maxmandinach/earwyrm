@@ -5,6 +5,7 @@ struct ArtistPageView: View {
     let artistName: String
 
     @Environment(AuthManager.self) private var auth
+    @Environment(AuthGate.self) private var authGate
     @Environment(FollowManager.self) private var followManager
 
     @State private var lyrics: [Lyric] = []
@@ -148,13 +149,17 @@ struct ArtistPageView: View {
                 .foregroundStyle(Theme.Light.text)
 
             FollowButton(isFollowing: isFollowing) {
-                Task {
-                    guard let userId = auth.userId else { return }
-                    if isFollowing {
-                        await followManager.unfollow(userId: userId, type: "artist", value: artistName)
-                    } else {
-                        await followManager.follow(userId: userId, type: "artist", value: artistName)
+                if auth.isAuthenticated {
+                    Task {
+                        guard let userId = auth.userId else { return }
+                        if isFollowing {
+                            await followManager.unfollow(userId: userId, type: "artist", value: artistName)
+                        } else {
+                            await followManager.follow(userId: userId, type: "artist", value: artistName)
+                        }
                     }
+                } else {
+                    authGate.showAuthSheet = true
                 }
             }
         }

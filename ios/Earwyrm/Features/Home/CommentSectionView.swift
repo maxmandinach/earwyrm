@@ -8,6 +8,7 @@ struct CommentSectionView: View {
     let currentUserId: UUID?
     let initialCount: Int
 
+    @Environment(AuthGate.self) private var authGate
     @State private var isOpen = false
     @State private var comments: [CommentWithProfile] = []
     @State private var count: Int
@@ -39,13 +40,19 @@ struct CommentSectionView: View {
 
     private var collapsedButton: some View {
         Button {
-            withAnimation(.easeOut(duration: 0.2)) {
-                isOpen = true
+            if currentUserId == nil {
+                authGate.showAuthSheet = true
+            } else {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isOpen = true
+                }
             }
         } label: {
-            Text(count > 0
-                 ? "\(count) \(count == 1 ? "comment" : "comments")"
-                 : "add a comment")
+            Text(currentUserId == nil
+                 ? "sign in to join the discussion"
+                 : count > 0
+                    ? "\(count) \(count == 1 ? "comment" : "comments")"
+                    : "add a comment")
                 .font(Theme.dmSans(12))
                 .foregroundStyle(Theme.Light.muted.opacity(0.6))
                 .padding(.vertical, 4)

@@ -17,6 +17,7 @@ struct SongDestination: Hashable {
 struct ExploreView: View {
     var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
+    @Environment(AuthGate.self) private var authGate
     @Environment(FollowManager.self) private var followManager
     @Environment(NotificationManager.self) private var notificationManager
     @State private var viewModel = ExploreViewModel()
@@ -47,7 +48,7 @@ struct ExploreView: View {
                                 shareUsername = username
                                 shareOwnerId = lyric.userId
                             }
-                        } else {
+                        } else if auth.isAuthenticated {
                             ExploreFollowingView(viewModel: viewModel) { lyric, username in
                                 shareLyric = lyric
                                 shareUsername = username
@@ -82,6 +83,19 @@ struct ExploreView: View {
                 PublicProfileView(userId: dest.userId, username: dest.username)
             }
             .earwyrmBranding()
+            .toolbar {
+                if !auth.isAuthenticated {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            authGate.showAuthSheet = true
+                        } label: {
+                            Text("Sign In")
+                                .font(Theme.dmSans(14, weight: .medium))
+                                .foregroundStyle(Theme.Light.accent)
+                        }
+                    }
+                }
+            }
         }
         .sheet(item: $shareLyric) { lyric in
             ShareModalView(
@@ -119,7 +133,9 @@ struct ExploreView: View {
     private var tabBar: some View {
         HStack(spacing: Theme.Spacing.lg) {
             tabButton("for you", tag: 0)
-            tabButton("following", tag: 1)
+            if auth.isAuthenticated {
+                tabButton("following", tag: 1)
+            }
         }
         .overlay(alignment: .bottom) {
             Rectangle()
