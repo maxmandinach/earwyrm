@@ -74,12 +74,8 @@ struct ProfileView: View {
             .navigationDestination(for: ProfileDestination.self) { dest in
                 PublicProfileView(userId: dest.userId, username: dest.username)
             }
+            .earwyrmBranding()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Text("earwyrm")
-                        .font(Theme.caveat(24, weight: .semibold))
-                        .foregroundStyle(Theme.Light.secondary)
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -90,7 +86,6 @@ struct ProfileView: View {
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
             // Nav bar appearance handled globally (opaque bg, no shadow line)
         }
         .task {

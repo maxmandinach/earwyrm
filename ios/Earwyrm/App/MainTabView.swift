@@ -89,6 +89,8 @@ struct EarwyrmTabBar: View {
                     weight: .bold,
                     color: selectedTab == 0 ? Theme.Light.accent : Theme.Light.muted
                 )
+                .frame(height: 24)
+                .clipped()
             }
 
             // Explore — magnifying glass

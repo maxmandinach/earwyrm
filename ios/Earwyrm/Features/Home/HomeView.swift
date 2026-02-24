@@ -23,8 +23,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack(alignment: .bottomTrailing) {
-                ScrollViewReader { proxy in
+            ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         Color.clear.frame(height: 0).id("home-top")
@@ -143,8 +142,29 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 80)
                         } else {
-                            // Empty state — tappable CTA
+                            // Empty state — CTA + trending content
                             emptyState
+
+                            // Show trending even without a current lyric
+                            TrendingSection(
+                                lyrics: viewModel.trendingLyrics,
+                                onShare: { item in
+                                    shareCarouselLyric = item.lyric
+                                    shareCarouselUsername = item.username
+                                    shareCarouselOwnerId = item.lyric.userId
+                                },
+                                onSave: { item in
+                                    bookmarkLyricId = item.lyric.id
+                                    showCollectionPicker = true
+                                },
+                                onViewProfile: { item in
+                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+                            )
+                            .cascadeReveal(delay: 0.4)
+
+                            Spacer().frame(height: 80)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -159,13 +179,7 @@ struct HomeView: View {
                 .onChange(of: scrollToTop) { _, _ in
                     withAnimation { proxy.scrollTo("home-top", anchor: .top) }
                 }
-                } // ScrollViewReader
-
-                // FAB — only show when there's content or empty state (not loading/error)
-                if !viewModel.isLoading && viewModel.error == nil {
-                    fabButton
-                }
-            }
+            } // ScrollViewReader
             .navigationDestination(for: LyricWithProfile.self) { item in
                 LyricDetailDestination(item: item)
             }
@@ -188,6 +202,10 @@ struct HomeView: View {
         .task {
             if let userId = auth.userId {
                 await viewModel.fetchCurrentLyric(userId: userId)
+                // If no current lyric, still load trending so the screen isn't empty
+                if viewModel.currentLyric == nil {
+                    await viewModel.fetchTrendingLyrics()
+                }
             }
         }
         .onChange(of: viewModel.currentLyric?.id) { _, newId in
@@ -310,22 +328,6 @@ struct HomeView: View {
         }
     }
 
-    private var fabButton: some View {
-        Button {
-            Haptics.medium()
-            showPostSheet = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 22, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
-                .background(Theme.Light.accent)
-                .clipShape(Circle())
-                .shadow(color: Theme.Light.accent.opacity(0.4), radius: 8, y: 4)
-        }
-        .padding(.trailing, Theme.Spacing.lg)
-        .padding(.bottom, Theme.Spacing.lg)
-    }
 }
 
 // MARK: - Profile Username Resolver (deep link)
