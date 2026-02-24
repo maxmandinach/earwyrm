@@ -3,12 +3,26 @@ import SwiftUI
 struct ProfileCollectionsView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(CollectionManager.self) private var collectionManager
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showCreateSheet = false
+    @State private var showPaywall = false
 
     private let columns = [
         GridItem(.flexible(), spacing: Theme.Spacing.md),
         GridItem(.flexible(), spacing: Theme.Spacing.md)
     ]
+
+    private var manualCollectionCount: Int {
+        collectionManager.collections.filter { $0.isSmart != true }.count
+    }
+
+    private func handleNewCollection() {
+        if subscriptionManager.canCreateCollection(currentCount: manualCollectionCount) {
+            showCreateSheet = true
+        } else {
+            showPaywall = true
+        }
+    }
 
     var body: some View {
         if collectionManager.collections.isEmpty && !collectionManager.isLoading {
@@ -27,7 +41,7 @@ struct ProfileCollectionsView: View {
 
                 // Create button
                 Button {
-                    showCreateSheet = true
+                    handleNewCollection()
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "plus.circle")
@@ -45,6 +59,10 @@ struct ProfileCollectionsView: View {
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $showPaywall) {
+                EarwyrmPlusPaywall()
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -60,7 +78,7 @@ struct ProfileCollectionsView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                showCreateSheet = true
+                handleNewCollection()
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle")
@@ -76,6 +94,10 @@ struct ProfileCollectionsView: View {
         .sheet(isPresented: $showCreateSheet) {
             CreateCollectionSheet()
                 .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showPaywall) {
+            EarwyrmPlusPaywall()
                 .presentationDragIndicator(.visible)
         }
     }

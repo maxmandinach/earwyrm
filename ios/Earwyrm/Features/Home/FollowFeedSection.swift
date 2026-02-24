@@ -3,6 +3,9 @@ import SwiftUI
 struct FollowFeedSection: View {
     let lyrics: [LyricWithProfile]
     var onShare: ((LyricWithProfile) -> Void)?
+    var onSave: ((LyricWithProfile) -> Void)?
+    var onViewProfile: ((LyricWithProfile) -> Void)?
+    var isLyricSaved: ((UUID) -> Bool)?
 
     var body: some View {
         if !lyrics.isEmpty {
@@ -14,7 +17,13 @@ struct FollowFeedSection: View {
                     HStack(spacing: Theme.Spacing.md) {
                         ForEach(lyrics) { item in
                             NavigationLink(value: item) {
-                                SocialLyricCard(item: item, onShare: onShare != nil ? { onShare?(item) } : nil)
+                                SocialLyricCard(
+                                    item: item,
+                                    onShare: onShare != nil ? { onShare?(item) } : nil,
+                                    onSave: onSave != nil ? { onSave?(item) } : nil,
+                                    onViewProfile: onViewProfile != nil ? { onViewProfile?(item) } : nil,
+                                    isSaved: isLyricSaved?(item.lyric.id) ?? false
+                                )
                             }
                             .buttonStyle(.plain)
                         }

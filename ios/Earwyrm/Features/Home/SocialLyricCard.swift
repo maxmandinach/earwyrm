@@ -4,6 +4,7 @@ struct SocialLyricCard: View {
     let item: LyricWithProfile
     var onShare: (() -> Void)?
     var onSave: (() -> Void)?
+    var onViewProfile: (() -> Void)?
     var isSaved: Bool = false
 
     private var lyric: Lyric { item.lyric }
@@ -87,10 +88,8 @@ struct SocialLyricCard: View {
                     Label(isSaved ? "Remove from Collection" : "Save to Collection", systemImage: isSaved ? "bookmark.fill" : "bookmark")
                 }
             }
-            if let username = item.username {
-                Button {
-                    // Navigation handled by parent
-                } label: {
+            if let username = item.username, let onViewProfile {
+                Button { onViewProfile() } label: {
                     Label("View @\(username)", systemImage: "person")
                 }
             }
