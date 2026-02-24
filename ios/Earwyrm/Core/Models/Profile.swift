@@ -10,6 +10,10 @@ struct Profile: Codable, Identifiable {
     let lastActivitySeenAt: Date?
     let createdAt: Date?
     let updatedAt: Date?
+    let subscriptionTier: String?
+    let subscriptionExpiresAt: Date?
+
+    var isPlus: Bool { subscriptionTier == "plus" }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -21,5 +25,7 @@ struct Profile: Codable, Identifiable {
         case lastActivitySeenAt = "last_activity_seen_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case subscriptionTier = "subscription_tier"
+        case subscriptionExpiresAt = "subscription_expires_at"
     }
 }

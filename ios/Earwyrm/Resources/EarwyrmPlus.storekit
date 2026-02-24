@@ -1,0 +1,129 @@
+{
+  "identifier" : "EarwyrmPlus",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : "",
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "earwyrmplus_group",
+      "localizations" : [
+
+      ],
+      "name" : "Earwyrm+",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "earwyrmplus_monthly_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited collections and full memory lane",
+              "displayName" : "Earwyrm+ Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "earwyrmplus_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Earwyrm+ Monthly",
+          "subscriptionGroupID" : "earwyrmplus_group",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "24.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "earwyrmplus_yearly_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited collections and full memory lane — save 30%",
+              "displayName" : "Earwyrm+ Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "earwyrmplus_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Earwyrm+ Yearly",
+          "subscriptionGroupID" : "earwyrmplus_group",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

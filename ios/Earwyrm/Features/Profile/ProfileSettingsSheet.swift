@@ -1,12 +1,15 @@
 import SwiftUI
 import UIKit
+import StoreKit
 
 struct ProfileSettingsSheet: View {
     @Environment(AuthManager.self) private var auth
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
     @State private var vm = SettingsViewModel()
     @State private var isSigningOut = false
     @State private var hasLoaded = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -16,6 +19,7 @@ struct ProfileSettingsSheet: View {
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
+                        subscriptionSection
                         editProfileSection
                         notificationsSection
                         privacySection
@@ -62,6 +66,78 @@ struct ProfileSettingsSheet: View {
             }
             hasLoaded = true
         }
+        .sheet(isPresented: $showPaywall) {
+            EarwyrmPlusPaywall()
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    // MARK: - Subscription
+
+    private var subscriptionSection: some View {
+        settingsSection("earwyrm+") {
+            if subscriptionManager.isPlus {
+                VStack(spacing: Theme.Spacing.sm) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("earwyrm+ active")
+                                .font(Theme.dmSans(15, weight: .medium))
+                                .foregroundStyle(Theme.Light.text)
+                            Text("thank you for your support")
+                                .font(Theme.dmSans(13))
+                                .foregroundStyle(Theme.Light.muted)
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Theme.Light.accent)
+                    }
+
+                    Button {
+                        Task {
+                            try? await AppStore.showManageSubscriptions(in: windowScene)
+                        }
+                    } label: {
+                        Text("Manage Subscription")
+                            .font(Theme.dmSans(14))
+                            .foregroundStyle(Theme.Light.accent)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(Theme.Light.accent.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            } else {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("free tier")
+                            .font(Theme.dmSans(15, weight: .medium))
+                            .foregroundStyle(Theme.Light.text)
+                        Text("unlimited collections & full memory lane")
+                            .font(Theme.dmSans(13))
+                            .foregroundStyle(Theme.Light.muted)
+                    }
+                    Spacer()
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Text("Upgrade")
+                            .font(Theme.dmSans(14, weight: .medium))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Theme.Light.accent)
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+        }
+    }
+
+    private var windowScene: UIWindowScene {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first!
     }
 
     // MARK: - Edit Profile

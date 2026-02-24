@@ -125,13 +125,20 @@ final class HomeViewModel {
 
     // MARK: - Memory Lane
 
-    func fetchPastLyrics(userId: UUID) async {
+    func fetchPastLyrics(userId: UUID, cutoffDate: Date? = nil) async {
         do {
-            let lyrics: [Lyric] = try await supabase
+            var query = supabase
                 .from("lyrics")
                 .select(Self.lyricColumns)
                 .eq("user_id", value: userId.uuidString)
                 .eq("is_current", value: false)
+
+            if let cutoff = cutoffDate {
+                let formatter = ISO8601DateFormatter()
+                query = query.gte("created_at", value: formatter.string(from: cutoff))
+            }
+
+            let lyrics: [Lyric] = try await query
                 .order("created_at", ascending: false)
                 .limit(8)
                 .execute()
@@ -339,9 +346,9 @@ final class HomeViewModel {
 
     // MARK: - Load All Sections
 
-    func loadAllSections(userId: UUID, follows: [Follow]) async {
+    func loadAllSections(userId: UUID, follows: [Follow], memoryCutoff: Date? = nil) async {
         print("loadAllSections called — follows: \(follows.count)")
-        async let past: () = fetchPastLyrics(userId: userId)
+        async let past: () = fetchPastLyrics(userId: userId, cutoffDate: memoryCutoff)
         async let trending: () = fetchTrendingLyrics()
         async let feed: () = fetchFollowFeedLyrics(userId: userId, follows: follows)
         _ = await (past, trending, feed)

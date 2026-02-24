@@ -4,11 +4,13 @@ struct CollectionPickerSheet: View {
     let lyricId: UUID
     @Environment(AuthManager.self) private var auth
     @Environment(CollectionManager.self) private var collectionManager
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var membershipIds: Set<UUID> = []
     @State private var isLoading = true
     @State private var showCreateSheet = false
+    @State private var showPaywall = false
 
     private var manualCollections: [Collection] {
         collectionManager.collections.filter { $0.isSmart != true }
@@ -45,7 +47,11 @@ struct CollectionPickerSheet: View {
 
                             // New collection row
                             Button {
-                                showCreateSheet = true
+                                if subscriptionManager.canCreateCollection(currentCount: manualCollections.count) {
+                                    showCreateSheet = true
+                                } else {
+                                    showPaywall = true
+                                }
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "plus.circle")
@@ -81,6 +87,10 @@ struct CollectionPickerSheet: View {
         .sheet(isPresented: $showCreateSheet) {
             CreateCollectionSheet()
                 .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showPaywall) {
+            EarwyrmPlusPaywall()
                 .presentationDragIndicator(.visible)
         }
     }

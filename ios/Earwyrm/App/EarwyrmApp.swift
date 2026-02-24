@@ -5,11 +5,14 @@ import UIKit
 struct EarwyrmApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var authManager = AuthManager()
+    @State private var authGate = AuthGate()
     @State private var followManager = FollowManager()
     @State private var userFollowManager = UserFollowManager()
     @State private var notificationManager = NotificationManager()
     @State private var collectionManager = CollectionManager()
     @State private var navigationCoordinator = NavigationCoordinator()
+    @State private var subscriptionManager = SubscriptionManager()
+    @State private var subscriptionGate = SubscriptionGate()
 
     init() {
         let bg = UIColor(Theme.Light.background)
@@ -25,11 +28,14 @@ struct EarwyrmApp: App {
         WindowGroup {
             ContentView()
                 .environment(authManager)
+                .environment(authGate)
                 .environment(followManager)
                 .environment(userFollowManager)
                 .environment(notificationManager)
                 .environment(collectionManager)
                 .environment(navigationCoordinator)
+                .environment(subscriptionManager)
+                .environment(subscriptionGate)
                 .onOpenURL { url in
                     navigationCoordinator.handle(url: url)
                 }

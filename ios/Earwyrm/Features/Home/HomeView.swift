@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(FollowManager.self) private var followManager
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(CollectionManager.self) private var collectionManager
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
     @State private var showEditSheet = false
@@ -94,23 +95,48 @@ struct HomeView: View {
                                 .cascadeReveal(delay: 0.3)
 
                             // Memory Lane
-                            MemoryLaneSection(lyrics: viewModel.pastLyrics)
-                                .cascadeReveal(delay: 0.4)
+                            MemoryLaneSection(
+                                lyrics: viewModel.pastLyrics,
+                                showUpsell: !subscriptionManager.isPlus
+                            )
+                            .cascadeReveal(delay: 0.4)
 
                             // Trending
-                            TrendingSection(lyrics: viewModel.trendingLyrics) { item in
-                                shareCarouselLyric = item.lyric
-                                shareCarouselUsername = item.username
-                                shareCarouselOwnerId = item.lyric.userId
-                            }
+                            TrendingSection(
+                                lyrics: viewModel.trendingLyrics,
+                                onShare: { item in
+                                    shareCarouselLyric = item.lyric
+                                    shareCarouselUsername = item.username
+                                    shareCarouselOwnerId = item.lyric.userId
+                                },
+                                onSave: { item in
+                                    bookmarkLyricId = item.lyric.id
+                                    showCollectionPicker = true
+                                },
+                                onViewProfile: { item in
+                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+                            )
                             .cascadeReveal(delay: 0.6)
 
                             // From Your Follows
-                            FollowFeedSection(lyrics: viewModel.followFeedLyrics) { item in
-                                shareCarouselLyric = item.lyric
-                                shareCarouselUsername = item.username
-                                shareCarouselOwnerId = item.lyric.userId
-                            }
+                            FollowFeedSection(
+                                lyrics: viewModel.followFeedLyrics,
+                                onShare: { item in
+                                    shareCarouselLyric = item.lyric
+                                    shareCarouselUsername = item.username
+                                    shareCarouselOwnerId = item.lyric.userId
+                                },
+                                onSave: { item in
+                                    bookmarkLyricId = item.lyric.id
+                                    showCollectionPicker = true
+                                },
+                                onViewProfile: { item in
+                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+                            )
                             .cascadeReveal(delay: 0.8)
 
                             // Bottom padding for FAB
@@ -178,7 +204,8 @@ struct HomeView: View {
                     await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
                     await viewModel.loadAllSections(
                         userId: userId,
-                        follows: followManager.follows
+                        follows: followManager.follows,
+                        memoryCutoff: subscriptionManager.memoryLaneCutoffDate
                     )
                 }
             } else {

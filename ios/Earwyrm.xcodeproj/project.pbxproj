@@ -103,6 +103,16 @@
 		28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47946B7ED7858D8588F43FA0 /* Haptics.swift */; };
 		C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70DFC9C9290DB250677A38F /* AppDelegate.swift */; };
 		3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB134CEA61598146E3A6A8FA /* PushManager.swift */; };
+		0B01020304050607080910B1 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01020304050607080910A1 /* OnboardingView.swift */; };
+		0B01020304050607080910B2 /* OnboardingSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01020304050607080910A2 /* OnboardingSplashView.swift */; };
+		0B01020304050607080910B3 /* OnboardingTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01020304050607080910A3 /* OnboardingTourView.swift */; };
+		0B01020304050607080910B4 /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01020304050607080910A4 /* OnboardingPageView.swift */; };
+		8B9C0D1E2F3A4B5C6D7E8F9A /* AuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8B9C0D1E2F3A4B5C6D7E8F /* AuthGate.swift */; };
+		AA01AA01AA01AA01AA01AA02 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01AA01AA01AA01AA01AA01 /* SubscriptionManager.swift */; };
+		BB01BB01BB01BB01BB01BB02 /* SubscriptionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01BB01BB01BB01BB01BB01 /* SubscriptionGate.swift */; };
+		CC01CC01CC01CC01CC01CC02 /* EarwyrmPlusPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC01CC01CC01CC01CC01CC01 /* EarwyrmPlusPaywall.swift */; };
+		DD01DD01DD01DD01DD01DD02 /* MemoryLaneUpsellCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD01DD01DD01DD01DD01DD01 /* MemoryLaneUpsellCard.swift */; };
+		EE01EE01EE01EE01EE01EE02 /* EarwyrmPlus.storekit in Resources */ = {isa = PBXBuildFile; fileRef = EE01EE01EE01EE01EE01EE01 /* EarwyrmPlus.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -204,6 +214,16 @@
 		47946B7ED7858D8588F43FA0 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		D70DFC9C9290DB250677A38F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CB134CEA61598146E3A6A8FA /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
+		0B01020304050607080910A1 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		0B01020304050607080910A2 /* OnboardingSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSplashView.swift; sourceTree = "<group>"; };
+		0B01020304050607080910A3 /* OnboardingTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTourView.swift; sourceTree = "<group>"; };
+		0B01020304050607080910A4 /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
+		7A8B9C0D1E2F3A4B5C6D7E8F /* AuthGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGate.swift; sourceTree = "<group>"; };
+		AA01AA01AA01AA01AA01AA01 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		BB01BB01BB01BB01BB01BB01 /* SubscriptionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionGate.swift; sourceTree = "<group>"; };
+		CC01CC01CC01CC01CC01CC01 /* EarwyrmPlusPaywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarwyrmPlusPaywall.swift; sourceTree = "<group>"; };
+		DD01DD01DD01DD01DD01DD01 /* MemoryLaneUpsellCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryLaneUpsellCard.swift; sourceTree = "<group>"; };
+		EE01EE01EE01EE01EE01EE01 /* EarwyrmPlus.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = EarwyrmPlus.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -226,9 +246,11 @@
 				EA10EA10EA10EA10EA10EA10 /* Collections */,
 				2F1577A94BC90F8F1298D549 /* Explore */,
 				C1D0D988353B259E23C87711 /* Home */,
+				0B01020304050607080910C1 /* Onboarding */,
 				3C120E489D1D131214F1B12C /* PostLyric */,
 				402C4564BF5763AB04F08CC8 /* Profile */,
 				AABB112233445566778899CC /* Share */,
+				FF02FF02FF02FF02FF02FF02 /* Subscription */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -236,11 +258,13 @@
 		0F2D536EFC864F6B3B07C6E5 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				6A7B8C9D0E1F2A3B4C5D6E7F /* Auth */,
 				9B63760EBE5C7C1E5C3F245A /* Design */,
 				D14C32545551A6044405DC04 /* Models */,
 				BBCC223344556677889900DD /* Navigation */,
 				61366DC4CDA939A88105C554 /* Networking */,
 				ADA4477418648E83AF2524C1 /* Supabase */,
+				FF01FF01FF01FF01FF01FF01 /* Subscription */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -249,6 +273,7 @@
 			isa = PBXGroup;
 			children = (
 				C627C8DD0A5D0FE16BDCA87B /* Assets.xcassets */,
+				EE01EE01EE01EE01EE01EE01 /* EarwyrmPlus.storekit */,
 				513F31560AD682D5A30367F3 /* Fonts */,
 			);
 			path = Resources;
@@ -356,6 +381,14 @@
 				8E551C04139837D48A03AE89 /* Earwyrm.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6A7B8C9D0E1F2A3B4C5D6E7F /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				7A8B9C0D1E2F3A4B5C6D7E8F /* AuthGate.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 		9B63760EBE5C7C1E5C3F245A /* Design */ = {
@@ -473,6 +506,17 @@
 			path = Share;
 			sourceTree = "<group>";
 		};
+		0B01020304050607080910C1 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				0B01020304050607080910A4 /* OnboardingPageView.swift */,
+				0B01020304050607080910A2 /* OnboardingSplashView.swift */,
+				0B01020304050607080910A3 /* OnboardingTourView.swift */,
+				0B01020304050607080910A1 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		BBCC223344556677889900DD /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
@@ -480,6 +524,24 @@
 				0011223344556677AABBCCDD /* NavigationCoordinator.swift */,
 			);
 			path = Navigation;
+			sourceTree = "<group>";
+		};
+		FF01FF01FF01FF01FF01FF01 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				AA01AA01AA01AA01AA01AA01 /* SubscriptionManager.swift */,
+				BB01BB01BB01BB01BB01BB01 /* SubscriptionGate.swift */,
+			);
+			path = Subscription;
+			sourceTree = "<group>";
+		};
+		FF02FF02FF02FF02FF02FF02 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				CC01CC01CC01CC01CC01CC01 /* EarwyrmPlusPaywall.swift */,
+				DD01DD01DD01DD01DD01DD01 /* MemoryLaneUpsellCard.swift */,
+			);
+			path = Subscription;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -545,6 +607,7 @@
 				02BF2A679CDCA584D2B473F6 /* Caveat-Variable.ttf in Resources */,
 				06AD373F64856502CC505A76 /* DMSans-Italic-Variable.ttf in Resources */,
 				C71D93C505DBBD8373FA1B61 /* DMSans-Variable.ttf in Resources */,
+				EE01EE01EE01EE01EE01EE02 /* EarwyrmPlus.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -558,6 +621,7 @@
 				6B1694DC9ED597783CEA7A08 /* ActivityView.swift in Sources */,
 				65F83E7B73EF066BE8CB7A12 /* ArtistAutocompleteView.swift in Sources */,
 				7992F8789CDA4D90AEBCE7B5 /* ArtistPageView.swift in Sources */,
+				8B9C0D1E2F3A4B5C6D7E8F9A /* AuthGate.swift in Sources */,
 				47E2A6F6F223C6111D0DA46B /* AuthManager.swift in Sources */,
 				762D14C82A080396AA8A4A07 /* CardActionBar.swift in Sources */,
 				CEE890CDC1C24C665CE24071 /* CascadeModifier.swift in Sources */,
@@ -646,6 +710,14 @@
 				28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */,
 				C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */,
 				3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */,
+				0B01020304050607080910B1 /* OnboardingView.swift in Sources */,
+				0B01020304050607080910B2 /* OnboardingSplashView.swift in Sources */,
+				0B01020304050607080910B3 /* OnboardingTourView.swift in Sources */,
+				0B01020304050607080910B4 /* OnboardingPageView.swift in Sources */,
+				AA01AA01AA01AA01AA01AA02 /* SubscriptionManager.swift in Sources */,
+				BB01BB01BB01BB01BB01BB02 /* SubscriptionGate.swift in Sources */,
+				CC01CC01CC01CC01CC01CC02 /* EarwyrmPlusPaywall.swift in Sources */,
+				DD01DD01DD01DD01DD01DD02 /* MemoryLaneUpsellCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

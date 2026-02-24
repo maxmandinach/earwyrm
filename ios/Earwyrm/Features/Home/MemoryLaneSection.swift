@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MemoryLaneSection: View {
     let lyrics: [Lyric]
+    var showUpsell: Bool = false
 
     var body: some View {
         if lyrics.count >= 3 {
@@ -13,6 +14,9 @@ struct MemoryLaneSection: View {
                     HStack(spacing: Theme.Spacing.md) {
                         ForEach(lyrics) { lyric in
                             MemoryLaneCard(lyric: lyric)
+                        }
+                        if showUpsell {
+                            MemoryLaneUpsellCard()
                         }
                     }
                     .padding(.horizontal, Theme.Spacing.lg)
