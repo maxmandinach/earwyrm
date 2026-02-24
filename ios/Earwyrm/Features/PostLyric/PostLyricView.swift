@@ -3,6 +3,7 @@ import UIKit
 
 struct PostLyricView: View {
     @Environment(AuthManager.self) private var auth
+    @Environment(ToastManager.self) private var toastManager
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PostLyricViewModel()
 
@@ -122,7 +123,10 @@ struct PostLyricView: View {
                 }
             }
             .toolbarBackground(Theme.card, for: .navigationBar)
-            .onAppear { Analytics.track(.postLyricStarted) }
+            .onAppear {
+                viewModel.toast = toastManager
+                Analytics.track(.postLyricStarted)
+            }
             .onDisappear {
                 viewModel.cancelAllTasks()
             }

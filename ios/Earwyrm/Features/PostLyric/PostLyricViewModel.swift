@@ -57,6 +57,7 @@ final class PostLyricViewModel {
 
     var isSaving = false
     var saveError: String?
+    var toast: ToastManager?
 
     // MARK: - Autocomplete Visibility
 
@@ -430,6 +431,7 @@ final class PostLyricViewModel {
             return true
         } catch {
             saveError = error.localizedDescription
+            toast?.show("couldn't post lyric, try again")
             isSaving = false
             return false
         }

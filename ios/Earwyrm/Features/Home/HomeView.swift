@@ -10,6 +10,7 @@ struct HomeView: View {
     @Environment(CollectionManager.self) private var collectionManager
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(BlockManager.self) private var blockManager
+    @Environment(ToastManager.self) private var toastManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
     @State private var showEditSheet = false
@@ -240,7 +241,8 @@ struct HomeView: View {
                 resonateVM = ResonateViewModel(
                     lyricId: lyric.id,
                     userId: userId,
-                    initialCount: lyric.reactionCount ?? 0
+                    initialCount: lyric.reactionCount ?? 0,
+                    toast: toastManager
                 )
                 Task {
                     await resonateVM?.checkInitialState()

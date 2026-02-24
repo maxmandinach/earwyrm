@@ -8,6 +8,7 @@ final class CollectionManager {
     var collectionLyrics: [UUID: [Lyric]] = [:]
     var savedLyricIds: Set<UUID> = []
     var isLoading = false
+    var toast: ToastManager?
 
     // MARK: - Fetch Collections
 
@@ -107,6 +108,7 @@ final class CollectionManager {
             Haptics.medium()
             return created
         } catch {
+            toast?.show("couldn't create collection")
             print("Create collection error: \(error)")
             return nil
         }
@@ -133,6 +135,7 @@ final class CollectionManager {
                 collections[idx] = updated
             }
         } catch {
+            toast?.show("couldn't update collection")
             print("Update collection error: \(error)")
         }
     }
@@ -155,6 +158,7 @@ final class CollectionManager {
             if let removed {
                 collections.append(removed)
             }
+            toast?.show("couldn't delete collection")
             print("Delete collection error: \(error)")
         }
     }
@@ -179,6 +183,7 @@ final class CollectionManager {
                 return
             }
             savedLyricIds.remove(lyricId)
+            toast?.show("couldn't save to collection")
             print("Add lyric to collection error: \(error)")
         }
     }
@@ -201,6 +206,7 @@ final class CollectionManager {
             // Recompute saved IDs
             await refreshSavedLyricIds()
         } catch {
+            toast?.show("couldn't remove from collection")
             print("Remove lyric from collection error: \(error)")
         }
     }

@@ -15,6 +15,7 @@ struct EarwyrmApp: App {
     @State private var subscriptionGate = SubscriptionGate()
     @State private var appearanceManager = AppearanceManager()
     @State private var blockManager = BlockManager()
+    @State private var toastManager = ToastManager()
 
     init() {
         let bg = UIColor(named: "background")!
@@ -40,6 +41,7 @@ struct EarwyrmApp: App {
                 .environment(subscriptionGate)
                 .environment(appearanceManager)
                 .environment(blockManager)
+                .environment(toastManager)
                 .preferredColorScheme(appearanceManager.resolvedScheme)
                 .onOpenURL { url in
                     navigationCoordinator.handle(url: url)

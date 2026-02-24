@@ -6,6 +6,7 @@ import Supabase
 final class UserFollowManager {
     var followingIds: Set<UUID> = []
     var isLoading = false
+    var toast: ToastManager?
 
     // MARK: - Fetch
 
@@ -46,6 +47,7 @@ final class UserFollowManager {
                 return
             }
             followingIds.remove(targetUserId)
+            toast?.show("couldn't follow, try again")
             print("User follow error: \(error)")
         }
     }
@@ -66,6 +68,7 @@ final class UserFollowManager {
                 .execute()
         } catch {
             followingIds.insert(targetUserId)
+            toast?.show("couldn't unfollow, try again")
             print("User unfollow error: \(error)")
         }
     }

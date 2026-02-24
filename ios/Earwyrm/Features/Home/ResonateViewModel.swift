@@ -12,11 +12,13 @@ final class ResonateViewModel {
     private let lyricId: UUID
     private let userId: UUID
     private var animationTask: Task<Void, Never>?
+    var toast: ToastManager?
 
-    init(lyricId: UUID, userId: UUID, initialCount: Int) {
+    init(lyricId: UUID, userId: UUID, initialCount: Int, toast: ToastManager? = nil) {
         self.lyricId = lyricId
         self.userId = userId
         self.count = initialCount
+        self.toast = toast
     }
 
     /// Check if user has already reacted to this lyric.
@@ -84,6 +86,7 @@ final class ResonateViewModel {
                 // Revert on error
                 hasReacted = wasReacted
                 count += wasReacted ? 1 : -1
+                toast?.show("couldn't resonate, try again")
                 print("Toggle reaction error: \(error)")
             }
         }

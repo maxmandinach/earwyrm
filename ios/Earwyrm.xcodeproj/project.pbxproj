@@ -103,6 +103,8 @@
 		DB08DB08DB08DB08DB08DB08 /* CollectionsCarouselSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB08CB08CB08CB08CB08CB08 /* CollectionsCarouselSection.swift */; };
 		DC09DC09DC09DC09DC09DC09 /* CollectionCarouselCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */; };
 		28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47946B7ED7858D8588F43FA0 /* Haptics.swift */; };
+		T0A5T1B6C7D8E9F0A1B2C3D4 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = T0A5T1B6C7D8E9F0A1B2C3D5 /* ToastManager.swift */; };
+		T0A5T1B6C7D8E9F0A1B2C3D6 /* ToastOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = T0A5T1B6C7D8E9F0A1B2C3D7 /* ToastOverlay.swift */; };
 		C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70DFC9C9290DB250677A38F /* AppDelegate.swift */; };
 		3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB134CEA61598146E3A6A8FA /* PushManager.swift */; };
 		0B01020304050607080910B1 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01020304050607080910A1 /* OnboardingView.swift */; };
@@ -219,6 +221,8 @@
 		CB08CB08CB08CB08CB08CB08 /* CollectionsCarouselSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsCarouselSection.swift; sourceTree = "<group>"; };
 		CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionCarouselCard.swift; sourceTree = "<group>"; };
 		47946B7ED7858D8588F43FA0 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		T0A5T1B6C7D8E9F0A1B2C3D5 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		T0A5T1B6C7D8E9F0A1B2C3D7 /* ToastOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastOverlay.swift; sourceTree = "<group>"; };
 		D70DFC9C9290DB250677A38F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CB134CEA61598146E3A6A8FA /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
 		0B01020304050607080910A1 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -408,6 +412,8 @@
 				98B59CCFF4872610C4BCFC8A /* AppearanceManager.swift */,
 				47946B7ED7858D8588F43FA0 /* Haptics.swift */,
 				00EDCDA3576B454DD2084818 /* Theme.swift */,
+				T0A5T1B6C7D8E9F0A1B2C3D5 /* ToastManager.swift */,
+				T0A5T1B6C7D8E9F0A1B2C3D7 /* ToastOverlay.swift */,
 			);
 			path = Design;
 			sourceTree = "<group>";
@@ -733,6 +739,8 @@
 				DB08DB08DB08DB08DB08DB08 /* CollectionsCarouselSection.swift in Sources */,
 				DC09DC09DC09DC09DC09DC09 /* CollectionCarouselCard.swift in Sources */,
 				28F0A3BB9F142EB0DB1D7A85 /* Haptics.swift in Sources */,
+				T0A5T1B6C7D8E9F0A1B2C3D4 /* ToastManager.swift in Sources */,
+				T0A5T1B6C7D8E9F0A1B2C3D6 /* ToastOverlay.swift in Sources */,
 				C36A0B4C2041C3D0345E0630 /* AppDelegate.swift in Sources */,
 				3CF3ED9C3D562ABFBD373683 /* PushManager.swift in Sources */,
 				0B01020304050607080910B1 /* OnboardingView.swift in Sources */,

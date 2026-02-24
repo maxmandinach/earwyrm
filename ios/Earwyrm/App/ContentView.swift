@@ -4,10 +4,14 @@ struct ContentView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(AuthGate.self) private var authGate
     @Environment(SubscriptionGate.self) private var subscriptionGate
+    @Environment(UserFollowManager.self) private var userFollowManager
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(ToastManager.self) private var toastManager
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var anonBrowsing = false
 
     var body: some View {
+        ZStack {
         Group {
             if auth.isLoading {
                 // Loading state
@@ -34,6 +38,8 @@ struct ContentView: View {
                 LoginView(onExplore: { anonBrowsing = true })
             }
         }
+        ToastOverlay()
+        }
         .sheet(isPresented: Bindable(authGate).showAuthSheet) {
             LoginView()
         }
@@ -50,5 +56,9 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.3), value: auth.isLoading)
         .animation(.easeInOut(duration: 0.4), value: hasSeenOnboarding)
         .animation(.easeInOut(duration: 0.3), value: anonBrowsing)
+        .task {
+            userFollowManager.toast = toastManager
+            collectionManager.toast = toastManager
+        }
     }
 }
