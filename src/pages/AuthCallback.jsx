@@ -61,8 +61,11 @@ export default function AuthCallback() {
           >
             something went wrong
           </h1>
-          <p className="text-sm text-charcoal/50 mb-8">
+          <p className="text-sm text-charcoal/50 mb-4">
             We couldn't verify your link. It may have expired.
+          </p>
+          <p className="text-xs text-charcoal/30 mb-8 break-all">
+            Debug: {window.location.href}
           </p>
           <a
             href="/login"
