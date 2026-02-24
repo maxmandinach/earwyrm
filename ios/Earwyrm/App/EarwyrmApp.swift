@@ -44,6 +44,7 @@ struct EarwyrmApp: App {
                 .environment(toastManager)
                 .preferredColorScheme(appearanceManager.resolvedScheme)
                 .onOpenURL { url in
+                    supabase.handle(url)
                     navigationCoordinator.handle(url: url)
                 }
         }

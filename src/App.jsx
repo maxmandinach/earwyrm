@@ -22,6 +22,7 @@ const ArtistPage = lazy(() => import('./pages/ArtistPage'))
 const SongPage = lazy(() => import('./pages/SongPage'))
 const Activity = lazy(() => import('./pages/Activity'))
 const EmailConfirmed = lazy(() => import('./pages/EmailConfirmed'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -155,6 +156,7 @@ export default function App() {
         <Route path="following" element={<Navigate to="/explore?tab=following" replace />} />
         <Route path="artist/:slug" element={<ArtistPage />} />
         <Route path="song/:slug" element={<SongPage />} />
+        <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="confirmed" element={<EmailConfirmed />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="terms" element={<Terms />} />

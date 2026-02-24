@@ -2,8 +2,8 @@
   "applinks": {
     "details": [
       {
-        "appID": "TEAMID.com.earwyrm.app",
-        "paths": ["/s/*", "/u/*"]
+        "appID": "V92LZ375PL.com.earwyrm.app",
+        "paths": ["/s/*", "/u/*", "/auth/callback"]
       }
     ]
   }
