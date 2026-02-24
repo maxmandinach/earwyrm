@@ -9,6 +9,7 @@ final class CollectionManager {
     var savedLyricIds: Set<UUID> = []
     var isLoading = false
     var toast: ToastManager?
+    private var inFlightCollectionOps: Set<String> = []
 
     // MARK: - Fetch Collections
 
@@ -166,6 +167,11 @@ final class CollectionManager {
     // MARK: - Add Lyric to Collection
 
     func addLyricToCollection(lyricId: UUID, collectionId: UUID) async {
+        let key = "add-\(lyricId)-\(collectionId)"
+        guard !inFlightCollectionOps.contains(key) else { return }
+        inFlightCollectionOps.insert(key)
+        defer { inFlightCollectionOps.remove(key) }
+
         // Optimistic update
         savedLyricIds.insert(lyricId)
         Haptics.medium()
@@ -191,6 +197,11 @@ final class CollectionManager {
     // MARK: - Remove Lyric from Collection
 
     func removeLyricFromCollection(lyricId: UUID, collectionId: UUID) async {
+        let key = "rm-\(lyricId)-\(collectionId)"
+        guard !inFlightCollectionOps.contains(key) else { return }
+        inFlightCollectionOps.insert(key)
+        defer { inFlightCollectionOps.remove(key) }
+
         // Optimistic update
         collectionLyrics[collectionId]?.removeAll { $0.id == lyricId }
         Haptics.light()

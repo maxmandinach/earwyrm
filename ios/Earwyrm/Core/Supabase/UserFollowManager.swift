@@ -7,6 +7,7 @@ final class UserFollowManager {
     var followingIds: Set<UUID> = []
     var isLoading = false
     var toast: ToastManager?
+    private var inFlightIds: Set<UUID> = []
 
     // MARK: - Fetch
 
@@ -30,6 +31,10 @@ final class UserFollowManager {
     // MARK: - Follow
 
     func follow(currentUserId: UUID, targetUserId: UUID) async {
+        guard !inFlightIds.contains(targetUserId) else { return }
+        inFlightIds.insert(targetUserId)
+        defer { inFlightIds.remove(targetUserId) }
+
         // Optimistic update
         followingIds.insert(targetUserId)
         Haptics.medium()
@@ -55,6 +60,10 @@ final class UserFollowManager {
     // MARK: - Unfollow
 
     func unfollow(currentUserId: UUID, targetUserId: UUID) async {
+        guard !inFlightIds.contains(targetUserId) else { return }
+        inFlightIds.insert(targetUserId)
+        defer { inFlightIds.remove(targetUserId) }
+
         // Optimistic update
         followingIds.remove(targetUserId)
         Haptics.light()

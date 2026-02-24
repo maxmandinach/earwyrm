@@ -12,6 +12,7 @@ final class ResonateViewModel {
     private let lyricId: UUID
     private let userId: UUID
     private var animationTask: Task<Void, Never>?
+    private var isToggling = false
     var toast: ToastManager?
 
     init(lyricId: UUID, userId: UUID, initialCount: Int, toast: ToastManager? = nil) {
@@ -41,6 +42,9 @@ final class ResonateViewModel {
 
     /// Toggle reaction with optimistic UI update.
     func toggle() {
+        guard !isToggling else { return }
+        isToggling = true
+
         let wasReacted = hasReacted
 
         // Optimistic update
@@ -82,10 +86,12 @@ final class ResonateViewModel {
                         .insert(insert)
                         .execute()
                 }
+                isToggling = false
             } catch {
                 // Revert on error
                 hasReacted = wasReacted
                 count += wasReacted ? 1 : -1
+                isToggling = false
                 toast?.show("couldn't resonate, try again")
                 print("Toggle reaction error: \(error)")
             }
