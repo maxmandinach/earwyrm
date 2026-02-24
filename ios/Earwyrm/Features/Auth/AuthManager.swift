@@ -35,6 +35,14 @@ final class AuthManager {
         }
     }
 
+    func checkEmailExists(email: String) async throws -> Bool {
+        let result: Bool = try await supabase
+            .rpc("check_email_exists", params: ["email_input": email])
+            .execute()
+            .value
+        return result
+    }
+
     func signIn(email: String, password: String) async throws {
         error = nil
         let session = try await supabase.auth.signIn(
