@@ -17,6 +17,7 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showConfirmation = false
+    @State private var showPassword = false
 
     private var isUsernameValid: Bool {
         let regex = /^[a-zA-Z0-9_]{3,20}$/
@@ -146,13 +147,28 @@ struct LoginView: View {
         VStack(spacing: Theme.Spacing.md) {
             emailLabel
 
-            SecureField("Password", text: $password)
+            HStack {
+                Group {
+                    if showPassword {
+                        TextField("Password", text: $password)
+                            .textContentType(.password)
+                    } else {
+                        SecureField("Password", text: $password)
+                            .textContentType(.password)
+                    }
+                }
                 .textFieldStyle(.plain)
-                .textContentType(.password)
-                .padding(Theme.Spacing.md)
-                .background(Theme.card)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .font(Theme.dmSans(15))
+
+                Button { showPassword.toggle() } label: {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundStyle(.secondary)
+                        .font(.system(size: 14))
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button {
                 signIn()
@@ -202,13 +218,28 @@ struct LoginView: View {
                 }
             }
 
-            SecureField("Password", text: $password)
+            HStack {
+                Group {
+                    if showPassword {
+                        TextField("Password", text: $password)
+                            .textContentType(.newPassword)
+                    } else {
+                        SecureField("Password", text: $password)
+                            .textContentType(.newPassword)
+                    }
+                }
                 .textFieldStyle(.plain)
-                .textContentType(.newPassword)
-                .padding(Theme.Spacing.md)
-                .background(Theme.card)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .font(Theme.dmSans(15))
+
+                Button { showPassword.toggle() } label: {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundStyle(.secondary)
+                        .font(.system(size: 14))
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button {
                 signUp()

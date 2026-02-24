@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase-wrapper'
 
 export default function AuthCallback() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [error, setError] = useState(null)
+
+  // Exchange PKCE code for session (Supabase v2 email confirmations)
+  useEffect(() => {
+    const code = searchParams.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).catch(() => {
+        setError(true)
+      })
+    }
+  }, [searchParams])
 
   useEffect(() => {
     // Listen for password recovery specifically — redirect to settings
@@ -21,20 +32,24 @@ export default function AuthCallback() {
   useEffect(() => {
     if (loading) return
 
-    // Signup confirmations are handled by AuthContext → /confirmed redirect.
-    // For other cases (e.g. generic sign-in via link), redirect to /home.
     if (user) {
-      navigate('/home', { replace: true })
+      // Check if this was a signup confirmation
+      const hash = window.location.hash
+      if (hash.includes('type=signup') || searchParams.get('type') === 'signup') {
+        navigate('/confirmed', { replace: true })
+      } else {
+        navigate('/home', { replace: true })
+      }
       return
     }
 
     // If not loading and no user after a delay, something went wrong
     const timeout = setTimeout(() => {
       setError(true)
-    }, 6000)
+    }, 8000)
 
     return () => clearTimeout(timeout)
-  }, [user, loading, navigate])
+  }, [user, loading, navigate, searchParams])
 
   if (error) {
     return (

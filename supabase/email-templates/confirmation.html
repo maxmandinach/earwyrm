@@ -4,45 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Confirm your earwyrm account</title>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #FAF8F5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #FAF8F5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FAF8F5;">
     <tr>
       <td align="center" style="padding: 48px 24px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 440px;">
+        <table role="presentation" width="440" cellspacing="0" cellpadding="0" border="0" style="max-width: 440px; width: 100%;">
 
           <!-- Header -->
           <tr>
             <td align="center" style="padding-bottom: 32px;">
-              <span style="font-family: 'Caveat', cursive; font-size: 32px; color: #2C2825;">earwyrm</span>
+              <span style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 600; color: #2C2825; letter-spacing: -0.02em;">earwyrm</span>
             </td>
           </tr>
 
           <!-- Card -->
           <tr>
-            <td style="background-color: #FFFFFF; border: 1px solid rgba(44, 40, 37, 0.08); padding: 40px 32px; text-align: center;">
+            <td style="background-color: #FFFFFF; border: 1px solid #E8E4E0; padding: 40px 32px; text-align: center;">
 
-              <h1 style="font-family: 'Caveat', cursive; font-size: 26px; color: #2C2825; margin: 0 0 12px;">
+              <h1 style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: 500; color: #2C2825; margin: 0 0 12px; letter-spacing: -0.01em;">
                 confirm your account
               </h1>
 
-              <p style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(44, 40, 37, 0.5); line-height: 1.6; margin: 0 0 28px;">
+              <p style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #908780; line-height: 1.6; margin: 0 0 28px;">
                 Tap below to verify <strong style="color: #2C2825;">{{ .Email }}</strong> and start sharing the lyrics stuck in your head.
               </p>
 
               <!-- Button -->
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                 <tr>
-                  <td style="background-color: #B8A99A; padding: 14px 32px;">
-                    <a href="{{ .ConfirmationURL }}" style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: #FFFFFF; text-decoration: none; display: inline-block; letter-spacing: 0.02em; text-transform: lowercase;">
+                  <td style="background-color: #B8A99A; padding: 14px 32px; border-radius: 4px;">
+                    <a href="{{ .ConfirmationURL }}" style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; color: #FFFFFF; text-decoration: none; display: inline-block; letter-spacing: 0.02em; text-transform: lowercase;">
                       confirm email
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="font-family: 'DM Sans', sans-serif; font-size: 12px; color: rgba(44, 40, 37, 0.25); line-height: 1.5; margin: 24px 0 0;">
+              <p style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #C4BDB8; line-height: 1.5; margin: 24px 0 0;">
                 If you didn't create an earwyrm account, you can ignore this email.
               </p>
             </td>
@@ -51,7 +54,7 @@
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top: 24px;">
-              <p style="font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(44, 40, 37, 0.2); margin: 0;">
+              <p style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #D1CBC6; margin: 0;">
                 earwyrm — the lyrics stuck in your head
               </p>
             </td>
