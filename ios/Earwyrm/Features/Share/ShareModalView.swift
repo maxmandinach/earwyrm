@@ -41,11 +41,11 @@ struct ShareModalView: View {
                         .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
                 } else {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Theme.Light.card)
+                        .fill(Theme.card)
                         .frame(height: 420)
                         .overlay {
                             ProgressView()
-                                .tint(Theme.Light.accent)
+                                .tint(Theme.accent)
                         }
                 }
 
@@ -95,6 +95,7 @@ struct ShareModalView: View {
 
                 // Primary action — Share
                 Button {
+                    Analytics.track(.shareActionChosen, ["action": "activity_sheet"])
                     Haptics.success()
                     renderer.format = .square
                     rerender()
@@ -109,7 +110,7 @@ struct ShareModalView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Theme.Light.accent)
+                    .background(Theme.accent)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
@@ -144,20 +145,20 @@ struct ShareModalView: View {
             }
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.top, Theme.Spacing.md)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Text("Share")
                         .font(Theme.caveat(24, weight: .semibold))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Cancel") {
                         dismiss()
                     }
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                 }
             }
         }
@@ -198,23 +199,23 @@ struct ShareModalView: View {
                 } label: {
                     Text(label(option))
                         .font(Theme.dmSans(13, weight: selected == option ? .semibold : .regular))
-                        .foregroundStyle(selected == option ? Theme.Light.text : Theme.Light.muted)
+                        .foregroundStyle(selected == option ? Theme.textPrimary : Theme.textMuted)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
                         .background(
                             selected == option
-                                ? Theme.Light.card
+                                ? Theme.card
                                 : Color.clear
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Theme.Light.divider, lineWidth: 1)
+                .strokeBorder(Theme.dividerColor, lineWidth: 1)
         )
     }
 
@@ -226,14 +227,14 @@ struct ShareModalView: View {
                 Text(label)
                     .font(Theme.dmSans(12, weight: .medium))
             }
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
         }
         .frame(maxWidth: .infinity)
     }
 
     private var dot: some View {
         Text("·")
-            .foregroundStyle(Theme.Light.muted)
+            .foregroundStyle(Theme.textMuted)
     }
 
     // MARK: - Actions
@@ -252,6 +253,7 @@ struct ShareModalView: View {
     }
 
     private func saveToPhotos() {
+        Analytics.track(.shareActionChosen, ["action": "save_photo"])
         guard let image = renderer.renderedImage else { return }
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         Haptics.success()
@@ -262,6 +264,7 @@ struct ShareModalView: View {
     }
 
     private func saveAsWallpaper() {
+        Analytics.track(.shareActionChosen, ["action": "wallpaper"])
         renderer.format = .story
         rerender()
         guard let image = renderer.renderedImage else {
@@ -280,6 +283,7 @@ struct ShareModalView: View {
     }
 
     private func copyLink() {
+        Analytics.track(.shareActionChosen, ["action": "copy_link"])
         guard let url = shareURL else { return }
         UIPasteboard.general.string = url.absoluteString
         Haptics.light()

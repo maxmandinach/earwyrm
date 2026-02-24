@@ -58,7 +58,7 @@ struct SongPageView: View {
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("most saved line")
                                 .font(Theme.caveat(22))
-                                .foregroundStyle(Theme.Light.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, Theme.Spacing.md)
 
                             LyricCardView(lyric: top, hero: false)
@@ -71,7 +71,7 @@ struct SongPageView: View {
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("all saves")
                                 .font(Theme.caveat(22))
-                                .foregroundStyle(Theme.Light.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, Theme.Spacing.md)
 
                             let remaining = lyrics.filter { $0.id != mostSavedLine?.id }
@@ -90,7 +90,7 @@ struct SongPageView: View {
                 .padding(.vertical, Theme.Spacing.md)
             }
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await fetchSongLyrics()
@@ -105,13 +105,13 @@ struct SongPageView: View {
     private var loadingState: some View {
         VStack(spacing: Theme.Spacing.lg) {
             RoundedRectangle(cornerRadius: 12)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 120, height: 120)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 160, height: 20)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 100, height: 14)
         }
         .frame(maxWidth: .infinity)
@@ -128,32 +128,32 @@ struct SongPageView: View {
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Theme.Light.divider)
+                        .fill(Theme.dividerColor)
                 }
                 .frame(width: 120, height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
             } else {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Theme.Light.divider)
+                    .fill(Theme.dividerColor)
                     .frame(width: 120, height: 120)
                     .overlay(
                         Image(systemName: "music.note")
                             .font(.system(size: 32))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     )
             }
 
             Text(songTitle)
                 .font(Theme.dmSans(20, weight: .semibold))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
 
             if let artist = artistName {
                 NavigationLink(value: ArtistDestination(name: artist)) {
                     Text(artist)
                         .font(Theme.dmSansItalic(15))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
 
@@ -182,18 +182,18 @@ struct SongPageView: View {
             VStack(spacing: 2) {
                 Text("\(lyrics.count)")
                     .font(Theme.dmSans(18, weight: .semibold))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                 Text("saves")
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
             VStack(spacing: 2) {
                 Text("\(totalResonations)")
                     .font(Theme.dmSans(18, weight: .semibold))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                 Text("resonations")
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         }
     }
@@ -205,14 +205,14 @@ struct SongPageView: View {
             HStack {
                 Text("more from \(artistName)")
                     .font(Theme.caveat(22))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
 
                 Spacer()
 
                 NavigationLink(value: ArtistDestination(name: artistName)) {
                     Text("See all")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
@@ -232,24 +232,24 @@ struct SongPageView: View {
                                         image.resizable().aspectRatio(contentMode: .fill)
                                     } placeholder: {
                                         RoundedRectangle(cornerRadius: 6)
-                                            .fill(Theme.Light.divider)
+                                            .fill(Theme.dividerColor)
                                     }
                                     .frame(width: 64, height: 64)
                                     .clipShape(RoundedRectangle(cornerRadius: 6))
                                 } else {
                                     RoundedRectangle(cornerRadius: 6)
-                                        .fill(Theme.Light.divider)
+                                        .fill(Theme.dividerColor)
                                         .frame(width: 64, height: 64)
                                         .overlay(
                                             Image(systemName: "music.note")
                                                 .font(.system(size: 16))
-                                                .foregroundStyle(Theme.Light.muted)
+                                                .foregroundStyle(Theme.textMuted)
                                         )
                                 }
 
                                 Text(lyric.songTitle ?? "")
                                     .font(Theme.dmSans(11))
-                                    .foregroundStyle(Theme.Light.text)
+                                    .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(2)
                                     .frame(width: 64)
                             }

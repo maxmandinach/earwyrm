@@ -13,7 +13,7 @@ struct MemoryLaneCard: View {
             // Lyric content (2-line clamp)
             Text("\u{201C}\(lyric.content)\u{201D}")
                 .font(Theme.caveat(20))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -26,24 +26,24 @@ struct MemoryLaneCard: View {
                     .joined(separator: " — ")
                 Text(display)
                     .font(Theme.dmSansItalic(12))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
             }
 
             // Duration badge
             Text(duration)
                 .font(Theme.dmSans(11, weight: .medium))
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(Theme.Light.accent.opacity(0.12))
+                .background(Theme.accent.opacity(0.12))
                 .clipShape(Capsule())
         }
         .padding(Theme.Spacing.md)
         .frame(width: 240, height: 150)
         .background(
             ZStack {
-                Theme.Light.card
+                Theme.card
                 if let url = lyric.coverArtUrl, let imageUrl = URL(string: url) {
                     AsyncImage(url: imageUrl) { image in
                         image

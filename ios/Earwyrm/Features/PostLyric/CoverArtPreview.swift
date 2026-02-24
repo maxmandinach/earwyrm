@@ -17,7 +17,7 @@ struct CoverArtPreview: View {
                     placeholder
                         .overlay {
                             ProgressView()
-                                .tint(Theme.Light.muted)
+                                .tint(Theme.textMuted)
                                 .scaleEffect(0.7)
                         }
                 }
@@ -30,7 +30,7 @@ struct CoverArtPreview: View {
 
     private var placeholder: some View {
         RoundedRectangle(cornerRadius: 8)
-            .fill(Theme.Light.divider)
+            .fill(Theme.dividerColor)
             .frame(width: 56, height: 56)
     }
 }

@@ -73,9 +73,9 @@ struct ProfileFollowingView: View {
                     .font(Theme.dmSans(14, weight: .medium))
                 Text("(\(followerProfiles.count))")
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
             .padding(.horizontal, Theme.Spacing.xs)
 
             VStack(spacing: 0) {
@@ -83,7 +83,7 @@ struct ProfileFollowingView: View {
                     HStack {
                         Spacer()
                         ProgressView()
-                            .tint(Theme.Light.accent)
+                            .tint(Theme.accent)
                         Spacer()
                     }
                     .padding(.vertical, 12)
@@ -93,15 +93,15 @@ struct ProfileFollowingView: View {
                             NavigationLink(value: ProfileDestination(userId: profile.id, username: profile.username)) {
                                 HStack(spacing: 8) {
                                     Circle()
-                                        .fill(Theme.Light.background)
+                                        .fill(Theme.background)
                                         .frame(width: 32, height: 32)
                                         .overlay {
-                                            CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.Light.accent)
+                                            CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.accent)
                                         }
 
                                     Text("@\(profile.username)")
                                         .font(Theme.dmSans(15))
-                                        .foregroundStyle(Theme.Light.text)
+                                        .foregroundStyle(Theme.textPrimary)
                                 }
                             }
 
@@ -112,13 +112,13 @@ struct ProfileFollowingView: View {
 
                         if profile.id != followerProfiles.last?.id {
                             Divider()
-                                .foregroundStyle(Theme.Light.divider)
+                                .foregroundStyle(Theme.dividerColor)
                                 .padding(.horizontal, Theme.Spacing.md)
                         }
                     }
                 }
             }
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
         }
@@ -138,9 +138,9 @@ struct ProfileFollowingView: View {
                     .font(Theme.dmSans(14, weight: .medium))
                 Text("(\(userFollowManager.followingIds.count))")
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
             .padding(.horizontal, Theme.Spacing.xs)
 
             VStack(spacing: 0) {
@@ -148,7 +148,7 @@ struct ProfileFollowingView: View {
                     HStack {
                         Spacer()
                         ProgressView()
-                            .tint(Theme.Light.accent)
+                            .tint(Theme.accent)
                         Spacer()
                     }
                     .padding(.vertical, 12)
@@ -158,15 +158,15 @@ struct ProfileFollowingView: View {
                             NavigationLink(value: ProfileDestination(userId: profile.id, username: profile.username)) {
                                 HStack(spacing: 8) {
                                     Circle()
-                                        .fill(Theme.Light.background)
+                                        .fill(Theme.background)
                                         .frame(width: 32, height: 32)
                                         .overlay {
-                                            CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.Light.accent)
+                                            CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.accent)
                                         }
 
                                     Text("@\(profile.username)")
                                         .font(Theme.dmSans(15))
-                                        .foregroundStyle(Theme.Light.text)
+                                        .foregroundStyle(Theme.textPrimary)
                                 }
                             }
 
@@ -186,10 +186,10 @@ struct ProfileFollowingView: View {
                             } label: {
                                 Text("Unfollow")
                                     .font(Theme.dmSans(12, weight: .medium))
-                                    .foregroundStyle(Theme.Light.muted)
+                                    .foregroundStyle(Theme.textMuted)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Theme.Light.background)
+                                    .background(Theme.background)
                                     .clipShape(Capsule())
                             }
                         }
@@ -198,13 +198,13 @@ struct ProfileFollowingView: View {
 
                         if profile.id != followedProfiles.last?.id {
                             Divider()
-                                .foregroundStyle(Theme.Light.divider)
+                                .foregroundStyle(Theme.dividerColor)
                                 .padding(.horizontal, Theme.Spacing.md)
                         }
                     }
                 }
             }
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
         }
@@ -274,9 +274,9 @@ struct ProfileFollowingView: View {
                     .font(Theme.dmSans(14, weight: .medium))
                 Text("(\(collectionManager.collections.count))")
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
             .padding(.horizontal, Theme.Spacing.xs)
 
             VStack(spacing: 0) {
@@ -289,12 +289,12 @@ struct ProfileFollowingView: View {
 
                             Text(collection.name)
                                 .font(Theme.dmSans(15))
-                                .foregroundStyle(Theme.Light.text)
+                                .foregroundStyle(Theme.textPrimary)
 
                             if collection.isSmart == true {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(Theme.Light.muted)
+                                    .foregroundStyle(Theme.textMuted)
                             }
 
                             Spacer()
@@ -305,12 +305,12 @@ struct ProfileFollowingView: View {
 
                     if collection.id != collectionManager.collections.last?.id {
                         Divider()
-                            .foregroundStyle(Theme.Light.divider)
+                            .foregroundStyle(Theme.dividerColor)
                             .padding(.horizontal, Theme.Spacing.md)
                     }
                 }
             }
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
         }
@@ -323,10 +323,10 @@ struct ProfileFollowingView: View {
             Spacer().frame(height: 60)
             Text("not following anything")
                 .font(Theme.caveat(28))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text("Follow artists, songs, and tags from the Explore tab.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -344,9 +344,9 @@ struct ProfileFollowingView: View {
                     .font(Theme.dmSans(14, weight: .medium))
                 Text("(\(follows.count))")
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
             .padding(.horizontal, Theme.Spacing.xs)
 
             // Rows
@@ -355,7 +355,7 @@ struct ProfileFollowingView: View {
                     HStack {
                         Text(follow.filterValue)
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
 
                         Spacer()
 
@@ -372,10 +372,10 @@ struct ProfileFollowingView: View {
                         } label: {
                             Text("Unfollow")
                                 .font(Theme.dmSans(12, weight: .medium))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(Theme.Light.background)
+                                .background(Theme.background)
                                 .clipShape(Capsule())
                         }
                     }
@@ -384,12 +384,12 @@ struct ProfileFollowingView: View {
 
                     if follow.id != follows.last?.id {
                         Divider()
-                            .foregroundStyle(Theme.Light.divider)
+                            .foregroundStyle(Theme.dividerColor)
                             .padding(.horizontal, Theme.Spacing.md)
                     }
                 }
             }
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
         }

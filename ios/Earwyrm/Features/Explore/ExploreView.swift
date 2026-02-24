@@ -29,7 +29,7 @@ struct ExploreView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -91,7 +91,7 @@ struct ExploreView: View {
                         } label: {
                             Text("Sign In")
                                 .font(Theme.dmSans(14, weight: .medium))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                 }
@@ -139,7 +139,7 @@ struct ExploreView: View {
         }
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(height: 0.5)
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -155,13 +155,13 @@ struct ExploreView: View {
             Text(title)
                 .font(Theme.dmSans(14))
                 .foregroundStyle(selectedTab == tag
-                                 ? Theme.Light.text.opacity(0.7)
-                                 : Theme.Light.text.opacity(0.3))
+                                 ? Theme.textPrimary.opacity(0.7)
+                                 : Theme.textPrimary.opacity(0.3))
                 .padding(.bottom, Theme.Spacing.sm)
                 .overlay(alignment: .bottom) {
                     if selectedTab == tag {
                         Rectangle()
-                            .fill(Theme.Light.text.opacity(0.4))
+                            .fill(Theme.textPrimary.opacity(0.4))
                             .frame(height: 1)
                     }
                 }

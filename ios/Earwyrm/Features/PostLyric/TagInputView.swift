@@ -24,7 +24,7 @@ struct TagInputView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("tags")
                 .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
             // Tag chips
             if !tags.isEmpty {
@@ -39,7 +39,7 @@ struct TagInputView: View {
             HStack(spacing: 8) {
                 TextField("add a tag...", text: $inputText)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                     .focused($isFocused)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -58,18 +58,18 @@ struct TagInputView: View {
                         addTag()
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                             .font(.system(size: 20))
                     }
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Theme.Light.divider, lineWidth: 1)
+                    .stroke(Theme.dividerColor, lineWidth: 1)
             )
 
             // Suggestions
@@ -83,13 +83,13 @@ struct TagInputView: View {
                         } label: {
                             Text(suggestion)
                                 .font(Theme.dmSans(12))
-                                .foregroundStyle(Theme.Light.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(Theme.Light.background)
+                                .background(Theme.background)
                                 .clipShape(Capsule())
                                 .overlay(
-                                    Capsule().stroke(Theme.Light.divider, lineWidth: 1)
+                                    Capsule().stroke(Theme.dividerColor, lineWidth: 1)
                                 )
                         }
                     }
@@ -102,19 +102,19 @@ struct TagInputView: View {
         HStack(spacing: 4) {
             Text(tag)
                 .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
 
             Button {
                 tags.removeAll { $0 == tag }
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Theme.Light.accent.opacity(0.15))
+        .background(Theme.accent.opacity(0.15))
         .clipShape(Capsule())
     }
 

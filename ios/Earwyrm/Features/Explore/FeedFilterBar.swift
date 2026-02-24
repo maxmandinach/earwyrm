@@ -12,11 +12,11 @@ struct FeedFilterBar: View {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 14))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
 
                 TextField("Search lyrics, artists, songs...", text: $search)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
 
                 Button {
                     search = ""
@@ -25,13 +25,13 @@ struct FeedFilterBar: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .frame(width: 28, height: 28)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         } else {
             // Compact row: search icon + time pills + sort
@@ -42,7 +42,7 @@ struct FeedFilterBar: View {
                 } label: {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 14))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .frame(width: 36, height: 36)
                 }
 
@@ -56,8 +56,8 @@ struct FeedFilterBar: View {
                             Text(range.rawValue)
                                 .font(Theme.dmSans(12))
                                 .foregroundStyle(timeRange == range
-                                                 ? Theme.Light.text.opacity(0.6)
-                                                 : Theme.Light.text.opacity(0.25))
+                                                 ? Theme.textPrimary.opacity(0.6)
+                                                 : Theme.textPrimary.opacity(0.25))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                         }
@@ -88,7 +88,7 @@ struct FeedFilterBar: View {
                         Text(sort.rawValue)
                             .font(Theme.dmSans(12))
                     }
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                 }
             }
         }

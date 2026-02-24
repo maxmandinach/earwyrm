@@ -36,12 +36,12 @@ struct EditLyricView: View {
                     // Content
                     TextEditor(text: $content)
                         .font(Theme.caveat(30))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .lineSpacing(10)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 150)
                         .padding(Theme.Spacing.md)
-                        .background(Theme.Light.card)
+                        .background(Theme.card)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                         .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
@@ -52,8 +52,8 @@ struct EditLyricView: View {
                         let counterColor: Color = count >= 500
                             ? .orange
                             : count >= 400
-                                ? Theme.Light.accent
-                                : Theme.Light.muted
+                                ? Theme.accent
+                                : Theme.textMuted
                         let counterOpacity: Double = count < 400
                             ? Double(count - 300) / 100.0
                             : 1.0
@@ -85,7 +85,7 @@ struct EditLyricView: View {
                 .padding(.top, Theme.Spacing.md)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle("edit lyric")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -95,27 +95,27 @@ struct EditLyricView: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .font(Theme.dmSans(15))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button { save() } label: {
                         if isSaving {
-                            ProgressView().scaleEffect(0.8).tint(Theme.Light.accent)
+                            ProgressView().scaleEffect(0.8).tint(Theme.accent)
                         } else {
                             Text("Save")
                                 .font(Theme.dmSans(15, weight: .semibold))
                         }
                     }
                     .disabled(!canSave)
-                    .foregroundStyle(canSave ? Theme.Light.accent : Theme.Light.muted)
+                    .foregroundStyle(canSave ? Theme.accent : Theme.textMuted)
                 }
             }
-            .toolbarBackground(Theme.Light.card, for: .navigationBar)
+            .toolbarBackground(Theme.card, for: .navigationBar)
             .task {
                 await loadNote()
             }
@@ -130,7 +130,7 @@ struct EditLyricView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     TextEditor(text: $noteContent)
                         .font(Theme.noteFont(16))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                         .lineSpacing(6)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 60)
@@ -140,7 +140,7 @@ struct EditLyricView: View {
                             if noteContent.isEmpty {
                                 Text("why does this one stay with you?")
                                     .font(Theme.noteFont(16))
-                                    .foregroundStyle(Theme.Light.muted.opacity(0.5))
+                                    .foregroundStyle(Theme.textMuted.opacity(0.5))
                                     .padding(.horizontal, 17)
                                     .padding(.vertical, 16)
                                     .allowsHitTesting(false)
@@ -148,7 +148,7 @@ struct EditLyricView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Theme.Light.divider, lineWidth: 1)
+                                .stroke(Theme.dividerColor, lineWidth: 1)
                         )
                         .onChange(of: noteContent) { _, newValue in
                             if newValue.count > 500 {
@@ -168,7 +168,7 @@ struct EditLyricView: View {
                                 Text(noteIsPublic ? "visible on explore" : "private note")
                                     .font(Theme.dmSans(12))
                             }
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                             .padding(.leading, 4)
                         }
 
@@ -176,7 +176,7 @@ struct EditLyricView: View {
 
                         Text("\(noteContent.count)/500")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(noteContent.count > 450 ? Theme.Light.accent : Theme.Light.muted)
+                            .foregroundStyle(noteContent.count > 450 ? Theme.accent : Theme.textMuted)
                             .padding(.trailing, 4)
                     }
                 }
@@ -192,7 +192,7 @@ struct EditLyricView: View {
                         Text("add a note")
                             .font(Theme.dmSans(13))
                     }
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                 }
             }
         }
@@ -224,15 +224,15 @@ struct EditLyricView: View {
     private func editField(_ placeholder: String, text: Binding<String>) -> some View {
         TextField(placeholder, text: text)
             .font(Theme.dmSansItalic(14))
-            .foregroundStyle(Theme.Light.text)
+            .foregroundStyle(Theme.textPrimary)
             .autocorrectionDisabled()
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Theme.Light.divider, lineWidth: 1)
+                    .stroke(Theme.dividerColor, lineWidth: 1)
             )
     }
 

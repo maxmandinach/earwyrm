@@ -13,15 +13,15 @@ struct MemoryLaneUpsellCard: View {
 
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.system(size: 24))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
 
                 Text("see all")
                     .font(Theme.caveat(22))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
 
                 Text("unlock your full\nmemory lane")
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(2)
 
@@ -29,12 +29,12 @@ struct MemoryLaneUpsellCard: View {
             }
             .padding(Theme.Spacing.md)
             .frame(width: 240, height: 150)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-                    .foregroundStyle(Theme.Light.accent.opacity(0.4))
+                    .foregroundStyle(Theme.accent.opacity(0.4))
             )
         }
     }

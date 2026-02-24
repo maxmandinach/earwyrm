@@ -28,11 +28,11 @@ struct CreateCollectionSheet: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Name")
                             .font(Theme.dmSans(13, weight: .medium))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                         TextField("e.g. Late Night Vibes", text: $name)
                             .font(Theme.dmSans(15))
                             .padding(Theme.Spacing.sm + 4)
-                            .background(Theme.Light.card)
+                            .background(Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
@@ -40,11 +40,11 @@ struct CreateCollectionSheet: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Description")
                             .font(Theme.dmSans(13, weight: .medium))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                         TextField("Optional description", text: $descriptionText)
                             .font(Theme.dmSans(15))
                             .padding(Theme.Spacing.sm + 4)
-                            .background(Theme.Light.card)
+                            .background(Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
@@ -52,7 +52,7 @@ struct CreateCollectionSheet: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         Text("Color")
                             .font(Theme.dmSans(13, weight: .medium))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
 
                         HStack(spacing: Theme.Spacing.md) {
                             ForEach(CollectionColors.all, id: \.self) { colorName in
@@ -85,23 +85,23 @@ struct CreateCollectionSheet: View {
                                     Text("Smart collection")
                                         .font(Theme.dmSans(14, weight: .medium))
                                 }
-                                .foregroundStyle(Theme.Light.text)
+                                .foregroundStyle(Theme.textPrimary)
                             }
-                            .tint(Theme.Light.accent)
+                            .tint(Theme.accent)
 
                             if isSmart {
                                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                                     Text("Tag filter")
                                         .font(Theme.dmSans(13, weight: .medium))
-                                        .foregroundStyle(Theme.Light.secondary)
+                                        .foregroundStyle(Theme.textSecondary)
                                     TextField("e.g. melancholy", text: $smartTag)
                                         .font(Theme.dmSans(15))
                                         .padding(Theme.Spacing.sm + 4)
-                                        .background(Theme.Light.card)
+                                        .background(Theme.card)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                     Text("Lyrics with this tag will auto-populate.")
                                         .font(Theme.dmSans(12))
-                                        .foregroundStyle(Theme.Light.muted)
+                                        .foregroundStyle(Theme.textMuted)
                                 }
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
@@ -111,7 +111,7 @@ struct CreateCollectionSheet: View {
                 }
                 .padding(Theme.Spacing.lg)
             }
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle(isEditing ? "Edit Collection" : "New Collection")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -121,19 +121,19 @@ struct CreateCollectionSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .font(Theme.dmSans(15))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "Save" : "Create") {
                         Task { await save() }
                     }
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(canSave ? Theme.Light.accent : Theme.Light.muted)
+                    .foregroundStyle(canSave ? Theme.accent : Theme.textMuted)
                     .disabled(!canSave)
                 }
             }

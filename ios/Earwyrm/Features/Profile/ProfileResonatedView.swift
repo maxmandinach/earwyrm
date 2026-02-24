@@ -25,10 +25,10 @@ struct ProfileResonatedView: View {
             Spacer().frame(height: 60)
             Text("nothing resonated yet")
                 .font(Theme.caveat(28))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text("Tap the waveform on lyrics that resonate with you.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -45,7 +45,7 @@ private struct ResonatedRow: View {
             // Content
             Text(item.lyric.content)
                 .font(Theme.caveat(24, weight: .medium))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineSpacing(6)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -56,17 +56,17 @@ private struct ResonatedRow: View {
                     if let song = item.lyric.songTitle {
                         Text(song)
                             .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                     if item.lyric.songTitle != nil && item.lyric.artistName != nil {
                         Text("—")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     if let artist = item.lyric.artistName {
                         Text(artist)
                             .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                 }
             }
@@ -76,19 +76,19 @@ private struct ResonatedRow: View {
                 if let username = item.username {
                     Text("by @\(username)")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
 
                 Spacer()
 
                 Text("resonated \(relativeDate(item.resonatedAt))")
                     .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .opacity(0.7)
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

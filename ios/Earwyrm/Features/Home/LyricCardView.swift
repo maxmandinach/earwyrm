@@ -39,7 +39,7 @@ struct LyricCardView: View {
                 // Lyric content — centered blockquote style
                 Text(lyric.content)
                     .font(Theme.caveat(hero ? 30 : 26, weight: .medium))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineSpacing(hero ? 12 : 8)
                     .tracking(hero ? 0.3 : 0)
                     .multilineTextAlignment(.center)
@@ -50,7 +50,7 @@ struct LyricCardView: View {
                 // Signature: thin accent rule + metadata
                 if lyric.songTitle != nil || lyric.artistName != nil {
                     Rectangle()
-                        .fill(Theme.Light.accent.opacity(0.5))
+                        .fill(Theme.accent.opacity(0.5))
                         .frame(width: 80, height: 1.5)
                         .padding(.top, hero ? Theme.Spacing.md : Theme.Spacing.sm)
                         .padding(.bottom, hero ? Theme.Spacing.lg : Theme.Spacing.md)
@@ -65,7 +65,7 @@ struct LyricCardView: View {
                                     .aspectRatio(contentMode: .fill)
                             } placeholder: {
                                 RoundedRectangle(cornerRadius: hero ? 6 : 4)
-                                    .fill(Theme.Light.divider)
+                                    .fill(Theme.dividerColor)
                             }
                             .frame(width: hero ? 56 : 40, height: hero ? 56 : 40)
                             .clipShape(RoundedRectangle(cornerRadius: hero ? 6 : 4))
@@ -82,7 +82,7 @@ struct LyricCardView: View {
                         ForEach(tags, id: \.self) { tag in
                             Text("#\(tag)")
                                 .font(Theme.dmSans(12))
-                                .foregroundStyle(Theme.Light.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .opacity(0.5)
                         }
                     }
@@ -93,7 +93,7 @@ struct LyricCardView: View {
                 if let createdAt = formattedDate {
                     Text(createdAt)
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .opacity(0.4)
                         .padding(.top, hero ? Theme.Spacing.lg : Theme.Spacing.md)
                 }
@@ -102,12 +102,12 @@ struct LyricCardView: View {
                 if let note {
                     HStack(spacing: 6) {
                         Rectangle()
-                            .fill(Theme.Light.accent.opacity(0.4))
+                            .fill(Theme.accent.opacity(0.4))
                             .frame(width: 2)
 
                         Text(note.content)
                             .font(Theme.noteFont(15))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .lineSpacing(4)
                             .multilineTextAlignment(.leading)
                     }
@@ -140,7 +140,7 @@ struct LyricCardView: View {
             }
             .padding(hero ? Theme.Spacing.xl + Theme.Spacing.sm : Theme.Spacing.lg)
             .frame(maxWidth: .infinity)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             // Hero: deeper shadow with more presence
             .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
@@ -198,7 +198,7 @@ struct LyricCardView: View {
         if !parts.isEmpty {
             Text(parts.joined(separator: " — "))
                 .font(Theme.dmSansItalic(hero ? 15 : 14))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 

@@ -22,7 +22,7 @@ struct CollectionPickerSheet: View {
                 if isLoading {
                     Spacer()
                     ProgressView()
-                        .tint(Theme.Light.accent)
+                        .tint(Theme.accent)
                     Spacer()
                 } else {
                     ScrollView {
@@ -31,7 +31,7 @@ struct CollectionPickerSheet: View {
                             if let favorites = manualCollections.first(where: { $0.name == "Favorites" }) {
                                 collectionRow(favorites, isFavorites: true)
                                 Divider()
-                                    .foregroundStyle(Theme.Light.divider)
+                                    .foregroundStyle(Theme.dividerColor)
                                     .padding(.horizontal, Theme.Spacing.md)
                             }
 
@@ -40,7 +40,7 @@ struct CollectionPickerSheet: View {
                                 collectionRow(collection)
                                 if collection.id != manualCollections.filter({ $0.name != "Favorites" }).last?.id {
                                     Divider()
-                                        .foregroundStyle(Theme.Light.divider)
+                                        .foregroundStyle(Theme.dividerColor)
                                         .padding(.horizontal, Theme.Spacing.md)
                                 }
                             }
@@ -56,10 +56,10 @@ struct CollectionPickerSheet: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "plus.circle")
                                         .font(.system(size: 16))
-                                        .foregroundStyle(Theme.Light.accent)
+                                        .foregroundStyle(Theme.accent)
                                     Text("New Collection")
                                         .font(Theme.dmSans(15, weight: .medium))
-                                        .foregroundStyle(Theme.Light.accent)
+                                        .foregroundStyle(Theme.accent)
                                     Spacer()
                                 }
                                 .padding(.horizontal, Theme.Spacing.lg)
@@ -69,14 +69,14 @@ struct CollectionPickerSheet: View {
                     }
                 }
             }
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle("Save to Collection")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .font(Theme.dmSans(15, weight: .medium))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
         }
@@ -123,13 +123,13 @@ struct CollectionPickerSheet: View {
 
                 Text(collection.name)
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
 
                 Spacer()
 
                 Image(systemName: isMember ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
-                    .foregroundStyle(isMember ? Theme.Light.accent : Theme.Light.muted)
+                    .foregroundStyle(isMember ? Theme.accent : Theme.textMuted)
             }
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.vertical, 14)

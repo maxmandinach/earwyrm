@@ -11,17 +11,17 @@ struct FollowButton: View {
         }) {
             Text(isFollowing ? "following" : "follow")
                 .font(Theme.dmSans(13, weight: .medium))
-                .foregroundStyle(isFollowing ? Theme.Light.text : .white)
+                .foregroundStyle(isFollowing ? Theme.textPrimary : .white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(isFollowing ? Theme.Light.card : Theme.Light.accent)
+                        .fill(isFollowing ? Theme.card : Theme.accent)
                 )
                 .overlay(
                     Capsule()
                         .strokeBorder(
-                            isFollowing ? Theme.Light.divider : Color.clear,
+                            isFollowing ? Theme.dividerColor : Color.clear,
                             lineWidth: 1
                         )
                 )

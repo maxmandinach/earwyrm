@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(CollectionManager.self) private var collectionManager
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(BlockManager.self) private var blockManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
     @State private var showEditSheet = false
@@ -20,6 +21,9 @@ struct HomeView: View {
     @State private var shareCarouselOwnerId: UUID?
     @State private var bookmarkLyricId: UUID?
     @State private var showCollectionPicker = false
+    @State private var reportLyric: Lyric?
+    @State private var blockTarget: (userId: UUID, username: String)?
+    @State private var showBlockAlert = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -31,7 +35,7 @@ struct HomeView: View {
                             Spacer()
                                 .frame(height: 100)
                             ProgressView()
-                                .tint(Theme.Light.accent)
+                                .tint(Theme.accent)
                         } else if let error = viewModel.error {
                             // Error state
                             VStack(spacing: Theme.Spacing.sm) {
@@ -39,10 +43,10 @@ struct HomeView: View {
                                     .frame(height: 80)
                                 Text("couldn't load your lyric")
                                     .font(Theme.caveat(28))
-                                    .foregroundStyle(Theme.Light.text)
+                                    .foregroundStyle(Theme.textPrimary)
                                 Text(error)
                                     .font(Theme.dmSans(13))
-                                    .foregroundStyle(Theme.Light.muted)
+                                    .foregroundStyle(Theme.textMuted)
                                     .multilineTextAlignment(.center)
                                 Button("Retry") {
                                     Task {
@@ -52,7 +56,7 @@ struct HomeView: View {
                                     }
                                 }
                                 .font(Theme.dmSans(14, weight: .medium))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                                 .padding(.top, Theme.Spacing.sm)
                             }
                             .padding(.horizontal, Theme.Spacing.lg)
@@ -102,7 +106,7 @@ struct HomeView: View {
 
                             // Trending
                             TrendingSection(
-                                lyrics: viewModel.trendingLyrics,
+                                lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
                                 onShare: { item in
                                     shareCarouselLyric = item.lyric
                                     shareCarouselUsername = item.username
@@ -114,6 +118,13 @@ struct HomeView: View {
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                onReport: { item in
+                                    reportLyric = item.lyric
+                                },
+                                onBlock: { item in
+                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
+                                    showBlockAlert = true
                                 },
                                 isLyricSaved: { id in collectionManager.isLyricSaved(id) }
                             )
@@ -121,7 +132,7 @@ struct HomeView: View {
 
                             // From Your Follows
                             FollowFeedSection(
-                                lyrics: viewModel.followFeedLyrics,
+                                lyrics: viewModel.followFeedLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
                                 onShare: { item in
                                     shareCarouselLyric = item.lyric
                                     shareCarouselUsername = item.username
@@ -133,6 +144,13 @@ struct HomeView: View {
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                onReport: { item in
+                                    reportLyric = item.lyric
+                                },
+                                onBlock: { item in
+                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
+                                    showBlockAlert = true
                                 },
                                 isLyricSaved: { id in collectionManager.isLyricSaved(id) }
                             )
@@ -147,7 +165,7 @@ struct HomeView: View {
 
                             // Show trending even without a current lyric
                             TrendingSection(
-                                lyrics: viewModel.trendingLyrics,
+                                lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
                                 onShare: { item in
                                     shareCarouselLyric = item.lyric
                                     shareCarouselUsername = item.username
@@ -159,6 +177,13 @@ struct HomeView: View {
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+                                },
+                                onReport: { item in
+                                    reportLyric = item.lyric
+                                },
+                                onBlock: { item in
+                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
+                                    showBlockAlert = true
                                 },
                                 isLyricSaved: { id in collectionManager.isLyricSaved(id) }
                             )
@@ -175,7 +200,7 @@ struct HomeView: View {
                         await collectionManager.fetchCollections(userId: userId)
                     }
                 }
-                .background(Theme.Light.background)
+                .background(Theme.background)
                 .onChange(of: scrollToTop) { _, _ in
                     withAnimation { proxy.scrollTo("home-top", anchor: .top) }
                 }
@@ -299,6 +324,25 @@ struct HomeView: View {
                     .presentationDragIndicator(.visible)
             }
         }
+        .sheet(item: $reportLyric) { lyric in
+            ReportSheet(contentType: "lyric", contentId: lyric.id)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .alert(
+            "Block @\(blockTarget?.username ?? "user")?",
+            isPresented: $showBlockAlert
+        ) {
+            Button("Block", role: .destructive) {
+                guard let target = blockTarget, let userId = auth.userId else { return }
+                Task {
+                    await blockManager.block(currentUserId: userId, targetUserId: target.userId)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Their content will be hidden from your feeds. You can unblock from Settings.")
+        }
     }
 
     private var emptyState: some View {
@@ -311,17 +355,17 @@ struct HomeView: View {
 
                 Text("what's stuck in your head?")
                     .font(Theme.caveat(32))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
 
                 Text("Tap here to post your first lyric.")
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
 
                 Image(systemName: "plus.circle")
                     .font(.system(size: 28))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                     .padding(.top, Theme.Spacing.xs)
             }
             .padding(.horizontal, Theme.Spacing.lg)
@@ -343,11 +387,11 @@ private struct ProfileUsernameResolver: View {
                 PublicProfileView(userId: profile.id, username: profile.username)
             } else if isLoading {
                 ProgressView()
-                    .tint(Theme.Light.accent)
+                    .tint(Theme.accent)
             } else {
                 Text("User not found")
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         }
         .task {
@@ -396,13 +440,13 @@ private struct LyricDetailDestination: View {
                     NavigationLink(value: ProfileDestination(userId: item.lyric.userId, username: username)) {
                         Text("posted by @\(username)")
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                 }
             }
             .padding(.top, Theme.Spacing.md)
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)

@@ -17,10 +17,12 @@ struct PublicProfileView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(UserFollowManager.self) private var userFollowManager
     @Environment(NotificationManager.self) private var notificationManager
+    @Environment(BlockManager.self) private var blockManager
     @State private var profile: Profile?
     @State private var lyrics: [Lyric] = []
     @State private var isLoading = true
     @State private var shareLyric: Lyric?
+    @State private var showBlockAlert = false
 
     private var isOwnProfile: Bool {
         auth.userId == userId
@@ -40,13 +42,13 @@ struct PublicProfileView: View {
                 // Lyrics list
                 if isLoading {
                     ProgressView()
-                        .tint(Theme.Light.accent)
+                        .tint(Theme.accent)
                         .padding(.top, Theme.Spacing.xl)
                 } else if lyrics.isEmpty {
                     VStack(spacing: Theme.Spacing.sm) {
                         Text("no public lyrics yet")
                             .font(Theme.caveat(22))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                     .padding(.top, Theme.Spacing.xl)
                 } else {
@@ -64,8 +66,50 @@ struct PublicProfileView: View {
                 Spacer().frame(height: Theme.Spacing.xl)
             }
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isOwnProfile && auth.userId != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        if blockManager.isBlocked(userId) {
+                            Button {
+                                guard let currentUserId = auth.userId else { return }
+                                Task {
+                                    await blockManager.unblock(currentUserId: currentUserId, targetUserId: userId)
+                                }
+                            } label: {
+                                Label("Unblock @\(username)", systemImage: "hand.raised.slash")
+                            }
+                        } else {
+                            Button(role: .destructive) {
+                                showBlockAlert = true
+                            } label: {
+                                Label("Block @\(username)", systemImage: "hand.raised")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+            }
+        }
+        .alert(
+            "Block @\(username)?",
+            isPresented: $showBlockAlert
+        ) {
+            Button("Block", role: .destructive) {
+                guard let currentUserId = auth.userId else { return }
+                Task {
+                    await blockManager.block(currentUserId: currentUserId, targetUserId: userId)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Their content will be hidden from your feeds. You can unblock from Settings.")
+        }
         .navigationDestination(for: ArtistDestination.self) { dest in
             ArtistPageView(artistName: dest.name)
         }
@@ -77,6 +121,7 @@ struct PublicProfileView: View {
             )
         }
         .task {
+            Analytics.track(.screenView, ["screen": "public_profile"])
             await loadProfile()
             await loadLyrics()
         }
@@ -108,22 +153,22 @@ struct PublicProfileView: View {
         VStack(spacing: Theme.Spacing.sm) {
             // Avatar
             Circle()
-                .fill(Theme.Light.card)
+                .fill(Theme.card)
                 .frame(width: 72, height: 72)
                 .overlay {
-                    CaveatText(text: initials, size: 26, color: Theme.Light.accent)
+                    CaveatText(text: initials, size: 26, color: Theme.accent)
                 }
 
             // Username
             Text("@\(username)")
                 .font(Theme.dmSans(18, weight: .medium))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
 
             // Display name
             if let displayName = profile?.displayName {
                 Text(displayName)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             // Follow button — only for public profiles, not own
@@ -186,7 +231,7 @@ private struct PublicProfileLyricCard: View {
             // Lyric content
             Text(lyric.content)
                 .font(Theme.caveat(24, weight: .medium))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineSpacing(6)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -202,19 +247,19 @@ private struct PublicProfileLyricCard: View {
                         )) {
                             Text(song)
                                 .font(Theme.dmSansItalic(13))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                     if lyric.songTitle != nil && lyric.artistName != nil {
                         Text("—")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     if let artist = lyric.artistName {
                         NavigationLink(value: ArtistDestination(name: artist)) {
                             Text(artist)
                                 .font(Theme.dmSansItalic(13))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                 }
@@ -226,16 +271,16 @@ private struct PublicProfileLyricCard: View {
                     ResonateIcon(isActive: false, isAnimating: false, size: 14)
                     Text("\(lyric.reactionCount ?? 0)")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
 
                 HStack(spacing: 4) {
                     Image(systemName: "bubble.left")
                         .font(.system(size: 11))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                     Text("\(lyric.commentCount ?? 0)")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
 
                 Spacer()
@@ -244,19 +289,19 @@ private struct PublicProfileLyricCard: View {
                     Button(action: onShare) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     .frame(minWidth: 44, minHeight: 44)
                 }
 
                 Text(relativeDate(lyric.createdAt))
                     .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .opacity(0.7)
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

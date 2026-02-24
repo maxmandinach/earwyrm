@@ -20,6 +20,7 @@ struct ProfileCollectionsView: View {
         if subscriptionManager.canCreateCollection(currentCount: manualCollectionCount) {
             showCreateSheet = true
         } else {
+            Analytics.track(.collectionCapHit, ["count": "\(manualCollectionCount)"])
             showPaywall = true
         }
     }
@@ -49,7 +50,7 @@ struct ProfileCollectionsView: View {
                         Text("new collection")
                             .font(Theme.dmSans(14, weight: .medium))
                     }
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                     .padding(.vertical, Theme.Spacing.sm)
                 }
             }
@@ -71,10 +72,10 @@ struct ProfileCollectionsView: View {
             Spacer().frame(height: 60)
             Text("no collections yet")
                 .font(Theme.caveat(28))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text("Organize your lyrics into collections.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
 
             Button {
@@ -86,7 +87,7 @@ struct ProfileCollectionsView: View {
                     Text("create one")
                         .font(Theme.dmSans(14, weight: .medium))
                 }
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
                 .padding(.top, Theme.Spacing.xs)
             }
         }
@@ -119,27 +120,27 @@ private struct CollectionGridCard: View {
                     .fill(accentColor)
                     .frame(width: 4, height: 20)
 
-                CaveatText(text: collection.name, size: 20, color: Theme.Light.text)
+                CaveatText(text: collection.name, size: 20, color: Theme.textPrimary)
 
                 Spacer()
 
                 if collection.isSmart == true {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
             }
 
             if let desc = collection.description, !desc.isEmpty {
                 Text(desc)
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .lineLimit(2)
             }
         }
         .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

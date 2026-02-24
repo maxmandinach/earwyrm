@@ -5,6 +5,7 @@ import StoreKit
 struct ProfileSettingsSheet: View {
     @Environment(AuthManager.self) private var auth
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(AppearanceManager.self) private var appearance
     @Environment(\.dismiss) private var dismiss
     @State private var vm = SettingsViewModel()
     @State private var isSigningOut = false
@@ -14,16 +15,18 @@ struct ProfileSettingsSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         subscriptionSection
+                        appearanceSection
                         editProfileSection
                         notificationsSection
                         privacySection
                         accountSection
+                        legalSection
                         signOutButton
                     }
                     .padding(.horizontal, Theme.Spacing.lg)
@@ -41,7 +44,7 @@ struct ProfileSettingsSheet: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
-                            .background(Theme.Light.text.opacity(0.85))
+                            .background(Theme.textPrimary.opacity(0.85))
                             .clipShape(Capsule())
                             .padding(.bottom, Theme.Spacing.xl)
                     }
@@ -55,7 +58,7 @@ struct ProfileSettingsSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .font(Theme.dmSans(15, weight: .medium))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
         }
@@ -72,6 +75,23 @@ struct ProfileSettingsSheet: View {
         }
     }
 
+    // MARK: - Appearance
+
+    private var appearanceSection: some View {
+        @Bindable var appearance = appearance
+        return settingsSection("appearance") {
+            Picker("Appearance", selection: $appearance.mode) {
+                ForEach(AppearanceManager.Mode.allCases, id: \.self) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: appearance.mode) { _, newMode in
+                Analytics.track(.appearanceChanged, ["mode": newMode.rawValue])
+            }
+        }
+    }
+
     // MARK: - Subscription
 
     private var subscriptionSection: some View {
@@ -82,15 +102,15 @@ struct ProfileSettingsSheet: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("earwyrm+ active")
                                 .font(Theme.dmSans(15, weight: .medium))
-                                .foregroundStyle(Theme.Light.text)
+                                .foregroundStyle(Theme.textPrimary)
                             Text("thank you for your support")
                                 .font(Theme.dmSans(13))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                         }
                         Spacer()
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 20))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
 
                     Button {
@@ -100,10 +120,10 @@ struct ProfileSettingsSheet: View {
                     } label: {
                         Text("Manage Subscription")
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
-                            .background(Theme.Light.accent.opacity(0.1))
+                            .background(Theme.accent.opacity(0.1))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
@@ -112,10 +132,10 @@ struct ProfileSettingsSheet: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("free tier")
                             .font(Theme.dmSans(15, weight: .medium))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
                         Text("unlimited collections & full memory lane")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     Spacer()
                     Button {
@@ -126,7 +146,7 @@ struct ProfileSettingsSheet: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
-                            .background(Theme.Light.accent)
+                            .background(Theme.accent)
                             .clipShape(Capsule())
                     }
                 }
@@ -149,15 +169,15 @@ struct ProfileSettingsSheet: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text("username")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
 
                     HStack(spacing: Theme.Spacing.sm) {
                         Text("@")
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                         TextField("username", text: $vm.username)
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .onChange(of: vm.username) { _, _ in
@@ -165,7 +185,7 @@ struct ProfileSettingsSheet: View {
                             }
                     }
                     .padding(12)
-                    .background(Theme.Light.background)
+                    .background(Theme.background)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     usernameStatusView
@@ -175,13 +195,13 @@ struct ProfileSettingsSheet: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text("display name")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
 
                     TextField("optional", text: $vm.displayName)
                         .font(Theme.dmSans(15))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(12)
-                        .background(Theme.Light.background)
+                        .background(Theme.background)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
@@ -190,20 +210,20 @@ struct ProfileSettingsSheet: View {
                     HStack {
                         Text("bio")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                         Spacer()
                         Text("\(vm.bioRemaining)")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(vm.bioRemaining < 0 ? .red : Theme.Light.muted)
+                            .foregroundStyle(vm.bioRemaining < 0 ? .red : Theme.textMuted)
                     }
 
                     TextEditor(text: $vm.bio)
                         .font(Theme.dmSans(15))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 60, maxHeight: 100)
                         .padding(8)
-                        .background(Theme.Light.background)
+                        .background(Theme.background)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .onChange(of: vm.bio) { _, newValue in
                             if newValue.count > 160 {
@@ -229,7 +249,7 @@ struct ProfileSettingsSheet: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(vm.canSave ? Theme.Light.accent : Theme.Light.muted)
+                        .background(vm.canSave ? Theme.accent : Theme.textMuted)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(!vm.canSave)
@@ -255,7 +275,7 @@ struct ProfileSettingsSheet: View {
                     .scaleEffect(0.6)
                 Text("checking...")
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         case .available:
             Text("available")
@@ -280,10 +300,10 @@ struct ProfileSettingsSheet: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("push notifications")
                         .font(Theme.dmSans(15))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                     Text(pushStatusText)
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 Spacer()
                 if PushManager.shared.permissionStatus == .denied {
@@ -293,13 +313,13 @@ struct ProfileSettingsSheet: View {
                         }
                     }
                     .font(Theme.dmSans(13, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 } else if PushManager.shared.permissionStatus == .notDetermined {
                     Button("Enable") {
                         PushManager.shared.requestPermission()
                     }
                     .font(Theme.dmSans(13, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green.opacity(0.7))
@@ -331,10 +351,10 @@ struct ProfileSettingsSheet: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("public profile")
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
                         Text("let others see your lyrics")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     Spacer()
                     Toggle("", isOn: Binding(
@@ -342,14 +362,14 @@ struct ProfileSettingsSheet: View {
                         set: { _ in toggleVisibility() }
                     ))
                     .labelsHidden()
-                    .tint(Theme.Light.accent)
+                    .tint(Theme.accent)
                 }
 
                 if vm.isPublic {
                     HStack {
                         Text("earwyrm.app/@\(vm.username.lowercased())")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
 
                         Spacer()
@@ -359,11 +379,11 @@ struct ProfileSettingsSheet: View {
                         } label: {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 14))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                     .padding(12)
-                    .background(Theme.Light.background)
+                    .background(Theme.background)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
@@ -380,16 +400,16 @@ struct ProfileSettingsSheet: View {
                     HStack {
                         Text("email")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                         Spacer()
                         Text(email)
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                 }
 
                 Divider()
-                    .foregroundStyle(Theme.Light.divider)
+                    .foregroundStyle(Theme.dividerColor)
 
                 // Change Password
                 VStack(spacing: Theme.Spacing.sm) {
@@ -403,11 +423,11 @@ struct ProfileSettingsSheet: View {
                         HStack {
                             Text("change password")
                                 .font(Theme.dmSans(15))
-                                .foregroundStyle(Theme.Light.text)
+                                .foregroundStyle(Theme.textPrimary)
                             Spacer()
                             Image(systemName: vm.showPasswordSection ? "chevron.up" : "chevron.down")
                                 .font(.system(size: 12))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                         }
                     }
 
@@ -416,19 +436,19 @@ struct ProfileSettingsSheet: View {
                             SecureField("current password", text: $vm.currentPassword)
                                 .font(Theme.dmSans(14))
                                 .padding(12)
-                                .background(Theme.Light.background)
+                                .background(Theme.background)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             SecureField("new password (min 6 chars)", text: $vm.newPassword)
                                 .font(Theme.dmSans(14))
                                 .padding(12)
-                                .background(Theme.Light.background)
+                                .background(Theme.background)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             SecureField("confirm new password", text: $vm.confirmPassword)
                                 .font(Theme.dmSans(14))
                                 .padding(12)
-                                .background(Theme.Light.background)
+                                .background(Theme.background)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             if let error = vm.passwordError {
@@ -458,7 +478,7 @@ struct ProfileSettingsSheet: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
-                                .background(vm.canChangePassword ? Theme.Light.accent : Theme.Light.muted)
+                                .background(vm.canChangePassword ? Theme.accent : Theme.textMuted)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .disabled(!vm.canChangePassword)
@@ -468,7 +488,7 @@ struct ProfileSettingsSheet: View {
                 }
 
                 Divider()
-                    .foregroundStyle(Theme.Light.divider)
+                    .foregroundStyle(Theme.dividerColor)
 
                 // Delete Account
                 Button {
@@ -487,6 +507,41 @@ struct ProfileSettingsSheet: View {
         }
     }
 
+    // MARK: - Legal
+
+    private var legalSection: some View {
+        settingsSection("legal") {
+            VStack(spacing: Theme.Spacing.md) {
+                Link(destination: URL(string: "https://earwyrm.app/privacy")!) {
+                    HStack {
+                        Text("Privacy Policy")
+                            .font(Theme.dmSans(15))
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+
+                Divider()
+                    .foregroundStyle(Theme.dividerColor)
+
+                Link(destination: URL(string: "https://earwyrm.app/terms")!) {
+                    HStack {
+                        Text("Terms of Service")
+                            .font(Theme.dmSans(15))
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Sign Out
 
     private var signOutButton: some View {
@@ -496,7 +551,7 @@ struct ProfileSettingsSheet: View {
             Group {
                 if isSigningOut {
                     ProgressView()
-                        .tint(Theme.Light.secondary)
+                        .tint(Theme.textSecondary)
                 } else {
                     HStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -506,10 +561,10 @@ struct ProfileSettingsSheet: View {
                 }
             }
             .font(Theme.dmSans(15, weight: .medium))
-            .foregroundStyle(Theme.Light.secondary)
+            .foregroundStyle(Theme.textSecondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
@@ -518,7 +573,7 @@ struct ProfileSettingsSheet: View {
 
     private func settingsSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            CaveatText(text: title, size: 22, color: Theme.Light.accent)
+            CaveatText(text: title, size: 22, color: Theme.accent)
                 .padding(.leading, 4)
 
             VStack(alignment: .leading, spacing: 0) {
@@ -526,7 +581,7 @@ struct ProfileSettingsSheet: View {
             }
             .padding(Theme.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }

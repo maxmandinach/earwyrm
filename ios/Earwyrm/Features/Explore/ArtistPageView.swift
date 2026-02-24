@@ -90,7 +90,7 @@ struct ArtistPageView: View {
                 .padding(.vertical, Theme.Spacing.md)
             }
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await fetchArtistLyrics()
@@ -102,13 +102,13 @@ struct ArtistPageView: View {
     private var loadingState: some View {
         VStack(spacing: Theme.Spacing.lg) {
             Circle()
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 80, height: 80)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 140, height: 20)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 80, height: 14)
         }
         .frame(maxWidth: .infinity)
@@ -127,9 +127,9 @@ struct ArtistPageView: View {
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Circle()
-                        .fill(Theme.Light.accent.opacity(0.3))
+                        .fill(Theme.accent.opacity(0.3))
                         .overlay(
-                            CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.Light.text)
+                            CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.textPrimary)
                         )
                 }
                 .frame(width: 80, height: 80)
@@ -137,16 +137,16 @@ struct ArtistPageView: View {
                 .shadow(color: .black.opacity(0.1), radius: 6, y: 2)
             } else {
                 Circle()
-                    .fill(Theme.Light.accent.opacity(0.3))
+                    .fill(Theme.accent.opacity(0.3))
                     .frame(width: 80, height: 80)
                     .overlay(
-                        CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.Light.text)
+                        CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.textPrimary)
                     )
             }
 
             Text(artistName)
                 .font(Theme.dmSans(22, weight: .semibold))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
 
             FollowButton(isFollowing: isFollowing) {
                 if auth.isAuthenticated {
@@ -181,10 +181,10 @@ struct ArtistPageView: View {
         VStack(spacing: 2) {
             Text(value)
                 .font(Theme.dmSans(18, weight: .semibold))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text(label)
                 .font(Theme.dmSans(12))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
         }
     }
 
@@ -194,7 +194,7 @@ struct ArtistPageView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("songs")
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
                 .padding(.horizontal, Theme.Spacing.md)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -212,29 +212,29 @@ struct ArtistPageView: View {
                                         image.resizable().aspectRatio(contentMode: .fill)
                                     } placeholder: {
                                         RoundedRectangle(cornerRadius: 8)
-                                            .fill(Theme.Light.divider)
+                                            .fill(Theme.dividerColor)
                                     }
                                     .frame(width: 80, height: 80)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                 } else {
                                     RoundedRectangle(cornerRadius: 8)
-                                        .fill(Theme.Light.divider)
+                                        .fill(Theme.dividerColor)
                                         .frame(width: 80, height: 80)
                                         .overlay(
                                             Image(systemName: "music.note")
-                                                .foregroundStyle(Theme.Light.muted)
+                                                .foregroundStyle(Theme.textMuted)
                                         )
                                 }
 
                                 Text(song.title)
                                     .font(Theme.dmSans(12))
-                                    .foregroundStyle(Theme.Light.text)
+                                    .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(2)
                                     .frame(width: 80)
 
                                 Text("\(song.count) save\(song.count == 1 ? "" : "s")")
                                     .font(Theme.dmSans(11))
-                                    .foregroundStyle(Theme.Light.muted)
+                                    .foregroundStyle(Theme.textMuted)
                             }
                         }
                     }
@@ -250,7 +250,7 @@ struct ArtistPageView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("most saved line")
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
                 .padding(.horizontal, Theme.Spacing.md)
 
             CompactLyricCard(lyric: lyric)
@@ -264,7 +264,7 @@ struct ArtistPageView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("recent saves")
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
                 .padding(.horizontal, Theme.Spacing.md)
 
             // Search + sort
@@ -272,13 +272,13 @@ struct ArtistPageView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                     TextField("Search lyrics...", text: $search)
                         .font(Theme.dmSans(13))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(Theme.Light.card)
+                .background(Theme.card)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Menu {
@@ -298,9 +298,9 @@ struct ArtistPageView: View {
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                         .frame(width: 36, height: 36)
-                        .background(Theme.Light.card)
+                        .background(Theme.card)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
@@ -314,7 +314,7 @@ struct ArtistPageView: View {
             if filteredLyrics.isEmpty && !isLoading {
                 Text("No lyrics found")
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Theme.Spacing.lg)
             }

@@ -50,7 +50,7 @@ struct CollectionDetailView: View {
                 Spacer().frame(height: Theme.Spacing.xl)
             }
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -68,7 +68,7 @@ struct CollectionDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 14))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
         }
@@ -104,15 +104,15 @@ struct CollectionDetailView: View {
                     .fill(accentColor)
                     .frame(width: 5, height: 28)
 
-                CaveatText(text: collection.name, size: 28, color: Theme.Light.text)
+                CaveatText(text: collection.name, size: 28, color: Theme.textPrimary)
 
                 if collection.isSmart == true {
                     Text("auto-updated")
                         .font(Theme.dmSans(11))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(Theme.Light.card)
+                        .background(Theme.card)
                         .clipShape(Capsule())
                 }
 
@@ -122,13 +122,13 @@ struct CollectionDetailView: View {
             if let desc = collection.description, !desc.isEmpty {
                 Text(desc)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Text("\(lyrics.count) lyric\(lyrics.count == 1 ? "" : "s")")
                 .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -140,16 +140,16 @@ struct CollectionDetailView: View {
             Spacer().frame(height: 40)
             Text("no lyrics yet")
                 .font(Theme.caveat(24))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             if collection.isSmart == true {
                 Text("Lyrics tagged #\(collection.smartTag ?? "") will appear here.")
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .multilineTextAlignment(.center)
             } else {
                 Text("Save lyrics to this collection from the bookmark button.")
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .multilineTextAlignment(.center)
             }
         }
@@ -168,7 +168,7 @@ private struct CollectionLyricRow: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(lyric.content)
                 .font(Theme.caveat(22, weight: .medium))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -176,7 +176,7 @@ private struct CollectionLyricRow: View {
                 let parts = [lyric.songTitle, lyric.artistName].compactMap { $0 }
                 Text(parts.joined(separator: " — "))
                     .font(Theme.dmSansItalic(13))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
             }
 
@@ -186,7 +186,7 @@ private struct CollectionLyricRow: View {
                         ForEach(tags.prefix(3), id: \.self) { tag in
                             Text("#\(tag)")
                                 .font(Theme.dmSans(11))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                         }
                     }
                 }
@@ -199,14 +199,14 @@ private struct CollectionLyricRow: View {
                     } label: {
                         Image(systemName: "minus.circle")
                             .font(.system(size: 13))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     .frame(minWidth: 44, minHeight: 44)
                 }
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

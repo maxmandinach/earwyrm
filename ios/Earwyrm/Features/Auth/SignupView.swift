@@ -17,7 +17,7 @@ struct SignupView: View {
 
     var body: some View {
         ZStack {
-            Theme.Light.background
+            Theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -27,7 +27,7 @@ struct SignupView: View {
 
                     Text("join earwyrm")
                         .font(Theme.caveat(36))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
 
                     // Form
                     VStack(spacing: Theme.Spacing.md) {
@@ -38,7 +38,7 @@ struct SignupView: View {
                                 .autocorrectionDisabled()
                                 .textInputAutocapitalization(.never)
                                 .padding(Theme.Spacing.md)
-                                .background(Theme.Light.card)
+                                .background(Theme.card)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .font(Theme.dmSans(15))
 
@@ -57,7 +57,7 @@ struct SignupView: View {
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                             .padding(Theme.Spacing.md)
-                            .background(Theme.Light.card)
+                            .background(Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .font(Theme.dmSans(15))
 
@@ -65,7 +65,7 @@ struct SignupView: View {
                             .textFieldStyle(.plain)
                             .textContentType(.newPassword)
                             .padding(Theme.Spacing.md)
-                            .background(Theme.Light.card)
+                            .background(Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .font(Theme.dmSans(15))
                     }
@@ -93,11 +93,17 @@ struct SignupView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Theme.Light.accent)
+                        .background(Theme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .disabled(!isUsernameValid || email.isEmpty || password.count < 6 || isLoading)
                     .opacity(!isUsernameValid || email.isEmpty || password.count < 6 ? 0.5 : 1)
+
+                    Text("By creating an account, you agree to our [Terms of Service](https://earwyrm.app/terms) and [Privacy Policy](https://earwyrm.app/privacy).")
+                        .font(Theme.dmSans(12))
+                        .foregroundStyle(Theme.textMuted)
+                        .tint(Theme.accent)
+                        .multilineTextAlignment(.center)
 
                     // Back to Login
                     Button {
@@ -105,7 +111,7 @@ struct SignupView: View {
                     } label: {
                         Text("Already have an account? **Sign in**")
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
@@ -118,7 +124,7 @@ struct SignupView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.left")
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                 }
             }
         }

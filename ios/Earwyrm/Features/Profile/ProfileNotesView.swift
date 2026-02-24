@@ -29,10 +29,10 @@ struct ProfileNotesView: View {
             Spacer().frame(height: 60)
             Text("no notes yet")
                 .font(Theme.caveat(28))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text("Add personal annotations to lyrics you love.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -49,7 +49,7 @@ private struct NoteRow: View {
             // Note content
             Text(item.note.content)
                 .font(Theme.noteFont(15))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -57,19 +57,19 @@ private struct NoteRow: View {
             if let lyric = item.lyric {
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Theme.Light.accent.opacity(0.4))
+                        .fill(Theme.accent.opacity(0.4))
                         .frame(width: 2)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(lyric.content)
                             .font(Theme.caveat(20))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .lineLimit(2)
 
                         if let song = lyric.songTitle {
                             Text(song)
                                 .font(Theme.dmSansItalic(12))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                     .padding(.leading, Theme.Spacing.sm)
@@ -84,18 +84,18 @@ private struct NoteRow: View {
                     Text(item.note.isPublic == true ? "public" : "private")
                         .font(Theme.dmSans(11))
                 }
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
                 Spacer()
 
                 Text(relativeDate(item.note.createdAt))
                     .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .opacity(0.7)
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

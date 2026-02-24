@@ -6,7 +6,7 @@ struct CollectionsCarouselSection: View {
     var body: some View {
         if !collections.isEmpty {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                CaveatText(text: "your collections", size: 24, color: Theme.Light.secondary)
+                CaveatText(text: "your collections", size: 24, color: Theme.textSecondary)
                     .padding(.horizontal, Theme.Spacing.lg)
 
                 ScrollView(.horizontal, showsIndicators: false) {

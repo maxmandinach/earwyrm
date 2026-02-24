@@ -29,7 +29,7 @@ struct CardActionBar: View {
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(Theme.Light.divider.opacity(0.6))
+                .fill(Theme.dividerColor.opacity(0.6))
                 .frame(height: 0.5)
 
             HStack(spacing: 0) {
@@ -51,7 +51,7 @@ struct CardActionBar: View {
                                     .font(Theme.dmSans(12))
                             }
                         }
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                     }
                     .accessibilityLabel("Comments")
@@ -66,7 +66,7 @@ struct CardActionBar: View {
                         } label: {
                             Image(systemName: isPublic ? "eye" : "eye.slash")
                                 .font(.system(size: 14))
-                                .foregroundStyle(isPublic ? Theme.Light.secondary : Theme.Light.muted)
+                                .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
                                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
                     }
@@ -84,7 +84,7 @@ struct CardActionBar: View {
                         } label: {
                             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                                 .font(.system(size: 14))
-                                .foregroundStyle(isSaved ? Theme.Light.accent : Theme.Light.muted)
+                                .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
                                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
                         .accessibilityLabel(isSaved ? "Remove from collection" : "Save to collection")
@@ -109,7 +109,7 @@ struct CardActionBar: View {
                         } label: {
                             Image(systemName: "pencil")
                                 .font(.system(size: 15))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
                     }
@@ -137,7 +137,7 @@ struct CardActionBar: View {
                         .font(Theme.dmSans(12))
                 }
             }
-            .foregroundStyle(hasReacted ? Theme.Light.accent : Theme.Light.muted)
+            .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
             .frame(minWidth: touchMinWidth, minHeight: touchHeight)
         }
         .accessibilityLabel("Resonate")
@@ -160,7 +160,7 @@ struct CardActionBar: View {
         } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: 14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                 .offset(y: shareNudge ? -2 : 0)
         }

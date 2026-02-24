@@ -6,6 +6,7 @@ struct MainTabView: View {
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(UserFollowManager.self) private var userFollowManager
     @Environment(CollectionManager.self) private var collectionManager
+    @Environment(BlockManager.self) private var blockManager
     @State private var selectedTab = 0
     @State private var homePath = NavigationPath()
     @State private var scrollToTopTrigger: [Int: Bool] = [0: false, 1: false, 2: false, 3: false]
@@ -48,10 +49,13 @@ struct MainTabView: View {
                     lastSeenAt: auth.profile?.lastActivitySeenAt
                 )
                 await collectionManager.fetchCollections(userId: userId)
+                await blockManager.fetchBlockedUsers(userId: userId)
                 PushManager.shared.requestPermission()
             }
         }
         .onChange(of: selectedTab) { _, newTab in
+            let screens = ["home", "explore", "activity", "profile"]
+            Analytics.track(.screenView, ["screen": screens[newTab]])
             if newTab == 2 {
                 Task {
                     if let userId = auth.userId {
@@ -87,7 +91,7 @@ struct EarwyrmTabBar: View {
                     text: "e",
                     size: 36,
                     weight: .bold,
-                    color: selectedTab == 0 ? Theme.Light.accent : Theme.Light.muted
+                    color: selectedTab == 0 ? Theme.accent : Theme.textMuted
                 )
                 .frame(height: 24)
                 .clipped()
@@ -122,7 +126,7 @@ struct EarwyrmTabBar: View {
         .padding(.top, 8)
         .padding(.bottom, 4)
         .background(
-            Theme.Light.background
+            Theme.background
                 .shadow(color: .black.opacity(0.04), radius: 4, y: -1)
                 .ignoresSafeArea(edges: .bottom)
         )
@@ -147,7 +151,7 @@ struct EarwyrmTabBar: View {
                 Text(label)
                     .font(Theme.dmSans(10))
             }
-            .foregroundStyle(selectedTab == index ? Theme.Light.accent : Theme.Light.muted)
+            .foregroundStyle(selectedTab == index ? Theme.accent : Theme.textMuted)
             .frame(maxWidth: .infinity)
         }
         .accessibilityLabel(label)

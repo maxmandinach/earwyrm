@@ -29,17 +29,17 @@ struct TrendingTagsView: View {
                             if tag.count > 0 {
                                 Text("\(tag.count)")
                                     .font(Theme.dmSans(10))
-                                    .foregroundStyle(Theme.Light.text.opacity(0.2))
+                                    .foregroundStyle(Theme.textPrimary.opacity(0.2))
                             }
                         }
                         .foregroundStyle(
                             isSelected
                                 ? (hasActiveFilter
-                                    ? Theme.Light.text.opacity(0.7)
-                                    : Theme.Light.text.opacity(0.5))
+                                    ? Theme.textPrimary.opacity(0.7)
+                                    : Theme.textPrimary.opacity(0.5))
                                 : (hasActiveFilter
-                                    ? Theme.Light.text.opacity(0.3)
-                                    : Theme.Light.text.opacity(0.5))
+                                    ? Theme.textPrimary.opacity(0.3)
+                                    : Theme.textPrimary.opacity(0.5))
                         )
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -47,13 +47,13 @@ struct TrendingTagsView: View {
                             Capsule()
                                 .strokeBorder(
                                     isSelected && hasActiveFilter
-                                        ? Theme.Light.text.opacity(0.4)
-                                        : Theme.Light.text.opacity(0.1),
+                                        ? Theme.textPrimary.opacity(0.4)
+                                        : Theme.textPrimary.opacity(0.1),
                                     lineWidth: 1
                                 )
                                 .background(
                                     isSelected && hasActiveFilter
-                                        ? Capsule().fill(Theme.Light.text.opacity(0.05))
+                                        ? Capsule().fill(Theme.textPrimary.opacity(0.05))
                                         : Capsule().fill(Color.clear)
                                 )
                         )
@@ -67,7 +67,7 @@ struct TrendingTagsView: View {
                     } label: {
                         Text("clear")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(Theme.Light.text.opacity(0.3))
+                            .foregroundStyle(Theme.textPrimary.opacity(0.3))
                     }
                 }
             }

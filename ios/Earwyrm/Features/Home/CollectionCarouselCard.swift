@@ -14,7 +14,7 @@ struct CollectionCarouselCard: View {
                     .fill(accentColor)
                     .frame(width: 4, height: 20)
 
-                CaveatText(text: collection.name, size: 20, color: Theme.Light.text)
+                CaveatText(text: collection.name, size: 20, color: Theme.textPrimary)
             }
 
             Spacer(minLength: 0)
@@ -22,7 +22,7 @@ struct CollectionCarouselCard: View {
             if let desc = collection.description, !desc.isEmpty {
                 Text(desc)
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .lineLimit(2)
             }
 
@@ -30,14 +30,14 @@ struct CollectionCarouselCard: View {
                 if collection.isSmart == true {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 Spacer()
             }
         }
         .padding(Theme.Spacing.md)
         .frame(width: 160, height: 120)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
     }

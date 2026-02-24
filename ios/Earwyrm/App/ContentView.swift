@@ -12,14 +12,14 @@ struct ContentView: View {
             if auth.isLoading {
                 // Loading state
                 ZStack {
-                    Theme.Light.background
+                    Theme.background
                         .ignoresSafeArea()
                     VStack(spacing: Theme.Spacing.md) {
                         Text("earwyrm")
                             .font(Theme.caveat(42))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
                         ProgressView()
-                            .tint(Theme.Light.accent)
+                            .tint(Theme.accent)
                     }
                 }
             } else if !hasSeenOnboarding {

@@ -2,28 +2,6 @@ import SwiftUI
 import UIKit
 
 enum Theme {
-    // MARK: - Colors (Light)
-    enum Light {
-        static let background = Color(hex: "#FAF8F5")
-        static let card = Color(hex: "#F5F2ED")
-        static let text = Color(hex: "#2C2825")
-        static let secondary = Color(hex: "#6B635A")
-        static let muted = Color(hex: "#9C948A")
-        static let accent = Color(hex: "#B8A99A")
-        static let divider = Color(hex: "#EBE4D8")
-    }
-
-    // MARK: - Colors (Dark)
-    enum Dark {
-        static let background = Color(hex: "#252220")
-        static let card = Color(hex: "#2D2A27")
-        static let text = Color(hex: "#FAF8F5")
-        static let secondary = Color(hex: "#C8C0B5")
-        static let muted = Color(hex: "#9C948A")
-        static let accent = Color(hex: "#C8B8A8")
-        static let divider = Color(hex: "#4A4540")
-    }
-
     // MARK: - Adaptive Colors
     static let background = Color("background")
     static let card = Color("card")
@@ -76,7 +54,7 @@ struct EarwyrmBrandHeader: ViewModifier {
         content
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    CaveatText(text: "earwyrm", size: 24, weight: .semibold, color: Theme.Light.secondary)
+                    CaveatText(text: "earwyrm", size: 24, weight: .semibold, color: Theme.textSecondary)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

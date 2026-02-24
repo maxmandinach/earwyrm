@@ -11,10 +11,10 @@ struct ArtistAutocompleteView: View {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.7)
-                        .tint(Theme.Light.muted)
+                        .tint(Theme.textMuted)
                     Text("searching artists...")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 .padding(12)
             } else {
@@ -25,22 +25,22 @@ struct ArtistAutocompleteView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(artist.name)
                                 .font(Theme.dmSans(14, weight: .medium))
-                                .foregroundStyle(Theme.Light.text)
+                                .foregroundStyle(Theme.textPrimary)
 
                             HStack(spacing: 6) {
                                 if let disambiguation = artist.disambiguation, !disambiguation.isEmpty {
                                     Text(disambiguation)
                                         .font(Theme.dmSans(12))
-                                        .foregroundStyle(Theme.Light.muted)
+                                        .foregroundStyle(Theme.textMuted)
                                         .lineLimit(1)
                                 }
                                 if let country = artist.country, !country.isEmpty {
                                     Text(country)
                                         .font(Theme.dmSans(11, weight: .medium))
-                                        .foregroundStyle(Theme.Light.accent)
+                                        .foregroundStyle(Theme.accent)
                                         .padding(.horizontal, 5)
                                         .padding(.vertical, 1)
-                                        .background(Theme.Light.accent.opacity(0.12))
+                                        .background(Theme.accent.opacity(0.12))
                                         .clipShape(RoundedRectangle(cornerRadius: 3))
                                 }
                             }
@@ -52,17 +52,17 @@ struct ArtistAutocompleteView: View {
 
                     if artist.id != artists.last?.id {
                         Divider()
-                            .foregroundStyle(Theme.Light.divider)
+                            .foregroundStyle(Theme.dividerColor)
                     }
                 }
             }
         }
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Light.divider, lineWidth: 1)
+                .stroke(Theme.dividerColor, lineWidth: 1)
         )
     }
 }

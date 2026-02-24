@@ -11,7 +11,7 @@ struct SuggestMatchesView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("someone already saved this one — tap to use it:")
                 .font(Theme.dmSans(12))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
             ForEach(matches) { match in
                 Button {
@@ -26,20 +26,20 @@ struct SuggestMatchesView: View {
                              ? String(match.content.prefix(80)) + "..."
                              : match.content)
                             .font(Theme.caveat(16))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
 
                         if let songTitle = match.songTitle {
                             Text(songTitle + (match.artistName.map { " — \($0)" } ?? ""))
                                 .font(Theme.dmSans(12))
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                         }
 
                         if selectedId == match.id {
                             Text("Lyric + details will be filled in for you")
                                 .font(Theme.dmSans(12, weight: .medium))
-                                .foregroundStyle(Theme.Light.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .padding(.top, 2)
                         }
                     }
@@ -47,25 +47,25 @@ struct SuggestMatchesView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(selectedId == match.id
-                                ? Theme.Light.accent.opacity(0.1)
+                                ? Theme.accent.opacity(0.1)
                                 : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(selectedId == match.id
-                                    ? Theme.Light.accent.opacity(0.3)
-                                    : Theme.Light.divider,
+                                    ? Theme.accent.opacity(0.3)
+                                    : Theme.dividerColor,
                                     lineWidth: 1)
                     )
                 }
             }
         }
         .padding(12)
-        .background(Theme.Light.background.opacity(0.5))
+        .background(Theme.background.opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Light.divider, lineWidth: 1)
+                .stroke(Theme.dividerColor, lineWidth: 1)
         )
     }
 }

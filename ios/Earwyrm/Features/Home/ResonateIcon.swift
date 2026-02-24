@@ -20,7 +20,7 @@ struct ResonateIcon: View {
                 let barHeight = heights[index] * size
 
                 RoundedRectangle(cornerRadius: size * 0.06)
-                    .fill(isActive ? Theme.Light.accent : Theme.Light.muted)
+                    .fill(isActive ? Theme.accent : Theme.textMuted)
                     .frame(width: max(size * 0.1, 1.5), height: barHeight * barScales[index])
             }
         }

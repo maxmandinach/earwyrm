@@ -13,9 +13,11 @@ struct EarwyrmApp: App {
     @State private var navigationCoordinator = NavigationCoordinator()
     @State private var subscriptionManager = SubscriptionManager()
     @State private var subscriptionGate = SubscriptionGate()
+    @State private var appearanceManager = AppearanceManager()
+    @State private var blockManager = BlockManager()
 
     init() {
-        let bg = UIColor(Theme.Light.background)
+        let bg = UIColor(named: "background")!
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = bg
@@ -36,6 +38,9 @@ struct EarwyrmApp: App {
                 .environment(navigationCoordinator)
                 .environment(subscriptionManager)
                 .environment(subscriptionGate)
+                .environment(appearanceManager)
+                .environment(blockManager)
+                .preferredColorScheme(appearanceManager.resolvedScheme)
                 .onOpenURL { url in
                     navigationCoordinator.handle(url: url)
                 }

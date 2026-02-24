@@ -3,10 +3,14 @@ import SwiftUI
 struct ExploreFollowingView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
+    @Environment(BlockManager.self) private var blockManager
     let viewModel: ExploreViewModel
     var onShare: ((Lyric, String?) -> Void)?
 
     @State private var search = ""
+    @State private var reportLyric: Lyric?
+    @State private var blockTarget: (userId: UUID, username: String)?
+    @State private var showBlockAlert = false
     @State private var timeRange: TimeRange = .all
     @State private var sort: SortOption = .newest
     @State private var activeFollowIds: Set<UUID> = []
@@ -22,7 +26,7 @@ struct ExploreFollowingView: View {
             sort: sort,
             limit: visibleCount,
             userId: auth.userId
-        )
+        ).filter { !blockManager.isBlocked($0.userId) }
     }
 
     private var hasMore: Bool {
@@ -61,7 +65,12 @@ struct ExploreFollowingView: View {
                         CompactLyricCard(
                             lyric: lyric,
                             username: viewModel.profileMap[lyric.userId],
-                            onShare: onShare != nil ? { onShare?(lyric, viewModel.profileMap[lyric.userId]) } : nil
+                            onShare: onShare != nil ? { onShare?(lyric, viewModel.profileMap[lyric.userId]) } : nil,
+                            onReport: { reportLyric = lyric },
+                            onBlock: {
+                                blockTarget = (userId: lyric.userId, username: viewModel.profileMap[lyric.userId] ?? "user")
+                                showBlockAlert = true
+                            }
                         )
                         .padding(.horizontal, Theme.Spacing.md)
                     }
@@ -73,7 +82,7 @@ struct ExploreFollowingView: View {
                         } label: {
                             Text("Load more")
                                 .font(Theme.dmSans(14, weight: .medium))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, Theme.Spacing.md)
                         }
@@ -93,6 +102,25 @@ struct ExploreFollowingView: View {
         .onChange(of: timeRange) { _, _ in visibleCount = 20 }
         .onChange(of: sort) { _, _ in visibleCount = 20 }
         .onChange(of: activeFollowIds) { _, _ in visibleCount = 20 }
+        .sheet(item: $reportLyric) { lyric in
+            ReportSheet(contentType: "lyric", contentId: lyric.id)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .alert(
+            "Block @\(blockTarget?.username ?? "user")?",
+            isPresented: $showBlockAlert
+        ) {
+            Button("Block", role: .destructive) {
+                guard let target = blockTarget, let userId = auth.userId else { return }
+                Task {
+                    await blockManager.block(currentUserId: userId, targetUserId: target.userId)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Their content will be hidden from your feeds.")
+        }
     }
 
     // MARK: - Follow Chips
@@ -126,9 +154,9 @@ struct ExploreFollowingView: View {
                                 .foregroundStyle(
                                     isActive
                                         ? (hasActiveFilter
-                                            ? Theme.Light.text.opacity(0.7)
-                                            : Theme.Light.text.opacity(0.5))
-                                        : Theme.Light.text.opacity(0.3)
+                                            ? Theme.textPrimary.opacity(0.7)
+                                            : Theme.textPrimary.opacity(0.5))
+                                        : Theme.textPrimary.opacity(0.3)
                                 )
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
@@ -136,13 +164,13 @@ struct ExploreFollowingView: View {
                                     Capsule()
                                         .strokeBorder(
                                             isActive && hasActiveFilter
-                                                ? Theme.Light.text.opacity(0.4)
-                                                : Theme.Light.text.opacity(0.1),
+                                                ? Theme.textPrimary.opacity(0.4)
+                                                : Theme.textPrimary.opacity(0.1),
                                             lineWidth: 1
                                         )
                                         .background(
                                             isActive && hasActiveFilter
-                                                ? Capsule().fill(Theme.Light.text.opacity(0.05))
+                                                ? Capsule().fill(Theme.textPrimary.opacity(0.05))
                                                 : Capsule().fill(Color.clear)
                                         )
                                 )
@@ -158,12 +186,12 @@ struct ExploreFollowingView: View {
                              ? "all follows (\(followManager.follows.count))"
                              : "\(activeFollowIds.count) active")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(Theme.Light.text.opacity(0.5))
+                            .foregroundStyle(Theme.textPrimary.opacity(0.5))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
                             .background(
                                 Capsule()
-                                    .strokeBorder(Theme.Light.text.opacity(0.15), lineWidth: 1)
+                                    .strokeBorder(Theme.textPrimary.opacity(0.15), lineWidth: 1)
                             )
                     }
                 }
@@ -177,11 +205,11 @@ struct ExploreFollowingView: View {
         VStack(spacing: Theme.Spacing.sm) {
             Text("Follow artists, songs, and tags to build your feed")
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
             Text("Tap follow on any artist, song, or tag page")
                 .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
         }
         .padding(.horizontal, Theme.Spacing.lg)
     }
@@ -190,10 +218,10 @@ struct ExploreFollowingView: View {
         VStack(spacing: Theme.Spacing.sm) {
             Text(noResultsTitle)
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
             Text(noResultsSubtitle)
                 .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
         }
     }
 
@@ -214,14 +242,14 @@ struct ExploreFollowingView: View {
     private var shimmerCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(height: 50)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 100, height: 14)
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .redacted(reason: .placeholder)
     }

@@ -25,10 +25,10 @@ struct ProfileLyricsView: View {
             Spacer().frame(height: 60)
             Text("no lyrics yet")
                 .font(Theme.caveat(28))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
             Text("Post your first earwyrm from the Home tab.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -49,14 +49,14 @@ private struct ProfileLyricRow: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(Theme.Light.accent)
+                    .background(Theme.accent)
                     .clipShape(Capsule())
             }
 
             // Content
             Text(lyric.content)
                 .font(Theme.caveat(24, weight: .medium))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineSpacing(6)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -67,17 +67,17 @@ private struct ProfileLyricRow: View {
                     if let song = lyric.songTitle {
                         Text(song)
                             .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                     if lyric.songTitle != nil && lyric.artistName != nil {
                         Text("—")
                             .font(Theme.dmSans(13))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     if let artist = lyric.artistName {
                         Text(artist)
                             .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                 }
             }
@@ -91,25 +91,25 @@ private struct ProfileLyricRow: View {
                     Text(lyric.isPublic == true ? "public" : "private")
                         .font(Theme.dmSans(11))
                 }
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
                 HStack(spacing: 4) {
                     ResonateIcon(isActive: false, isAnimating: false, size: 14)
                     Text("\(lyric.reactionCount ?? 0)")
                         .font(Theme.dmSans(12))
                 }
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
                 Spacer()
 
                 Text(relativeDate(lyric.createdAt))
                     .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                     .opacity(0.7)
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

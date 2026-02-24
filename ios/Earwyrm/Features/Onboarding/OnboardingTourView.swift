@@ -8,7 +8,7 @@ struct OnboardingTourView: View {
 
     var body: some View {
         ZStack {
-            Theme.Light.background
+            Theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -16,12 +16,13 @@ struct OnboardingTourView: View {
                 HStack {
                     Spacer()
                     Button {
+                        Analytics.track(.onboardingSkipped, ["last_page": "\(currentPage)"])
                         Haptics.light()
                         onComplete()
                     } label: {
                         Text("Skip")
                             .font(Theme.dmSans(14, weight: .medium))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                     .padding(.trailing, Theme.Spacing.lg)
                     .padding(.top, Theme.Spacing.sm)
@@ -81,6 +82,7 @@ struct OnboardingTourView: View {
                     if currentPage == pageCount - 1 {
                         // Continue button on last page
                         Button {
+                            Analytics.track(.onboardingCompleted)
                             Haptics.light()
                             onComplete()
                         } label: {
@@ -89,7 +91,7 @@ struct OnboardingTourView: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(Theme.Light.accent)
+                                .background(Theme.accent)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
@@ -99,7 +101,7 @@ struct OnboardingTourView: View {
                         HStack(spacing: 8) {
                             ForEach(0..<pageCount, id: \.self) { i in
                                 Circle()
-                                    .fill(i == currentPage ? Theme.Light.accent : Theme.Light.accent.opacity(0.25))
+                                    .fill(i == currentPage ? Theme.accent : Theme.accent.opacity(0.25))
                                     .frame(width: i == currentPage ? 8 : 6, height: i == currentPage ? 8 : 6)
                                     .animation(.easeInOut(duration: 0.2), value: currentPage)
                             }
@@ -113,6 +115,9 @@ struct OnboardingTourView: View {
                 Spacer()
                     .frame(height: Theme.Spacing.xxl)
             }
+        }
+        .onChange(of: currentPage) { _, page in
+            Analytics.track(.onboardingPageViewed, ["page": "\(page)"])
         }
     }
 }

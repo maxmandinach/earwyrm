@@ -17,11 +17,11 @@ struct OnboardingPageView: View {
                 .frame(height: 240)
 
             VStack(spacing: Theme.Spacing.sm) {
-                CaveatText(text: tagline, size: 28, color: Theme.Light.text)
+                CaveatText(text: tagline, size: 28, color: Theme.textPrimary)
 
                 Text(subtitle)
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.xl)
             }
@@ -47,7 +47,7 @@ struct PostLyricAnimation: View {
         ZStack {
             // Accent glow at top-right
             Circle()
-                .fill(Theme.Light.accent.opacity(0.15))
+                .fill(Theme.accent.opacity(0.15))
                 .frame(width: 50, height: 50)
                 .offset(x: 90, y: -70)
                 .opacity(showGlow ? 1 : 0)
@@ -56,7 +56,7 @@ struct PostLyricAnimation: View {
 
             // Main card
             RoundedRectangle(cornerRadius: 16)
-                .fill(Theme.Light.card)
+                .fill(Theme.card)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
                 .frame(width: 240, height: 160)
                 .opacity(showCard ? 1 : 0)
@@ -69,7 +69,7 @@ struct PostLyricAnimation: View {
                             ForEach(0..<3, id: \.self) { i in
                                 let widths: [CGFloat] = [170, 145, 110]
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(Theme.Light.accent.opacity(0.35))
+                                    .fill(Theme.accent.opacity(0.35))
                                     .frame(width: widths[i], height: 10)
                                     .opacity(showLines[i] ? 1 : 0)
                                     .offset(x: showLines[i] ? 0 : -8)
@@ -84,7 +84,7 @@ struct PostLyricAnimation: View {
 
                         // Divider
                         RoundedRectangle(cornerRadius: 1)
-                            .fill(Theme.Light.accent.opacity(0.5))
+                            .fill(Theme.accent.opacity(0.5))
                             .frame(width: 60, height: 1.5)
                             .opacity(showDivider ? 1 : 0)
                             .animation(.easeOut(duration: 0.3).delay(0.95), value: showDivider)
@@ -93,7 +93,7 @@ struct PostLyricAnimation: View {
 
                         // Song/artist metadata placeholder
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(Theme.Light.accent.opacity(0.2))
+                            .fill(Theme.accent.opacity(0.2))
                             .frame(width: 90, height: 6)
                             .opacity(showMeta ? 1 : 0)
                             .animation(.easeOut(duration: 0.3).delay(1.05), value: showMeta)
@@ -145,18 +145,18 @@ struct DiscoverConnectAnimation: View {
         if index == 2 {
             VStack(alignment: .leading, spacing: 7) {
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.Light.accent.opacity(0.35))
+                    .fill(Theme.accent.opacity(0.35))
                     .frame(width: 110, height: 8)
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.Light.accent.opacity(0.35))
+                    .fill(Theme.accent.opacity(0.35))
                     .frame(width: 90, height: 8)
                 Spacer().frame(height: 2)
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(Theme.Light.accent.opacity(0.5))
+                    .fill(Theme.accent.opacity(0.5))
                     .frame(width: 40, height: 1.5)
                 Spacer().frame(height: 1)
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Theme.Light.accent.opacity(0.2))
+                    .fill(Theme.accent.opacity(0.2))
                     .frame(width: 60, height: 5)
             }
             .padding(12)
@@ -164,10 +164,10 @@ struct DiscoverConnectAnimation: View {
         } else {
             VStack(alignment: .leading, spacing: 7) {
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.Light.accent.opacity(0.2))
+                    .fill(Theme.accent.opacity(0.2))
                     .frame(width: 100, height: 7)
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.Light.accent.opacity(0.15))
+                    .fill(Theme.accent.opacity(0.15))
                     .frame(width: 80, height: 7)
             }
             .padding(12)
@@ -179,7 +179,7 @@ struct DiscoverConnectAnimation: View {
         ZStack {
             ForEach(0..<3, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Theme.Light.card)
+                    .fill(Theme.card)
                     .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
                     .frame(width: 160, height: 120)
                     .overlay { cardOverlay(index: i) }
@@ -201,7 +201,7 @@ struct DiscoverConnectAnimation: View {
                     ForEach(0..<5, id: \.self) { i in
                         let heights: [CGFloat] = [8, 14, 20, 14, 8]
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(Theme.Light.accent)
+                            .fill(Theme.accent)
                             .frame(width: 3, height: heights[i] * barScales[i])
                     }
                 }
@@ -214,7 +214,7 @@ struct DiscoverConnectAnimation: View {
             if showBubble {
                 Image(systemName: "bubble.left.fill")
                     .font(.system(size: 14))
-                    .foregroundStyle(Theme.Light.accent.opacity(0.7))
+                    .foregroundStyle(Theme.accent.opacity(0.7))
                     .offset(x: 52, y: 30)
                     .zIndex(4)
                     .transition(.opacity.combined(with: .scale(scale: 0.5)))
@@ -278,7 +278,7 @@ struct MemoryLaneAnimation: View {
         ZStack {
             // Warm glow on the right side
             Circle()
-                .fill(Theme.Light.accent.opacity(0.12))
+                .fill(Theme.accent.opacity(0.12))
                 .frame(width: 70, height: 70)
                 .offset(x: 100, y: 10)
                 .opacity(showGlow ? 1 : 0)
@@ -287,16 +287,16 @@ struct MemoryLaneAnimation: View {
 
             // Behind card (peek from left)
             RoundedRectangle(cornerRadius: 16)
-                .fill(Theme.Light.card)
+                .fill(Theme.card)
                 .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
                 .frame(width: 200, height: 130)
                 .overlay {
                     VStack(alignment: .leading, spacing: 7) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Theme.Light.accent.opacity(0.15))
+                            .fill(Theme.accent.opacity(0.15))
                             .frame(width: 120, height: 8)
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Theme.Light.accent.opacity(0.12))
+                            .fill(Theme.accent.opacity(0.12))
                             .frame(width: 90, height: 8)
                     }
                     .padding(14)
@@ -308,13 +308,13 @@ struct MemoryLaneAnimation: View {
 
             // Main memory card
             RoundedRectangle(cornerRadius: 16)
-                .fill(Theme.Light.card)
+                .fill(Theme.card)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
                 .frame(width: 200, height: 130)
                 .overlay {
                     // Subtle accent tint
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Theme.Light.accent.opacity(0.05))
+                        .fill(Theme.accent.opacity(0.05))
                 }
                 .overlay {
                     VStack(alignment: .leading, spacing: 0) {
@@ -323,12 +323,12 @@ struct MemoryLaneAnimation: View {
                             Spacer()
                             Text("3mo ago")
                                 .font(Theme.dmSans(11, weight: .medium))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(
                                     Capsule()
-                                        .fill(Theme.Light.accent.opacity(0.12))
+                                        .fill(Theme.accent.opacity(0.12))
                                 )
                                 .opacity(showBadge ? 1 : 0)
                                 .scaleEffect(showBadge ? 1 : 0.7)
@@ -342,7 +342,7 @@ struct MemoryLaneAnimation: View {
                             ForEach(0..<2, id: \.self) { i in
                                 let widths: [CGFloat] = [140, 110]
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(Theme.Light.accent.opacity(0.35))
+                                    .fill(Theme.accent.opacity(0.35))
                                     .frame(width: widths[i], height: 9)
                                     .opacity(showLines[i] ? 1 : 0)
                                     .offset(x: showLines[i] ? 0 : -6)
@@ -357,7 +357,7 @@ struct MemoryLaneAnimation: View {
 
                         // Song metadata
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(Theme.Light.accent.opacity(0.2))
+                            .fill(Theme.accent.opacity(0.2))
                             .frame(width: 80, height: 5)
                     }
                     .padding(14)
@@ -401,10 +401,10 @@ struct CollectionAnimation: View {
     @State private var showBookmark = false
 
     private let accentTones: [Color] = [
-        Theme.Light.accent,
-        Theme.Light.accent.opacity(0.7),
-        Theme.Light.accent.opacity(0.5),
-        Theme.Light.accent.opacity(0.85)
+        Theme.accent,
+        Theme.accent.opacity(0.7),
+        Theme.accent.opacity(0.5),
+        Theme.accent.opacity(0.85)
     ]
 
     private let scatteredOffsets: [(x: CGFloat, y: CGFloat)] = [
@@ -419,7 +419,7 @@ struct CollectionAnimation: View {
             // Bookmark icon
             Image(systemName: "bookmark.fill")
                 .font(.system(size: 24))
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
                 .offset(y: -90)
                 .opacity(showBookmark ? 1 : 0)
                 .scaleEffect(showBookmark ? 1 : 0.3)
@@ -429,7 +429,7 @@ struct CollectionAnimation: View {
                 let from = scatteredOffsets[i]
                 let to = gridOffsets[i]
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Theme.Light.card)
+                    .fill(Theme.card)
                     .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
                     .frame(width: 60, height: 60)
                     .overlay(alignment: .top) {
@@ -443,10 +443,10 @@ struct CollectionAnimation: View {
                         // Tiny Caveat-style placeholders
                         VStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(Theme.Light.accent.opacity(0.3))
+                                .fill(Theme.accent.opacity(0.3))
                                 .frame(width: 36, height: 5)
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(Theme.Light.accent.opacity(0.2))
+                                .fill(Theme.accent.opacity(0.2))
                                 .frame(width: 28, height: 5)
                         }
                         .offset(y: 4)
@@ -496,12 +496,12 @@ struct WhatsThatSongAnimation: View {
         VStack(spacing: 16) {
             // Input area
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Light.divider, lineWidth: 1.5)
+                .stroke(Theme.dividerColor, lineWidth: 1.5)
                 .frame(width: 220, height: 100)
                 .overlay {
                     Text(typedText)
                         .font(Theme.caveat(20))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .frame(width: 190, height: 80, alignment: .topLeading)
                         .padding(.horizontal, 15)
                         .padding(.vertical, 10)
@@ -515,29 +515,29 @@ struct WhatsThatSongAnimation: View {
                 HStack(spacing: 10) {
                     Image(systemName: "music.note")
                         .font(.system(size: 14))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("My Girl")
                             .font(Theme.dmSans(13, weight: .medium))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
                         Text("The Temptations")
                             .font(Theme.dmSans(11))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
 
                     Spacer()
 
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .frame(width: 220)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Theme.Light.card)
+                        .fill(Theme.card)
                         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.9)))

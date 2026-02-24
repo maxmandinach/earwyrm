@@ -26,7 +26,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -37,11 +37,11 @@ struct LoginView: View {
                         // Logo / Title
                         Text("earwyrm")
                             .font(Theme.caveat(42))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
 
                         Text("your lyric journal")
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
 
                         Spacer()
                             .frame(height: Theme.Spacing.lg)
@@ -97,7 +97,7 @@ struct LoginView: View {
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .padding(Theme.Spacing.md)
-                .background(Theme.Light.card)
+                .background(Theme.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .font(Theme.dmSans(15))
 
@@ -116,7 +116,7 @@ struct LoginView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Theme.Light.accent)
+                .background(Theme.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(email.isEmpty || isLoading)
@@ -128,9 +128,9 @@ struct LoginView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text("Just browsing?")
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                         Text("Explore")
-                            .foregroundStyle(Theme.Light.accent)
+                            .foregroundStyle(Theme.accent)
                             .fontWeight(.medium)
                     }
                     .font(Theme.dmSans(14))
@@ -150,7 +150,7 @@ struct LoginView: View {
                 .textFieldStyle(.plain)
                 .textContentType(.password)
                 .padding(Theme.Spacing.md)
-                .background(Theme.Light.card)
+                .background(Theme.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .font(Theme.dmSans(15))
 
@@ -169,7 +169,7 @@ struct LoginView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Theme.Light.accent)
+                .background(Theme.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(password.isEmpty || isLoading)
@@ -190,7 +190,7 @@ struct LoginView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .padding(Theme.Spacing.md)
-                    .background(Theme.Light.card)
+                    .background(Theme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .font(Theme.dmSans(15))
 
@@ -206,7 +206,7 @@ struct LoginView: View {
                 .textFieldStyle(.plain)
                 .textContentType(.newPassword)
                 .padding(Theme.Spacing.md)
-                .background(Theme.Light.card)
+                .background(Theme.card)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .font(Theme.dmSans(15))
 
@@ -225,7 +225,7 @@ struct LoginView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Theme.Light.accent)
+                .background(Theme.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(!isUsernameValid || password.count < 6 || isLoading)
@@ -246,9 +246,9 @@ struct LoginView: View {
                     .font(Theme.dmSans(15))
                 Spacer()
             }
-            .foregroundStyle(Theme.Light.accent)
+            .foregroundStyle(Theme.accent)
             .padding(Theme.Spacing.md)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }

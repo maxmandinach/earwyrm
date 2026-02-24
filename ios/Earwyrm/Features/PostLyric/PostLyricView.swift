@@ -59,7 +59,7 @@ struct PostLyricView: View {
                                 Text("add artist & song")
                                     .font(Theme.dmSans(13))
                             }
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                         }
                     }
 
@@ -83,7 +83,7 @@ struct PostLyricView: View {
                 .padding(.top, Theme.Spacing.md)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle("new lyric")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -93,7 +93,7 @@ struct PostLyricView: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -101,7 +101,7 @@ struct PostLyricView: View {
                         dismiss()
                     }
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
@@ -111,17 +111,18 @@ struct PostLyricView: View {
                         if viewModel.isSaving {
                             ProgressView()
                                 .scaleEffect(0.8)
-                                .tint(Theme.Light.accent)
+                                .tint(Theme.accent)
                         } else {
                             Text("Save")
                                 .font(Theme.dmSans(15, weight: .semibold))
                         }
                     }
                     .disabled(!viewModel.canSave)
-                    .foregroundStyle(viewModel.canSave ? Theme.Light.accent : Theme.Light.muted)
+                    .foregroundStyle(viewModel.canSave ? Theme.accent : Theme.textMuted)
                 }
             }
-            .toolbarBackground(Theme.Light.card, for: .navigationBar)
+            .toolbarBackground(Theme.card, for: .navigationBar)
+            .onAppear { Analytics.track(.postLyricStarted) }
             .onDisappear {
                 viewModel.cancelAllTasks()
             }
@@ -137,18 +138,18 @@ struct PostLyricView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("what's stuck in your head?")
                 .font(Theme.caveat(22))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
 
             TextEditor(text: viewModel.isContentLocked
                        ? .constant(viewModel.content)
                        : $viewModel.content)
                 .font(Theme.caveat(30))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineSpacing(10)
                 .scrollContentBackground(.hidden)
                 .frame(minHeight: 150)
                 .padding(Theme.Spacing.md)
-                .background(Theme.Light.card)
+                .background(Theme.card)
                 .overlay(alignment: .topLeading) {
                     if let ghost = viewModel.ghostText, !ghost.isEmpty {
                         Text(viewModel.content + ghost)
@@ -185,8 +186,8 @@ struct PostLyricView: View {
                 let counterColor: Color = count >= 500
                     ? .orange
                     : count >= 400
-                        ? Theme.Light.accent
-                        : Theme.Light.muted
+                        ? Theme.accent
+                        : Theme.textMuted
                 let counterOpacity: Double = count < 400
                     ? Double(count - 300) / 100.0
                     : 1.0
@@ -210,7 +211,7 @@ struct PostLyricView: View {
                         Text("tap to complete")
                             .font(Theme.dmSans(12))
                     }
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                 }
                 .padding(.leading, 4)
             }
@@ -222,7 +223,7 @@ struct PostLyricView: View {
                 } label: {
                     Label("unlock & edit", systemImage: "lock.open")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
                 .padding(.leading, 4)
             }
@@ -248,11 +249,11 @@ struct PostLyricView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(viewModel.songTitle)
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Text(viewModel.artistName)
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
             }
 
@@ -264,11 +265,11 @@ struct PostLyricView: View {
             } label: {
                 Image(systemName: "pencil")
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         }
         .padding(12)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -349,7 +350,7 @@ struct PostLyricView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     TextEditor(text: $viewModel.noteContent)
                         .font(Theme.noteFont(16))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                         .lineSpacing(6)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 60)
@@ -359,7 +360,7 @@ struct PostLyricView: View {
                             if viewModel.noteContent.isEmpty {
                                 Text("why does this one stay with you?")
                                     .font(Theme.noteFont(16))
-                                    .foregroundStyle(Theme.Light.muted.opacity(0.5))
+                                    .foregroundStyle(Theme.textMuted.opacity(0.5))
                                     .padding(.horizontal, 17)
                                     .padding(.vertical, 16)
                                     .allowsHitTesting(false)
@@ -367,7 +368,7 @@ struct PostLyricView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Theme.Light.divider, lineWidth: 1)
+                                .stroke(Theme.dividerColor, lineWidth: 1)
                         )
                         .onChange(of: viewModel.noteContent) { _, newValue in
                             if newValue.count > 500 {
@@ -387,7 +388,7 @@ struct PostLyricView: View {
                                 Text(viewModel.noteIsPublic ? "visible on explore" : "private note")
                                     .font(Theme.dmSans(12))
                             }
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                             .padding(.leading, 4)
                         }
 
@@ -395,7 +396,7 @@ struct PostLyricView: View {
 
                         Text("\(viewModel.noteContent.count)/500")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(viewModel.noteContent.count > 450 ? Theme.Light.accent : Theme.Light.muted)
+                            .foregroundStyle(viewModel.noteContent.count > 450 ? Theme.accent : Theme.textMuted)
                             .padding(.trailing, 4)
                     }
                 }
@@ -411,7 +412,7 @@ struct PostLyricView: View {
                         Text("add a note")
                             .font(Theme.dmSans(13))
                     }
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
                 }
             }
         }
@@ -431,7 +432,7 @@ struct PostLyricView: View {
         typedPart.font = Theme.caveat(30)
 
         var ghostPart = AttributedString(ghost)
-        ghostPart.foregroundColor = Theme.Light.muted.opacity(0.35)
+        ghostPart.foregroundColor = Theme.textMuted.opacity(0.35)
         ghostPart.font = Theme.caveat(30)
 
         return typedPart + ghostPart
@@ -450,6 +451,7 @@ struct PostLyricView: View {
                 isPublicProfile: isPublic
             )
             if success {
+                Analytics.track(.postLyricCompleted)
                 Haptics.success()
                 onSaved()
                 dismiss()
@@ -472,16 +474,16 @@ struct CustomFocusTextField: View {
     var body: some View {
         TextField(placeholder, text: $text)
             .font(Theme.dmSansItalic(14))
-            .foregroundStyle(Theme.Light.text)
+            .foregroundStyle(Theme.textPrimary)
             .focused($isFocused)
             .autocorrectionDisabled()
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(isFocused ? Theme.Light.accent.opacity(0.6) : Theme.Light.divider,
+                    .stroke(isFocused ? Theme.accent.opacity(0.6) : Theme.dividerColor,
                             lineWidth: 1)
             )
             .onChange(of: text) { _, _ in

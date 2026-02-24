@@ -10,7 +10,7 @@ struct EarwyrmPlusPaywall: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 if showWelcome {
@@ -25,13 +25,17 @@ struct EarwyrmPlusPaywall: View {
             .toolbar {
                 if !showWelcome {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Not now") { dismiss() }
+                        Button("Not now") {
+                            Analytics.track(.paywallDismissed)
+                            dismiss()
+                        }
                             .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                 }
             }
         }
+        .onAppear { Analytics.track(.paywallShown) }
         .onChange(of: subscriptionManager.isPlus) { _, newValue in
             if newValue {
                 withAnimation { showWelcome = true }
@@ -51,13 +55,13 @@ struct EarwyrmPlusPaywall: View {
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
 
-            CaveatText(text: "welcome to earwyrm+", size: 36, weight: .bold, color: Theme.Light.text)
+            CaveatText(text: "welcome to earwyrm+", size: 36, weight: .bold, color: Theme.textPrimary)
 
             Text("you're all set")
                 .font(Theme.dmSans(16))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
 
             Spacer()
         }
@@ -71,11 +75,11 @@ struct EarwyrmPlusPaywall: View {
                 Spacer().frame(height: Theme.Spacing.xl)
 
                 // Header
-                CaveatText(text: "earwyrm+", size: 42, weight: .bold, color: Theme.Light.accent)
+                CaveatText(text: "earwyrm+", size: 42, weight: .bold, color: Theme.accent)
 
                 Text("support earwyrm & unlock everything")
                     .font(Theme.dmSans(16))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
 
                 Spacer().frame(height: Theme.Spacing.sm)
@@ -109,7 +113,7 @@ struct EarwyrmPlusPaywall: View {
                     if subscriptionManager.products.isEmpty {
                         Text("Products loading...")
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
@@ -124,11 +128,12 @@ struct EarwyrmPlusPaywall: View {
 
                 // Restore
                 Button {
+                    Analytics.track(.paywallRestoreTapped)
                     Task { await subscriptionManager.restorePurchases() }
                 } label: {
                     Text("Restore Purchases")
                         .font(Theme.dmSans(14))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                 }
                 .padding(.top, Theme.Spacing.xs)
 
@@ -143,22 +148,22 @@ struct EarwyrmPlusPaywall: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 22))
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
                 .frame(width: 36)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                 Text(subtitle)
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
 
             Spacer()
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -166,6 +171,8 @@ struct EarwyrmPlusPaywall: View {
 
     private func purchaseButton(product: Product, highlight: Bool) -> some View {
         Button {
+            let name = product.id == SubscriptionManager.yearlyId ? "yearly" : "monthly"
+            Analytics.track(.paywallProductTapped, ["product": name])
             Task {
                 purchaseError = nil
                 do {
@@ -184,7 +191,7 @@ struct EarwyrmPlusPaywall: View {
                             .font(Theme.dmSans(12, weight: .medium))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(Theme.Light.accent.opacity(0.2))
+                            .background(Theme.accent.opacity(0.2))
                             .clipShape(Capsule())
                     }
                     Spacer()
@@ -194,17 +201,17 @@ struct EarwyrmPlusPaywall: View {
                 HStack {
                     Text(product.id == SubscriptionManager.yearlyId ? "per year" : "per month")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(highlight ? .white.opacity(0.7) : Theme.Light.muted)
+                        .foregroundStyle(highlight ? .white.opacity(0.7) : Theme.textMuted)
                     Spacer()
                 }
             }
             .padding(Theme.Spacing.md)
-            .foregroundStyle(highlight ? .white : Theme.Light.text)
-            .background(highlight ? Theme.Light.accent : Theme.Light.card)
+            .foregroundStyle(highlight ? .white : Theme.textPrimary)
+            .background(highlight ? Theme.accent : Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(highlight ? Color.clear : Theme.Light.divider, lineWidth: 1)
+                    .stroke(highlight ? Color.clear : Theme.dividerColor, lineWidth: 1)
             )
         }
         .disabled(subscriptionManager.isLoading)

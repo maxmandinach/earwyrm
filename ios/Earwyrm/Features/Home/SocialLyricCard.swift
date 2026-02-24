@@ -5,6 +5,8 @@ struct SocialLyricCard: View {
     var onShare: (() -> Void)?
     var onSave: (() -> Void)?
     var onViewProfile: (() -> Void)?
+    var onReport: (() -> Void)?
+    var onBlock: (() -> Void)?
     var isSaved: Bool = false
 
     private var lyric: Lyric { item.lyric }
@@ -14,7 +16,7 @@ struct SocialLyricCard: View {
             // Lyric content (3-line clamp)
             Text("\u{201C}\(lyric.content)\u{201D}")
                 .font(Theme.caveat(20))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -27,7 +29,7 @@ struct SocialLyricCard: View {
                     .joined(separator: " — ")
                 Text(display)
                     .font(Theme.dmSansItalic(12))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
             }
 
@@ -36,7 +38,7 @@ struct SocialLyricCard: View {
                 if let username = item.username {
                     Text("@\(username)")
                         .font(Theme.dmSans(11))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
 
                 Spacer()
@@ -47,7 +49,7 @@ struct SocialLyricCard: View {
                     } label: {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(isSaved ? Theme.Light.accent : Theme.Light.muted)
+                            .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
                     }
                 }
 
@@ -57,7 +59,7 @@ struct SocialLyricCard: View {
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                     }
                 }
 
@@ -68,13 +70,13 @@ struct SocialLyricCard: View {
                         Text("\(count)")
                             .font(Theme.dmSans(11, weight: .medium))
                     }
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
             }
         }
         .padding(Theme.Spacing.md)
         .frame(width: 260, height: 170)
-        .background(Theme.Light.card)
+        .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
         .contextMenu {
@@ -91,6 +93,18 @@ struct SocialLyricCard: View {
             if let username = item.username, let onViewProfile {
                 Button { onViewProfile() } label: {
                     Label("View @\(username)", systemImage: "person")
+                }
+            }
+
+            if let onReport {
+                Divider()
+                Button(role: .destructive) { onReport() } label: {
+                    Label("Report", systemImage: "flag")
+                }
+            }
+            if let username = item.username, let onBlock {
+                Button(role: .destructive) { onBlock() } label: {
+                    Label("Block @\(username)", systemImage: "hand.raised")
                 }
             }
         }

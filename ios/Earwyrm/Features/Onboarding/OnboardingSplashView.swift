@@ -13,7 +13,7 @@ struct OnboardingSplashView: View {
 
     var body: some View {
         ZStack {
-            Theme.Light.background
+            Theme.background
                 .ignoresSafeArea()
 
             // Layer 1: Breathing waveform
@@ -42,7 +42,7 @@ struct OnboardingSplashView: View {
                     }
                     context.stroke(
                         path,
-                        with: .color(Theme.Light.accent.opacity(opacity)),
+                        with: .color(Theme.accent.opacity(opacity)),
                         lineWidth: lineWidth
                     )
                 }
@@ -52,7 +52,7 @@ struct OnboardingSplashView: View {
             // Layer 2: Drifting particles
             ForEach(particles) { particle in
                 Circle()
-                    .fill(Theme.Light.accent.opacity(particle.opacity))
+                    .fill(Theme.accent.opacity(particle.opacity))
                     .frame(width: particle.size, height: particle.size)
                     .position(particle.position)
             }
@@ -62,14 +62,14 @@ struct OnboardingSplashView: View {
             VStack(spacing: Theme.Spacing.md) {
                 Spacer()
 
-                CaveatText(text: "earwyrm", size: 42, color: Theme.Light.text)
+                CaveatText(text: "earwyrm", size: 42, color: Theme.textPrimary)
                     .opacity(showWordmark ? 1 : 0)
                     .offset(y: showWordmark ? 0 : 8)
                     .animation(.easeOut(duration: 0.8), value: showWordmark)
 
                 Text("your lyric journal")
                     .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .opacity(showTagline ? 1 : 0)
                     .offset(y: showTagline ? 0 : 8)
                     .animation(.easeOut(duration: 0.8), value: showTagline)
@@ -85,7 +85,7 @@ struct OnboardingSplashView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Theme.Light.accent)
+                        .background(Theme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
@@ -98,6 +98,7 @@ struct OnboardingSplashView: View {
             }
         }
         .onAppear {
+            Analytics.track(.onboardingSplashShown)
             startBreathingAnimation()
             generateParticles()
             scheduleReveals()

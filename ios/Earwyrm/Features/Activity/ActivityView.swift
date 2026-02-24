@@ -20,7 +20,7 @@ struct ActivityView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -35,7 +35,7 @@ struct ActivityView: View {
                         Color.clear.frame(height: 0).id("activity-top")
                         if notificationManager.isLoading && notificationManager.notifications.isEmpty {
                             ProgressView()
-                                .tint(Theme.Light.accent)
+                                .tint(Theme.accent)
                                 .padding(.top, Theme.Spacing.xxl)
                         } else if filteredNotifications.isEmpty {
                             emptyState
@@ -49,7 +49,7 @@ struct ActivityView: View {
                                     .buttonStyle(.plain)
 
                                     Divider()
-                                        .foregroundStyle(Theme.Light.divider)
+                                        .foregroundStyle(Theme.dividerColor)
                                         .padding(.horizontal, Theme.Spacing.md)
                                 }
 
@@ -67,7 +67,7 @@ struct ActivityView: View {
                                     } label: {
                                         Text("Load more")
                                             .font(Theme.dmSans(14, weight: .medium))
-                                            .foregroundStyle(Theme.Light.accent)
+                                            .foregroundStyle(Theme.accent)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, Theme.Spacing.md)
                                     }
@@ -122,19 +122,19 @@ struct ActivityView: View {
                             .font(Theme.dmSans(13, weight: selectedFilter == index ? .medium : .regular))
                             .foregroundStyle(
                                 selectedFilter == index
-                                    ? Theme.Light.text
-                                    : Theme.Light.muted
+                                    ? Theme.textPrimary
+                                    : Theme.textMuted
                             )
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
                             .background(
                                 Capsule()
-                                    .fill(selectedFilter == index ? Theme.Light.card : Color.clear)
+                                    .fill(selectedFilter == index ? Theme.card : Color.clear)
                             )
                             .overlay(
                                 Capsule()
                                     .strokeBorder(
-                                        selectedFilter == index ? Theme.Light.divider : Color.clear,
+                                        selectedFilter == index ? Theme.dividerColor : Color.clear,
                                         lineWidth: 1
                                     )
                             )
@@ -151,10 +151,10 @@ struct ActivityView: View {
         VStack(spacing: Theme.Spacing.sm) {
             Text("no activity yet")
                 .font(Theme.caveat(24))
-                .foregroundStyle(Theme.Light.secondary)
+                .foregroundStyle(Theme.textSecondary)
             Text("Reactions, comments, and follows will appear here.")
                 .font(Theme.dmSans(14))
-                .foregroundStyle(Theme.Light.muted)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Theme.Spacing.lg)
@@ -195,21 +195,21 @@ private struct NotificationRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(notificationText)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
 
                 // Lyric snippet
                 if let snippet = notification.lyricSnippet {
                     Text("\u{201C}\(snippet)\u{201D}")
                         .font(Theme.caveat(16))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
 
                 // Relative time
                 Text(relativeDate(notification.createdAt))
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
 
             Spacer()
@@ -225,25 +225,25 @@ private struct NotificationRow: View {
             switch notification.type {
             case "reaction":
                 Image(systemName: "waveform.path")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             case "comment", "reply":
                 Image(systemName: "bubble.left")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             case "new_lyric":
                 Image(systemName: "music.note")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             case "follow":
                 Image(systemName: "person.badge.plus")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             case "share":
                 Image(systemName: "square.and.arrow.up")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             case "collection_add":
                 Image(systemName: "folder.badge.plus")
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
             default:
                 Image(systemName: "bell")
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
             }
         }
         .font(.system(size: 16, weight: .medium))

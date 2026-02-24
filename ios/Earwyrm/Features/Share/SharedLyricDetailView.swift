@@ -15,17 +15,17 @@ struct SharedLyricDetailView: View {
                 VStack {
                     Spacer().frame(height: 100)
                     ProgressView()
-                        .tint(Theme.Light.accent)
+                        .tint(Theme.accent)
                 }
             } else if let error {
                 VStack(spacing: Theme.Spacing.sm) {
                     Spacer().frame(height: 80)
                     Text("lyric not found")
                         .font(Theme.caveat(28))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                     Text(error)
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
@@ -50,7 +50,7 @@ struct SharedLyricDetailView: View {
                         NavigationLink(value: ProfileDestination(userId: lyric.userId, username: username)) {
                             Text("posted by @\(username)")
                                 .font(Theme.dmSans(14))
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                 }
@@ -58,7 +58,7 @@ struct SharedLyricDetailView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)

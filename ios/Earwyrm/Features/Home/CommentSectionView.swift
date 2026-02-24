@@ -9,7 +9,9 @@ struct CommentSectionView: View {
     let initialCount: Int
 
     @Environment(AuthGate.self) private var authGate
+    @Environment(BlockManager.self) private var blockManager
     @State private var isOpen = false
+    @State private var reportCommentId: UUID?
     @State private var comments: [CommentWithProfile] = []
     @State private var count: Int
     @State private var newComment = ""
@@ -54,7 +56,7 @@ struct CommentSectionView: View {
                     ? "\(count) \(count == 1 ? "comment" : "comments")"
                     : "add a comment")
                 .font(Theme.dmSans(12))
-                .foregroundStyle(Theme.Light.muted.opacity(0.6))
+                .foregroundStyle(Theme.textMuted.opacity(0.6))
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
         }
@@ -85,7 +87,7 @@ struct CommentSectionView: View {
                 } label: {
                     Text("hide comments")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted.opacity(0.4))
+                        .foregroundStyle(Theme.textMuted.opacity(0.4))
                 }
                 .padding(.top, Theme.Spacing.xs)
             }
@@ -94,13 +96,24 @@ struct CommentSectionView: View {
         .task {
             await fetchComments()
         }
+        .sheet(isPresented: Binding(
+            get: { reportCommentId != nil },
+            set: { if !$0 { reportCommentId = nil } }
+        )) {
+            if let commentId = reportCommentId {
+                ReportSheet(contentType: "comment", contentId: commentId)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
+        }
     }
 
     // MARK: - Comment Thread
 
     private var commentThread: some View {
-        let topLevel = comments.filter { $0.parentCommentId == nil }
-        let replyMap = Dictionary(grouping: comments.filter { $0.parentCommentId != nil },
+        let visible = comments.filter { !blockManager.isBlocked($0.userId) }
+        let topLevel = visible.filter { $0.parentCommentId == nil }
+        let replyMap = Dictionary(grouping: visible.filter { $0.parentCommentId != nil },
                                   by: { $0.parentCommentId! })
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -119,7 +132,7 @@ struct CommentSectionView: View {
                         .padding(.top, Theme.Spacing.sm)
                         .overlay(alignment: .leading) {
                             Rectangle()
-                                .fill(Theme.Light.divider.opacity(0.3))
+                                .fill(Theme.dividerColor.opacity(0.3))
                                 .frame(width: 1)
                                 .padding(.leading, 6)
                         }
@@ -138,17 +151,17 @@ struct CommentSectionView: View {
                 if let username = comment.username {
                     Text("@\(username)")
                         .font(Theme.dmSans(12, weight: .medium))
-                        .foregroundStyle(Theme.Light.secondary.opacity(0.7))
+                        .foregroundStyle(Theme.textSecondary.opacity(0.7))
                 }
                 Text(formatRelativeTime(comment.createdAt))
                     .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.Light.muted.opacity(0.4))
+                    .foregroundStyle(Theme.textMuted.opacity(0.4))
             }
 
             // Content
             Text(comment.content)
                 .font(Theme.caveat(isReply ? 18 : 20))
-                .foregroundStyle(Theme.Light.text.opacity(isReply ? 0.6 : 0.7))
+                .foregroundStyle(Theme.textPrimary.opacity(isReply ? 0.6 : 0.7))
                 .lineSpacing(2)
 
             // Actions
@@ -164,7 +177,7 @@ struct CommentSectionView: View {
                     } label: {
                         Text("reply")
                             .font(Theme.dmSans(11))
-                            .foregroundStyle(Theme.Light.muted.opacity(0.4))
+                            .foregroundStyle(Theme.textMuted.opacity(0.4))
                     }
                 }
 
@@ -174,7 +187,15 @@ struct CommentSectionView: View {
                     } label: {
                         Text("delete")
                             .font(Theme.dmSans(11))
-                            .foregroundStyle(Theme.Light.muted.opacity(0.4))
+                            .foregroundStyle(Theme.textMuted.opacity(0.4))
+                    }
+                } else if currentUserId != nil {
+                    Button {
+                        reportCommentId = comment.id
+                    } label: {
+                        Text("report")
+                            .font(Theme.dmSans(11))
+                            .foregroundStyle(Theme.textMuted.opacity(0.4))
                     }
                 }
             }
@@ -190,7 +211,7 @@ struct CommentSectionView: View {
                 HStack(spacing: 4) {
                     Text("replying")
                         .font(Theme.dmSans(11))
-                        .foregroundStyle(Theme.Light.muted.opacity(0.5))
+                        .foregroundStyle(Theme.textMuted.opacity(0.5))
 
                     Button {
                         replyTo = nil
@@ -198,7 +219,7 @@ struct CommentSectionView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 10))
-                            .foregroundStyle(Theme.Light.muted.opacity(0.4))
+                            .foregroundStyle(Theme.textMuted.opacity(0.4))
                     }
                 }
             }
@@ -209,13 +230,13 @@ struct CommentSectionView: View {
                     text: $newComment
                 )
                 .font(Theme.caveat(18))
-                .foregroundStyle(Theme.Light.text)
+                .foregroundStyle(Theme.textPrimary)
                 .autocorrectionDisabled()
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     Capsule()
-                        .stroke(Theme.Light.divider, lineWidth: 1)
+                        .stroke(Theme.dividerColor, lineWidth: 1)
                 )
                 .onChange(of: newComment) { _, value in
                     if value.count > maxLength {
@@ -229,7 +250,7 @@ struct CommentSectionView: View {
                             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         }
                         .font(Theme.dmSans(15, weight: .medium))
-                        .foregroundStyle(Theme.Light.accent)
+                        .foregroundStyle(Theme.accent)
                     }
                 }
 
@@ -238,7 +259,7 @@ struct CommentSectionView: View {
                 } label: {
                     Text(isSubmitting ? "..." : "post")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.secondary.opacity(0.7))
+                        .foregroundStyle(Theme.textSecondary.opacity(0.7))
                 }
                 .disabled(newComment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
                 .opacity(newComment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.3 : 1)
@@ -253,14 +274,14 @@ struct CommentSectionView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Theme.Light.divider)
+                    .fill(Theme.dividerColor)
                     .frame(width: 60, height: 10)
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Theme.Light.divider)
+                    .fill(Theme.dividerColor)
                     .frame(width: 30, height: 10)
             }
             RoundedRectangle(cornerRadius: 2)
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(width: 180, height: 14)
         }
         .shimmer()

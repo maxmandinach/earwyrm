@@ -7,7 +7,7 @@ struct MemoryLaneSection: View {
     var body: some View {
         if lyrics.count >= 3 {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                CaveatText(text: "memory lane", size: 24, color: Theme.Light.secondary)
+                CaveatText(text: "memory lane", size: 24, color: Theme.textSecondary)
                     .padding(.horizontal, Theme.Spacing.lg)
 
                 ScrollView(.horizontal, showsIndicators: false) {

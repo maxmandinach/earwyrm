@@ -28,14 +28,14 @@ struct NoteEditorSheet: View {
                     if text.isEmpty {
                         Text(placeholder)
                             .font(Theme.noteFont(18))
-                            .foregroundStyle(Theme.Light.muted)
+                            .foregroundStyle(Theme.textMuted)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 8)
                     }
 
                     TextEditor(text: $text)
                         .font(Theme.noteFont(18))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 100)
                         .onChange(of: text) { _, newValue in
@@ -48,7 +48,7 @@ struct NoteEditorSheet: View {
                 HStack {
                     Text("\(text.count)/500")
                         .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
 
                     Spacer()
 
@@ -62,16 +62,16 @@ struct NoteEditorSheet: View {
                             Text(isPublic ? "public" : "private")
                                 .font(Theme.dmSans(12, weight: .medium))
                         }
-                        .foregroundStyle(isPublic ? Theme.Light.accent : Theme.Light.muted)
+                        .foregroundStyle(isPublic ? Theme.accent : Theme.textMuted)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(
                             Capsule()
-                                .fill(isPublic ? Theme.Light.accent.opacity(0.12) : Theme.Light.card)
+                                .fill(isPublic ? Theme.accent.opacity(0.12) : Theme.card)
                         )
                         .overlay(
                             Capsule()
-                                .strokeBorder(Theme.Light.divider, lineWidth: isPublic ? 0 : 1)
+                                .strokeBorder(Theme.dividerColor, lineWidth: isPublic ? 0 : 1)
                         )
                     }
                 }
@@ -79,7 +79,7 @@ struct NoteEditorSheet: View {
                 Spacer()
             }
             .padding(Theme.Spacing.lg)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle("note")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -89,12 +89,12 @@ struct NoteEditorSheet: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                     .font(Theme.dmSans(15, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .font(Theme.dmSans(14))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -103,7 +103,7 @@ struct NoteEditorSheet: View {
                         dismiss()
                     }
                     .font(Theme.dmSans(14, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }

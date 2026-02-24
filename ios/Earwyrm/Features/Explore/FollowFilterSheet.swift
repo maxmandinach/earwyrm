@@ -29,11 +29,11 @@ struct FollowFilterSheet: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 14))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                     TextField("Search follows...", text: $search)
                         .font(Theme.dmSans(14))
                 }
-                .listRowBackground(Theme.Light.card)
+                .listRowBackground(Theme.card)
 
                 if !artists.isEmpty {
                     followSection(title: "Artists", items: artists)
@@ -46,7 +46,7 @@ struct FollowFilterSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.Light.background)
+            .background(Theme.background)
             .navigationTitle("Filter follows")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -56,14 +56,14 @@ struct FollowFilterSheet: View {
                         Haptics.light()
                     }
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                     .font(Theme.dmSans(14, weight: .medium))
-                    .foregroundStyle(Theme.Light.accent)
+                    .foregroundStyle(Theme.accent)
                 }
             }
         }
@@ -86,26 +86,26 @@ struct FollowFilterSheet: View {
                              ? "#\(follow.filterValue)"
                              : follow.filterValue)
                             .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.Light.text)
+                            .foregroundStyle(Theme.textPrimary)
 
                         Spacer()
 
                         if activeFollowIds.contains(follow.id) {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Theme.Light.accent)
+                                .foregroundStyle(Theme.accent)
                         } else {
                             Image(systemName: "circle")
-                                .foregroundStyle(Theme.Light.muted)
+                                .foregroundStyle(Theme.textMuted)
                         }
                     }
                 }
-                .listRowBackground(Theme.Light.card)
+                .listRowBackground(Theme.card)
             }
         } header: {
             HStack {
                 Text(title)
                     .font(Theme.dmSans(12, weight: .semibold))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
 
                 Spacer()
 
@@ -116,7 +116,7 @@ struct FollowFilterSheet: View {
                     Haptics.light()
                 }
                 .font(Theme.dmSans(11))
-                .foregroundStyle(Theme.Light.accent)
+                .foregroundStyle(Theme.accent)
             }
         }
     }

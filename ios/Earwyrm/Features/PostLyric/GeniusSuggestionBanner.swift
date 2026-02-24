@@ -11,7 +11,7 @@ struct GeniusSuggestionBanner: View {
             HStack {
                 Text("is this the song?")
                     .font(Theme.dmSans(13))
-                    .foregroundStyle(Theme.Light.muted)
+                    .foregroundStyle(Theme.textMuted)
 
                 Spacer()
 
@@ -20,7 +20,7 @@ struct GeniusSuggestionBanner: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                         .padding(4)
                 }
             }
@@ -29,10 +29,10 @@ struct GeniusSuggestionBanner: View {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.7)
-                        .tint(Theme.Light.muted)
+                        .tint(Theme.textMuted)
                     Text("identifying song...")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 .padding(.vertical, Theme.Spacing.sm)
             } else {
@@ -46,11 +46,11 @@ struct GeniusSuggestionBanner: View {
             }
         }
         .padding(12)
-        .background(Theme.Light.accent.opacity(0.08))
+        .background(Theme.accent.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Light.accent.opacity(0.2), lineWidth: 1)
+                .stroke(Theme.accent.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -66,7 +66,7 @@ struct GeniusSuggestionBanner: View {
                             .aspectRatio(contentMode: .fill)
                     } placeholder: {
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Theme.Light.divider)
+                            .fill(Theme.dividerColor)
                     }
                     .frame(width: 44, height: 44)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -75,19 +75,19 @@ struct GeniusSuggestionBanner: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(suggestion.title)
                         .font(Theme.dmSans(13, weight: .medium))
-                        .foregroundStyle(Theme.Light.text)
+                        .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
 
                     if let artist = suggestion.artist {
                         Text(artist)
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
                     }
                 }
             }
             .padding(8)
-            .background(Theme.Light.card)
+            .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         }

@@ -18,7 +18,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Light.background
+                Theme.background
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -82,7 +82,7 @@ struct ProfileView: View {
                     } label: {
                         Image(systemName: "gearshape")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(Theme.Light.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
             }
@@ -98,6 +98,9 @@ struct ProfileView: View {
                 followingCount = counts.following
             }
         }
+        .onChange(of: showSettings) { _, show in
+            if show { Analytics.track(.screenView, ["screen": "settings"]) }
+        }
         .sheet(isPresented: $showSettings) {
             ProfileSettingsSheet()
                 .environment(auth)
@@ -112,24 +115,24 @@ struct ProfileView: View {
         VStack(spacing: Theme.Spacing.sm) {
             // Avatar
             Circle()
-                .fill(Theme.Light.card)
+                .fill(Theme.card)
                 .frame(width: 72, height: 72)
                 .overlay {
-                    CaveatText(text: initials, size: 26, color: Theme.Light.accent)
+                    CaveatText(text: initials, size: 26, color: Theme.accent)
                 }
 
             // Username
             if let username = auth.profile?.username {
                 Text("@\(username)")
                     .font(Theme.dmSans(18, weight: .medium))
-                    .foregroundStyle(Theme.Light.text)
+                    .foregroundStyle(Theme.textPrimary)
             }
 
             // Display name
             if let displayName = auth.profile?.displayName {
                 Text(displayName)
                     .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.Light.secondary)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             // Follower / following counts (visible only to profile owner)
@@ -139,14 +142,14 @@ struct ProfileView: View {
                 } label: {
                     Text("\(followerCount) followers")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 4 }
                 } label: {
                     Text("\(followingCount) following")
                         .font(Theme.dmSans(13))
-                        .foregroundStyle(Theme.Light.muted)
+                        .foregroundStyle(Theme.textMuted)
                 }
             }
         }
@@ -162,7 +165,7 @@ struct ProfileView: View {
         }
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Theme.Light.divider)
+                .fill(Theme.dividerColor)
                 .frame(height: 0.5)
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -178,13 +181,13 @@ struct ProfileView: View {
             Text(title)
                 .font(Theme.dmSans(13))
                 .foregroundStyle(selectedTab == tag
-                                 ? Theme.Light.text.opacity(0.7)
-                                 : Theme.Light.text.opacity(0.3))
+                                 ? Theme.textPrimary.opacity(0.7)
+                                 : Theme.textPrimary.opacity(0.3))
                 .padding(.bottom, Theme.Spacing.sm)
                 .overlay(alignment: .bottom) {
                     if selectedTab == tag {
                         Rectangle()
-                            .fill(Theme.Light.text.opacity(0.4))
+                            .fill(Theme.textPrimary.opacity(0.4))
                             .frame(height: 1)
                     }
                 }
@@ -226,12 +229,12 @@ private struct ProfileLyricDetail: View {
                 if let username = item.username {
                     Text("posted by @\(username)")
                         .font(Theme.dmSans(14))
-                        .foregroundStyle(Theme.Light.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
             .padding(.top, Theme.Spacing.md)
         }
-        .background(Theme.Light.background)
+        .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
