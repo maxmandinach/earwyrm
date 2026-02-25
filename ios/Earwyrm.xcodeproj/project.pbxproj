@@ -54,6 +54,8 @@
 		B039448B773E00198BEBB2C4 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D003504DBF6AB934A30C416 /* MainTabView.swift */; };
 		B17219B89D6136CFF114A51B /* FeedFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C6B69150766B1C55E9869F /* FeedFilterBar.swift */; };
 		B5D9A7490C47834F74652D81 /* FollowButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5477BABCAABA9A2541CBAE9 /* FollowButton.swift */; };
+		B5D9A74A0C47834F74652D82 /* FollowDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5477BAC0AABA9A2541CBAF0 /* FollowDiscoveryView.swift */; };
+		B5D9A74B0C47834F74652D83 /* InterestPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5477BAD0AABA9A2541CBAF1 /* InterestPickerSheet.swift */; };
 		BAA9C2BBD0C6C4530CA97051 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96343DED5E78B3EA154D8E61 /* HomeViewModel.swift */; };
 		C2700C0891877FD3833425E7 /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A07E028FFBD58AC8735212 /* SignupView.swift */; };
 		C71D93C505DBBD8373FA1B61 /* DMSans-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CA047FC35260ED1B0B7EE53D /* DMSans-Variable.ttf */; };
@@ -186,6 +188,8 @@
 		DBE08B59FAEAE445F852DC58 /* Lyric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lyric.swift; sourceTree = "<group>"; };
 		F2BE0BDB999D10490EF6F48F /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		F5477BABCAABA9A2541CBAE9 /* FollowButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowButton.swift; sourceTree = "<group>"; };
+		F5477BAC0AABA9A2541CBAF0 /* FollowDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowDiscoveryView.swift; sourceTree = "<group>"; };
+		F5477BAD0AABA9A2541CBAF1 /* InterestPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestPickerSheet.swift; sourceTree = "<group>"; };
 		F81A96190CDE5DD2C71FC596 /* GeniusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeniusService.swift; sourceTree = "<group>"; };
 		A7B8C9D0E1F2A3B4C5D6E7F9 /* LRCLIBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LRCLIBService.swift; sourceTree = "<group>"; };
 		F9353617E4B2C59722413D97 /* GeniusSuggestionBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeniusSuggestionBanner.swift; sourceTree = "<group>"; };
@@ -310,6 +314,7 @@
 				6668C8AAA1813DF871B363BB /* ExploreViewModel.swift */,
 				C6C6B69150766B1C55E9869F /* FeedFilterBar.swift */,
 				F5477BABCAABA9A2541CBAE9 /* FollowButton.swift */,
+				F5477BAC0AABA9A2541CBAF0 /* FollowDiscoveryView.swift */,
 				707D90B10C5C98B2D8BDDBAF /* FollowFilterSheet.swift */,
 				0D09E8C4FB66B66D6E2C8CD0 /* SongPageView.swift */,
 				00EC35ECFD65FD0FC1BB1E08 /* TrendingTagsView.swift */,
@@ -544,6 +549,7 @@
 		0B01020304050607080910C1 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				F5477BAD0AABA9A2541CBAF1 /* InterestPickerSheet.swift */,
 				0B01020304050607080910A4 /* OnboardingPageView.swift */,
 				0B01020304050607080910A2 /* OnboardingSplashView.swift */,
 				0B01020304050607080910A3 /* OnboardingTourView.swift */,
@@ -682,6 +688,8 @@
 				B17219B89D6136CFF114A51B /* FeedFilterBar.swift in Sources */,
 				00682B7318916EBA43D0684D /* Follow.swift in Sources */,
 				B5D9A7490C47834F74652D81 /* FollowButton.swift in Sources */,
+				B5D9A74A0C47834F74652D82 /* FollowDiscoveryView.swift in Sources */,
+				B5D9A74B0C47834F74652D83 /* InterestPickerSheet.swift in Sources */,
 				212E83B296F3C4F63CA002E9 /* FollowFeedSection.swift in Sources */,
 				125541F78001671E0B821C55 /* FollowFilterSheet.swift in Sources */,
 				AE6F14BA4F3839170EE273E7 /* FollowManager.swift in Sources */,

@@ -218,6 +218,12 @@ struct HomeView: View {
             .navigationDestination(for: ProfileDestination.self) { dest in
                 PublicProfileView(userId: dest.userId, username: dest.username)
             }
+            .navigationDestination(for: ArtistDestination.self) { dest in
+                ArtistPageView(artistName: dest.name)
+            }
+            .navigationDestination(for: SongDestination.self) { dest in
+                SongPageView(songTitle: dest.title, artistName: dest.artistName, coverArtUrl: dest.coverArtUrl)
+            }
             .earwyrmBranding()
         }
         .task {
@@ -497,6 +503,12 @@ private struct LyricDetailDestination: View {
         }
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)
+        }
+        .navigationDestination(for: ArtistDestination.self) { dest in
+            ArtistPageView(artistName: dest.name)
+        }
+        .navigationDestination(for: SongDestination.self) { dest in
+            SongPageView(songTitle: dest.title, artistName: dest.artistName, coverArtUrl: dest.coverArtUrl)
         }
     }
 }

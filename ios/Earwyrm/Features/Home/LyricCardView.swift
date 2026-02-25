@@ -193,11 +193,26 @@ struct LyricCardView: View {
 
     @ViewBuilder
     private var songArtistLabel: some View {
-        let parts = [lyric.songTitle, lyric.artistName].compactMap { $0 }
-        if !parts.isEmpty {
-            Text(parts.joined(separator: " — "))
-                .font(Theme.dmSansItalic(hero ? 15 : 14))
-                .foregroundStyle(Theme.textSecondary)
+        HStack(spacing: 4) {
+            if let song = lyric.songTitle {
+                NavigationLink(value: SongDestination(title: song, artistName: lyric.artistName, coverArtUrl: lyric.coverArtUrl)) {
+                    Text(song)
+                        .font(Theme.dmSansItalic(hero ? 15 : 14))
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            if lyric.songTitle != nil && lyric.artistName != nil {
+                Text("—")
+                    .font(Theme.dmSans(hero ? 15 : 14))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            if let artist = lyric.artistName {
+                NavigationLink(value: ArtistDestination(name: artist)) {
+                    Text(artist)
+                        .font(Theme.dmSansItalic(hero ? 15 : 14))
+                        .foregroundStyle(Theme.accent)
+                }
+            }
         }
     }
 

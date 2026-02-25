@@ -40,8 +40,8 @@ struct ExploreFollowingView: View {
     var body: some View {
         LazyVStack(spacing: Theme.Spacing.md) {
             if followManager.follows.isEmpty {
-                emptyState
-                    .padding(.top, Theme.Spacing.xxl)
+                FollowDiscoveryView(viewModel: viewModel)
+                    .padding(.top, Theme.Spacing.md)
             } else {
                 // Follow chips
                 followChips
@@ -200,19 +200,6 @@ struct ExploreFollowingView: View {
     }
 
     // MARK: - States
-
-    private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Text("Follow artists, songs, and tags to build your feed")
-                .font(Theme.caveat(22))
-                .foregroundStyle(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-            Text("Tap follow on any artist, song, or tag page")
-                .font(Theme.dmSans(13))
-                .foregroundStyle(Theme.textMuted)
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-    }
 
     private var noResultsState: some View {
         VStack(spacing: Theme.Spacing.sm) {

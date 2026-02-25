@@ -18,6 +18,8 @@ enum AnalyticsEvent: String {
     case postLyricStarted        = "post_lyric_started"
     case postLyricCompleted      = "post_lyric_completed"
     case appearanceChanged       = "appearance_changed"
+    case interestPickerShown     = "interest_picker_shown"
+    case interestPickerCompleted = "interest_picker_completed"
 }
 
 private struct AnalyticsInsert: Encodable {

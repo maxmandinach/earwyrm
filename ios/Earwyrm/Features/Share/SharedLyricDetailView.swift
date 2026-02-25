@@ -4,10 +4,17 @@ import Supabase
 struct SharedLyricDetailView: View {
     let shareToken: String
     @Environment(AuthManager.self) private var auth
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(NotificationManager.self) private var notificationManager
+    @Environment(ToastManager.self) private var toastManager
     @State private var lyric: Lyric?
     @State private var username: String?
     @State private var isLoading = true
     @State private var error: String?
+    @State private var resonateVM: ResonateViewModel?
+    @State private var showComments = false
+    @State private var showShareModal = false
+    @State private var bookmarkLyricId: IdentifiableUUID?
 
     var body: some View {
         ScrollView {
@@ -34,14 +41,21 @@ struct SharedLyricDetailView: View {
                     LyricCardView(
                         lyric: lyric,
                         hero: true,
-                        showActions: false,
+                        showActions: true,
                         isPublic: lyric.isPublic ?? false,
                         isOwn: false,
-                        hasReacted: false,
-                        reactionCount: lyric.reactionCount ?? 0,
-                        isResonateAnimating: false,
+                        onShare: { showShareModal = true },
+                        hasReacted: resonateVM?.hasReacted ?? false,
+                        reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
+                        isResonateAnimating: resonateVM?.isAnimating ?? false,
+                        onResonate: { resonateVM?.toggle() },
                         commentCount: lyric.commentCount ?? 0,
-                        showComments: false,
+                        showComments: showComments,
+                        onToggleComments: { showComments.toggle() },
+                        onSave: {
+                            bookmarkLyricId = IdentifiableUUID(lyric.id)
+                        },
+                        isSaved: collectionManager.isLyricSaved(lyric.id),
                         currentUserId: auth.userId
                     )
                     .padding(.horizontal, Theme.Spacing.md)
@@ -63,8 +77,57 @@ struct SharedLyricDetailView: View {
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)
         }
+        .navigationDestination(for: ArtistDestination.self) { dest in
+            ArtistPageView(artistName: dest.name)
+        }
+        .navigationDestination(for: SongDestination.self) { dest in
+            SongPageView(songTitle: dest.title, artistName: dest.artistName, coverArtUrl: dest.coverArtUrl)
+        }
         .task {
             await fetchLyric()
+        }
+        .onChange(of: lyric?.id) { _, newId in
+            guard let lyric, let userId = auth.userId else {
+                resonateVM = nil
+                return
+            }
+            resonateVM = ResonateViewModel(
+                lyricId: lyric.id,
+                userId: userId,
+                initialCount: lyric.reactionCount ?? 0,
+                toast: toastManager
+            )
+            Task {
+                await resonateVM?.checkInitialState()
+            }
+        }
+        .sheet(isPresented: $showShareModal) {
+            if let lyric {
+                ShareModalView(
+                    lyric: lyric,
+                    note: nil,
+                    username: username,
+                    onShareCompleted: {
+                        Task {
+                            guard let actorId = auth.userId,
+                                  let actorUsername = auth.profile?.username else { return }
+                            await notificationManager.sendShareNotification(
+                                lyricOwnerId: lyric.userId,
+                                actorId: actorId,
+                                actorUsername: actorUsername,
+                                lyric: lyric
+                            )
+                        }
+                    }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 

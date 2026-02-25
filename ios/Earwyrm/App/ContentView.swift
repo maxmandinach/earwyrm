@@ -6,9 +6,13 @@ struct ContentView: View {
     @Environment(SubscriptionGate.self) private var subscriptionGate
     @Environment(UserFollowManager.self) private var userFollowManager
     @Environment(CollectionManager.self) private var collectionManager
+    @Environment(FollowManager.self) private var followManager
     @Environment(ToastManager.self) private var toastManager
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("hasSeenInterestPicker") private var hasSeenInterestPicker = false
     @State private var anonBrowsing = false
+    @State private var showInterestPicker = false
+    @State private var interestPickerVM = ExploreViewModel()
 
     var body: some View {
         ZStack {
@@ -47,10 +51,21 @@ struct ContentView: View {
         .sheet(isPresented: Bindable(subscriptionGate).showPaywall) {
             EarwyrmPlusPaywall()
         }
+        .sheet(isPresented: $showInterestPicker) {
+            InterestPickerSheet(viewModel: interestPickerVM)
+                .presentationDetents([.large])
+        }
         .onChange(of: auth.isAuthenticated) { _, isAuth in
             if isAuth {
                 authGate.showAuthSheet = false
                 anonBrowsing = false
+                if !hasSeenInterestPicker && followManager.follows.isEmpty {
+                    Task {
+                        await interestPickerVM.fetchPublicLyrics()
+                        showInterestPicker = true
+                        Analytics.track(.interestPickerShown)
+                    }
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: auth.isAuthenticated)
