@@ -149,9 +149,7 @@ struct ShareModalView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Text("Share")
-                        .font(Theme.caveat(24, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
+                    CaveatText(text: "share", size: 24, weight: .semibold, color: Theme.textPrimary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Cancel") {

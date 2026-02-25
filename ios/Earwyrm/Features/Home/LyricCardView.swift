@@ -117,16 +117,15 @@ struct LyricCardView: View {
 
                 // Action bar
                 if showActions,
-                   let onShare, let onReplace, let onEdit,
-                   let onVisibilityChange, let onToggleComments, let onResonate {
+                   let onShare, let onToggleComments, let onResonate {
                     CardActionBar(
                         lyric: lyric,
                         isPublic: isPublic,
                         isOwn: isOwn,
                         onShare: onShare,
-                        onReplace: onReplace,
-                        onEdit: onEdit,
-                        onVisibilityChange: onVisibilityChange,
+                        onReplace: onReplace ?? {},
+                        onEdit: onEdit ?? {},
+                        onVisibilityChange: onVisibilityChange ?? { _ in },
                         onToggleComments: onToggleComments,
                         onSave: onSave,
                         isSaved: isSaved,

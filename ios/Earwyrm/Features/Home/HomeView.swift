@@ -419,27 +419,45 @@ private struct ProfileUsernameResolver: View {
 private struct LyricDetailDestination: View {
     let item: LyricWithProfile
     @Environment(AuthManager.self) private var auth
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(NotificationManager.self) private var notificationManager
+    @Environment(ToastManager.self) private var toastManager
+    @State private var resonateVM: ResonateViewModel?
+    @State private var showComments = false
+    @State private var showShareModal = false
+    @State private var bookmarkLyricId: UUID?
+    @State private var showCollectionPicker = false
+
+    private var lyric: Lyric { item.lyric }
 
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 LyricCardView(
-                    lyric: item.lyric,
+                    lyric: lyric,
                     hero: true,
-                    showActions: false,
-                    isPublic: item.lyric.isPublic ?? false,
+                    showActions: true,
+                    isPublic: lyric.isPublic ?? false,
                     isOwn: false,
-                    hasReacted: false,
-                    reactionCount: item.lyric.reactionCount ?? 0,
-                    isResonateAnimating: false,
-                    commentCount: item.lyric.commentCount ?? 0,
-                    showComments: false,
+                    onShare: { showShareModal = true },
+                    hasReacted: resonateVM?.hasReacted ?? false,
+                    reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
+                    isResonateAnimating: resonateVM?.isAnimating ?? false,
+                    onResonate: { resonateVM?.toggle() },
+                    commentCount: lyric.commentCount ?? 0,
+                    showComments: showComments,
+                    onToggleComments: { showComments.toggle() },
+                    onSave: {
+                        bookmarkLyricId = lyric.id
+                        showCollectionPicker = true
+                    },
+                    isSaved: collectionManager.isLyricSaved(lyric.id),
                     currentUserId: auth.userId
                 )
                 .padding(.horizontal, Theme.Spacing.md)
 
                 if let username = item.username {
-                    NavigationLink(value: ProfileDestination(userId: item.lyric.userId, username: username)) {
+                    NavigationLink(value: ProfileDestination(userId: lyric.userId, username: username)) {
                         Text("posted by @\(username)")
                             .font(Theme.dmSans(14))
                             .foregroundStyle(Theme.accent)
@@ -450,6 +468,44 @@ private struct LyricDetailDestination: View {
         }
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard let userId = auth.userId else { return }
+            resonateVM = ResonateViewModel(
+                lyricId: lyric.id,
+                userId: userId,
+                initialCount: lyric.reactionCount ?? 0,
+                toast: toastManager
+            )
+            await resonateVM?.checkInitialState()
+        }
+        .sheet(isPresented: $showShareModal) {
+            ShareModalView(
+                lyric: lyric,
+                note: nil,
+                username: item.username,
+                onShareCompleted: {
+                    Task {
+                        guard let actorId = auth.userId,
+                              let actorUsername = auth.profile?.username else { return }
+                        await notificationManager.sendShareNotification(
+                            lyricOwnerId: lyric.userId,
+                            actorId: actorId,
+                            actorUsername: actorUsername,
+                            lyric: lyric
+                        )
+                    }
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showCollectionPicker) {
+            if let lyricId = bookmarkLyricId {
+                CollectionPickerSheet(lyricId: lyricId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)
         }
