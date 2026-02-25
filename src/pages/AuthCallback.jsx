@@ -15,11 +15,18 @@ export default function AuthCallback() {
   useEffect(() => {
     const code = searchParams.get('code')
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).catch(() => {
-        // Code exchange failed (no code_verifier on this device)
-        // but Supabase already confirmed the email server-side
-        setConfirmed(true)
-      })
+      // Try code exchange, but also set a timeout — if the exchange hangs
+      // or fails, the email is still confirmed server-side by Supabase
+      const timeout = setTimeout(() => setConfirmed(true), 5000)
+      supabase.auth.exchangeCodeForSession(code)
+        .then(() => clearTimeout(timeout))
+        .catch(() => {
+          clearTimeout(timeout)
+          setConfirmed(true)
+        })
+    } else {
+      // No code parameter — show confirmed (user likely already verified)
+      setConfirmed(true)
     }
   }, [searchParams])
 
