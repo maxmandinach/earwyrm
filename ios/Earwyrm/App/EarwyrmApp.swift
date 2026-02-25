@@ -16,6 +16,7 @@ struct EarwyrmApp: App {
     @State private var appearanceManager = AppearanceManager()
     @State private var blockManager = BlockManager()
     @State private var toastManager = ToastManager()
+    @State private var networkMonitor = NetworkMonitor()
 
     init() {
         let bg = UIColor(named: "background")!
@@ -42,6 +43,7 @@ struct EarwyrmApp: App {
                 .environment(appearanceManager)
                 .environment(blockManager)
                 .environment(toastManager)
+                .environment(networkMonitor)
                 .preferredColorScheme(appearanceManager.resolvedScheme)
                 .onOpenURL { url in
                     supabase.handle(url)

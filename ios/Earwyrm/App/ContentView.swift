@@ -38,6 +38,7 @@ struct ContentView: View {
                 LoginView(onExplore: { anonBrowsing = true })
             }
         }
+        OfflineBanner()
         ToastOverlay()
         }
         .sheet(isPresented: Bindable(authGate).showAuthSheet) {

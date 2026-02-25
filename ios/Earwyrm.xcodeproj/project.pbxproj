@@ -120,6 +120,8 @@
 		AB10AB10AB10AB10AB10AB11 /* ContentReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB10AB10AB10AB10AB10AB10 /* ContentReport.swift */; };
 		AB20AB20AB20AB20AB20AB21 /* BlockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20AB20AB20AB20AB20AB20 /* BlockManager.swift */; };
 		AB30AB30AB30AB30AB30AB31 /* ReportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB30AB30AB30AB30AB30AB30 /* ReportSheet.swift */; };
+		AB344FF51373753FA6DC92A3 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7D8B25DFA37413EE37D10AB /* NetworkMonitor.swift */; };
+		7A14728EE00A024818CB9DF2 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E306E726CE544900D1B78E9F /* OfflineBanner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -238,6 +240,8 @@
 		AB10AB10AB10AB10AB10AB10 /* ContentReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentReport.swift; sourceTree = "<group>"; };
 		AB20AB20AB20AB20AB20AB20 /* BlockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockManager.swift; sourceTree = "<group>"; };
 		AB30AB30AB30AB30AB30AB30 /* ReportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportSheet.swift; sourceTree = "<group>"; };
+		E7D8B25DFA37413EE37D10AB /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		E306E726CE544900D1B78E9F /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -277,6 +281,7 @@
 				9B63760EBE5C7C1E5C3F245A /* Design */,
 				D14C32545551A6044405DC04 /* Models */,
 				BBCC223344556677889900DD /* Navigation */,
+				1884F969D68F2F8DE43367C0 /* Network */,
 				61366DC4CDA939A88105C554 /* Networking */,
 				ADA4477418648E83AF2524C1 /* Supabase */,
 				FF01FF01FF01FF01FF01FF01 /* Subscription */,
@@ -411,6 +416,7 @@
 			children = (
 				98B59CCFF4872610C4BCFC8A /* AppearanceManager.swift */,
 				47946B7ED7858D8588F43FA0 /* Haptics.swift */,
+				E306E726CE544900D1B78E9F /* OfflineBanner.swift */,
 				00EDCDA3576B454DD2084818 /* Theme.swift */,
 				T0A5T1B6C7D8E9F0A1B2C3D5 /* ToastManager.swift */,
 				T0A5T1B6C7D8E9F0A1B2C3D7 /* ToastOverlay.swift */,
@@ -544,6 +550,14 @@
 				0B01020304050607080910A1 /* OnboardingView.swift */,
 			);
 			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		1884F969D68F2F8DE43367C0 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				E7D8B25DFA37413EE37D10AB /* NetworkMonitor.swift */,
+			);
+			path = Network;
 			sourceTree = "<group>";
 		};
 		BBCC223344556677889900DD /* Navigation */ = {
@@ -754,6 +768,8 @@
 				AB10AB10AB10AB10AB10AB11 /* ContentReport.swift in Sources */,
 				AB20AB20AB20AB20AB20AB21 /* BlockManager.swift in Sources */,
 				AB30AB30AB30AB30AB30AB31 /* ReportSheet.swift in Sources */,
+				AB344FF51373753FA6DC92A3 /* NetworkMonitor.swift in Sources */,
+				7A14728EE00A024818CB9DF2 /* OfflineBanner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
