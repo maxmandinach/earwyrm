@@ -69,6 +69,7 @@ struct CollectionPickerSheet: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.background)
             .navigationTitle("Save to Collection")
             .navigationBarTitleDisplayMode(.inline)

@@ -20,8 +20,7 @@ struct HomeView: View {
     @State private var shareCarouselLyric: Lyric?
     @State private var shareCarouselUsername: String?
     @State private var shareCarouselOwnerId: UUID?
-    @State private var bookmarkLyricId: UUID?
-    @State private var showCollectionPicker = false
+    @State private var bookmarkLyricId: IdentifiableUUID?
     @State private var reportLyric: Lyric?
     @State private var blockTarget: (userId: UUID, username: String)?
     @State private var showBlockAlert = false
@@ -83,8 +82,7 @@ struct HomeView: View {
                                 showComments: showComments,
                                 onToggleComments: { showComments.toggle() },
                                 onSave: {
-                                    bookmarkLyricId = lyric.id
-                                    showCollectionPicker = true
+                                    bookmarkLyricId = IdentifiableUUID(lyric.id)
                                 },
                                 isSaved: collectionManager.isLyricSaved(lyric.id),
                                 note: viewModel.currentNote,
@@ -114,8 +112,7 @@ struct HomeView: View {
                                     shareCarouselOwnerId = item.lyric.userId
                                 },
                                 onSave: { item in
-                                    bookmarkLyricId = item.lyric.id
-                                    showCollectionPicker = true
+                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
@@ -140,8 +137,7 @@ struct HomeView: View {
                                     shareCarouselOwnerId = item.lyric.userId
                                 },
                                 onSave: { item in
-                                    bookmarkLyricId = item.lyric.id
-                                    showCollectionPicker = true
+                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
@@ -173,8 +169,7 @@ struct HomeView: View {
                                     shareCarouselOwnerId = item.lyric.userId
                                 },
                                 onSave: { item in
-                                    bookmarkLyricId = item.lyric.id
-                                    showCollectionPicker = true
+                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
                                 },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
@@ -319,12 +314,10 @@ struct HomeView: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showCollectionPicker) {
-            if let lyricId = bookmarkLyricId {
-                CollectionPickerSheet(lyricId: lyricId)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(item: $reportLyric) { lyric in
             ReportSheet(contentType: "lyric", contentId: lyric.id)
@@ -425,8 +418,7 @@ private struct LyricDetailDestination: View {
     @State private var resonateVM: ResonateViewModel?
     @State private var showComments = false
     @State private var showShareModal = false
-    @State private var bookmarkLyricId: UUID?
-    @State private var showCollectionPicker = false
+    @State private var bookmarkLyricId: IdentifiableUUID?
 
     private var lyric: Lyric { item.lyric }
 
@@ -448,8 +440,7 @@ private struct LyricDetailDestination: View {
                     showComments: showComments,
                     onToggleComments: { showComments.toggle() },
                     onSave: {
-                        bookmarkLyricId = lyric.id
-                        showCollectionPicker = true
+                        bookmarkLyricId = IdentifiableUUID(lyric.id)
                     },
                     isSaved: collectionManager.isLyricSaved(lyric.id),
                     currentUserId: auth.userId
@@ -499,16 +490,25 @@ private struct LyricDetailDestination: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showCollectionPicker) {
-            if let lyricId = bookmarkLyricId {
-                CollectionPickerSheet(lyricId: lyricId)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)
         }
+    }
+}
+
+// MARK: - Identifiable UUID wrapper for sheet(item:)
+
+struct IdentifiableUUID: Identifiable {
+    let id: UUID
+    let value: UUID
+    init(_ value: UUID) {
+        self.id = value
+        self.value = value
     }
 }
 
