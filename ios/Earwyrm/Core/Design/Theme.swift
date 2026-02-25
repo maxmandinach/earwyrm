@@ -11,22 +11,36 @@ enum Theme {
     static let accent = Color("accent")
     static let dividerColor = Color("dividerColor")
 
-    // MARK: - Typography
+    // MARK: - Typography (scales with Dynamic Type)
     static func caveat(_ size: CGFloat = 28, weight: Font.Weight = .medium) -> Font {
-        .custom("Caveat", size: size).weight(weight)
+        .custom("Caveat", size: size, relativeTo: textStyle(for: size)).weight(weight)
     }
 
     static func dmSans(_ size: CGFloat = 15, weight: Font.Weight = .regular) -> Font {
-        .custom("DM Sans", size: size).weight(weight)
+        .custom("DM Sans", size: size, relativeTo: textStyle(for: size)).weight(weight)
     }
 
     static func dmSansItalic(_ size: CGFloat = 15) -> Font {
-        .custom("DM Sans", size: size).italic()
+        .custom("DM Sans", size: size, relativeTo: textStyle(for: size)).italic()
     }
 
     /// Cochin — used for notes (personal reflections)
     static func noteFont(_ size: CGFloat = 16) -> Font {
-        .custom("Cochin", size: size)
+        .custom("Cochin", size: size, relativeTo: textStyle(for: size))
+    }
+
+    private static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case ...11: .caption2
+        case 12: .caption
+        case 13: .footnote
+        case 14: .subheadline
+        case 15...16: .body
+        case 17...19: .title3
+        case 20...23: .title2
+        case 24...33: .title
+        default: .largeTitle
+        }
     }
 
     // MARK: - Spacing
