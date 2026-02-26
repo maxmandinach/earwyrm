@@ -20,6 +20,10 @@ enum AnalyticsEvent: String {
     case appearanceChanged       = "appearance_changed"
     case interestPickerShown     = "interest_picker_shown"
     case interestPickerCompleted = "interest_picker_completed"
+    case pageShareStarted        = "page_share_started"
+    case pageShareCompleted      = "page_share_completed"
+    case artistPageViewed        = "artist_page_viewed"
+    case songPageViewed          = "song_page_viewed"
 }
 
 private struct AnalyticsInsert: Encodable {

@@ -3,6 +3,8 @@ import Foundation
 enum DeepLinkDestination: Hashable {
     case sharedLyric(shareToken: String)
     case profile(username: String)
+    case artist(name: String)
+    case song(title: String, artistName: String?)
 }
 
 enum DeepLinkRouter {
@@ -23,6 +25,16 @@ enum DeepLinkRouter {
             if url.host == "u", let username = pathComponents.first {
                 return .profile(username: username)
             }
+            // earwyrm://artist/{slug}
+            if url.host == "artist", let slug = pathComponents.first {
+                return .artist(name: slugToName(slug))
+            }
+            // earwyrm://song/{slug}?artist={name}
+            if url.host == "song", let slug = pathComponents.first {
+                let artist = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                    .queryItems?.first(where: { $0.name == "artist" })?.value
+                return .song(title: slugToName(slug), artistName: artist)
+            }
         }
 
         // Universal Link: pathComponents = ["s", "{token}"]
@@ -33,8 +45,23 @@ enum DeepLinkRouter {
             if pathComponents[0] == "u" {
                 return .profile(username: pathComponents[1])
             }
+            if pathComponents[0] == "artist" {
+                return .artist(name: slugToName(pathComponents[1]))
+            }
+            if pathComponents[0] == "song" {
+                let artist = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                    .queryItems?.first(where: { $0.name == "artist" })?.value
+                return .song(title: slugToName(pathComponents[1]), artistName: artist)
+            }
         }
 
         return nil
+    }
+
+    /// Converts a URL slug like "taylor-swift" back to "Taylor Swift"
+    private static func slugToName(_ slug: String) -> String {
+        slug.removingPercentEncoding?
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized ?? slug
     }
 }

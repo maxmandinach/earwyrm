@@ -61,97 +61,8 @@ struct HomeView: View {
                             }
                             .padding(.horizontal, Theme.Spacing.lg)
                         } else if let lyric = viewModel.currentLyric {
-                            // Hero card with actions
-                            LyricCardView(
-                                lyric: lyric,
-                                hero: true,
-                                showActions: true,
-                                isPublic: lyric.isPublic ?? false,
-                                isOwn: lyric.userId == auth.userId,
-                                onShare: { showShareModal = true },
-                                onReplace: { showPostSheet = true },
-                                onEdit: { showEditSheet = true },
-                                onVisibilityChange: { newValue in
-                                    Task { await viewModel.toggleVisibility(lyricId: lyric.id, isPublic: newValue) }
-                                },
-                                hasReacted: resonateVM?.hasReacted ?? false,
-                                reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
-                                isResonateAnimating: resonateVM?.isAnimating ?? false,
-                                onResonate: { resonateVM?.toggle() },
-                                commentCount: lyric.commentCount ?? 0,
-                                showComments: showComments,
-                                onToggleComments: { showComments.toggle() },
-                                onSave: {
-                                    bookmarkLyricId = IdentifiableUUID(lyric.id)
-                                },
-                                isSaved: collectionManager.isLyricSaved(lyric.id),
-                                note: viewModel.currentNote,
-                                currentUserId: auth.userId
-                            )
-                            .padding(.horizontal, Theme.Spacing.md)
-                            .padding(.top, Theme.Spacing.md)
-                            .cascadeReveal(delay: 0.2)
-
-                            // Collections carousel
-                            CollectionsCarouselSection(collections: collectionManager.collections)
-                                .cascadeReveal(delay: 0.3)
-
-                            // Memory Lane
-                            MemoryLaneSection(
-                                lyrics: viewModel.pastLyrics,
-                                showUpsell: !subscriptionManager.isPlus
-                            )
-                            .cascadeReveal(delay: 0.4)
-
-                            // Trending
-                            TrendingSection(
-                                lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
-                                onShare: { item in
-                                    shareCarouselLyric = item.lyric
-                                    shareCarouselUsername = item.username
-                                    shareCarouselOwnerId = item.lyric.userId
-                                },
-                                onSave: { item in
-                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
-                                },
-                                onViewProfile: { item in
-                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
-                                },
-                                onReport: { item in
-                                    reportLyric = item.lyric
-                                },
-                                onBlock: { item in
-                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
-                                    showBlockAlert = true
-                                },
-                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
-                            )
-                            .cascadeReveal(delay: 0.6)
-
-                            // From Your Follows
-                            FollowFeedSection(
-                                lyrics: viewModel.followFeedLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
-                                onShare: { item in
-                                    shareCarouselLyric = item.lyric
-                                    shareCarouselUsername = item.username
-                                    shareCarouselOwnerId = item.lyric.userId
-                                },
-                                onSave: { item in
-                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
-                                },
-                                onViewProfile: { item in
-                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
-                                },
-                                onReport: { item in
-                                    reportLyric = item.lyric
-                                },
-                                onBlock: { item in
-                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
-                                    showBlockAlert = true
-                                },
-                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
-                            )
-                            .cascadeReveal(delay: 0.8)
+                            lyricContent(lyric: lyric)
+                            socialFeedSections
 
                             // Bottom padding for FAB
                             Spacer()
@@ -213,6 +124,10 @@ struct HomeView: View {
                     SharedLyricDetailView(shareToken: token)
                 case .profile(let username):
                     ProfileUsernameResolver(username: username)
+                case .artist(let name):
+                    ArtistPageView(artistName: name)
+                case .song(let title, let artistName):
+                    SongPageView(songTitle: title, artistName: artistName, coverArtUrl: nil)
                 }
             }
             .navigationDestination(for: ProfileDestination.self) { dest in
@@ -344,6 +259,108 @@ struct HomeView: View {
         } message: {
             Text("Their content will be hidden from your feeds. You can unblock from Settings.")
         }
+    }
+
+    @ViewBuilder
+    private func lyricContent(lyric: Lyric) -> some View {
+        // Hero card with actions
+        LyricCardView(
+            lyric: lyric,
+            hero: true,
+            showActions: true,
+            isPublic: lyric.isPublic ?? false,
+            isOwn: lyric.userId == auth.userId,
+            onShare: { showShareModal = true },
+            onReplace: { showPostSheet = true },
+            onEdit: { showEditSheet = true },
+            onVisibilityChange: { newValue in
+                Task { await viewModel.toggleVisibility(lyricId: lyric.id, isPublic: newValue) }
+            },
+            hasReacted: resonateVM?.hasReacted ?? false,
+            reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
+            isResonateAnimating: resonateVM?.isAnimating ?? false,
+            onResonate: { resonateVM?.toggle() },
+            commentCount: lyric.commentCount ?? 0,
+            showComments: showComments,
+            onToggleComments: { showComments.toggle() },
+            onSave: {
+                bookmarkLyricId = IdentifiableUUID(lyric.id)
+            },
+            isSaved: collectionManager.isLyricSaved(lyric.id),
+            note: viewModel.currentNote,
+            currentUserId: auth.userId
+        )
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.md)
+        .cascadeReveal(delay: 0.2)
+
+        // Collections carousel
+        CollectionsCarouselSection(collections: collectionManager.collections)
+            .cascadeReveal(delay: 0.3)
+
+        // Followed artists carousel
+        FollowedArtistsSection(follows: followManager.follows)
+            .cascadeReveal(delay: 0.35)
+
+        // Memory Lane
+        MemoryLaneSection(
+            lyrics: viewModel.pastLyrics,
+            showUpsell: !subscriptionManager.isPlus
+        )
+        .cascadeReveal(delay: 0.45)
+    }
+
+    @ViewBuilder
+    private var socialFeedSections: some View {
+        // Trending
+        TrendingSection(
+            lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
+            onShare: { item in
+                shareCarouselLyric = item.lyric
+                shareCarouselUsername = item.username
+                shareCarouselOwnerId = item.lyric.userId
+            },
+            onSave: { item in
+                bookmarkLyricId = IdentifiableUUID(item.lyric.id)
+            },
+            onViewProfile: { item in
+                navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+            },
+            onReport: { item in
+                reportLyric = item.lyric
+            },
+            onBlock: { item in
+                blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
+                showBlockAlert = true
+            },
+            isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+        )
+        .cascadeReveal(delay: 0.65)
+
+        // From Your Follows
+        FollowFeedSection(
+            lyrics: viewModel.followFeedLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
+            onShare: { item in
+                shareCarouselLyric = item.lyric
+                shareCarouselUsername = item.username
+                shareCarouselOwnerId = item.lyric.userId
+            },
+            onSave: { item in
+                bookmarkLyricId = IdentifiableUUID(item.lyric.id)
+            },
+            onViewProfile: { item in
+                navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
+            },
+            onReport: { item in
+                reportLyric = item.lyric
+            },
+            onBlock: { item in
+                blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
+                showBlockAlert = true
+            },
+            isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+        )
+        .cascadeReveal(delay: 0.85)
     }
 
     private var emptyState: some View {

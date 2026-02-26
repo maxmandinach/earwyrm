@@ -12,6 +12,7 @@ struct ArtistPageView: View {
     @State private var isLoading = true
     @State private var search = ""
     @State private var sort: SortOption = .newest
+    @State private var showPageShare = false
 
     private var isFollowing: Bool {
         followManager.isFollowing(type: "artist", value: artistName)
@@ -34,30 +35,34 @@ struct ArtistPageView: View {
             .sorted { $0.count > $1.count }
     }
 
-    private var totalResonations: Int {
-        lyrics.reduce(0) { $0 + ($1.reactionCount ?? 0) }
+    private var stats: PageStats {
+        PageStats.from(lyrics: lyrics, songCount: uniqueSongs.count)
     }
 
-    private var mostSavedLine: Lyric? {
-        lyrics.max(by: { ($0.reactionCount ?? 0) < ($1.reactionCount ?? 0) })
+    private var allClusters: [LyricCluster] {
+        LyricClusterer.cluster(lyrics)
     }
 
-    private var filteredLyrics: [Lyric] {
-        var result = lyrics
+    private var topSavedClusters: [LyricCluster] {
+        LyricClusterer.topSaved(allClusters, limit: 3)
+    }
+
+    private var filteredClusters: [LyricCluster] {
+        var result = allClusters
         if !search.isEmpty {
             let q = search.lowercased()
             result = result.filter {
-                $0.content.lowercased().contains(q)
-                || ($0.songTitle?.lowercased().contains(q) ?? false)
+                $0.representative.content.lowercased().contains(q)
+                || ($0.representative.songTitle?.lowercased().contains(q) ?? false)
             }
         }
         switch sort {
         case .newest:
-            return result.sorted { $0.createdAt > $1.createdAt }
+            return result.sorted { $0.mostRecent.createdAt > $1.mostRecent.createdAt }
         case .resonated:
-            return result.sorted { ($0.reactionCount ?? 0) > ($1.reactionCount ?? 0) }
+            return result.sorted { $0.totalReactions > $1.totalReactions }
         case .discussed:
-            return result.sorted { ($0.commentCount ?? 0) > ($1.commentCount ?? 0) }
+            return result.sorted { $0.totalComments > $1.totalComments }
         }
     }
 
@@ -75,15 +80,13 @@ struct ArtistPageView: View {
             } else {
                 LazyVStack(spacing: Theme.Spacing.lg) {
                     artistHeader
-                    statsRow
+                    PageStatsRow(stats: stats)
 
                     if !uniqueSongs.isEmpty {
                         songsList
                     }
 
-                    if let top = mostSavedLine, (top.reactionCount ?? 0) > 0 {
-                        mostSavedSection(lyric: top)
-                    }
+                    MostSavedSection(clusters: topSavedClusters)
 
                     feedSection
                 }
@@ -92,9 +95,41 @@ struct ArtistPageView: View {
         }
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showPageShare = true
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+        }
+        .sheet(isPresented: $showPageShare) {
+            PageShareModalView(
+                pageTitle: artistName,
+                pageSubtitle: nil,
+                stats: stats,
+                featuredLyric: topSavedClusters.first?.representative.content,
+                coverArtUrl: lyrics.first(where: { $0.coverArtUrl != nil })?.coverArtUrl,
+                shareURL: artistShareURL,
+                shareText: "lyrics from \(artistName) on earwyrm"
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .task {
             await fetchArtistLyrics()
+            Analytics.track(.artistPageViewed, ["artist": artistName])
         }
+    }
+
+    private var artistShareURL: URL? {
+        let slug = artistName.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? artistName
+        return URL(string: "https://earwyrm.app/artist/\(slug)")
     }
 
     // MARK: - Loading
@@ -120,28 +155,18 @@ struct ArtistPageView: View {
 
     private var artistHeader: some View {
         VStack(spacing: Theme.Spacing.md) {
-            // Use first cover art from their lyrics, or initial
             if let firstCover = lyrics.first(where: { $0.coverArtUrl != nil })?.coverArtUrl,
                let url = URL(string: firstCover) {
                 AsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    Circle()
-                        .fill(Theme.accent.opacity(0.3))
-                        .overlay(
-                            CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.textPrimary)
-                        )
+                    artistInitialCircle
                 }
                 .frame(width: 80, height: 80)
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.1), radius: 6, y: 2)
             } else {
-                Circle()
-                    .fill(Theme.accent.opacity(0.3))
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.textPrimary)
-                    )
+                artistInitialCircle
             }
 
             Text(artistName)
@@ -166,26 +191,13 @@ struct ArtistPageView: View {
         .padding(.horizontal, Theme.Spacing.md)
     }
 
-    // MARK: - Stats
-
-    private var statsRow: some View {
-        HStack(spacing: Theme.Spacing.xl) {
-            statItem(value: "\(lyrics.count)", label: "saves")
-            statItem(value: "\(uniqueSongs.count)", label: "songs")
-            statItem(value: "\(totalResonations)", label: "resonations")
-        }
-        .padding(.horizontal, Theme.Spacing.md)
-    }
-
-    private func statItem(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(Theme.dmSans(18, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            Text(label)
-                .font(Theme.dmSans(12))
-                .foregroundStyle(Theme.textMuted)
-        }
+    private var artistInitialCircle: some View {
+        Circle()
+            .fill(Theme.accent.opacity(0.3))
+            .frame(width: 80, height: 80)
+            .overlay(
+                CaveatText(text: String(artistName.prefix(1)).uppercased(), size: 36, weight: .bold, color: Theme.textPrimary)
+            )
     }
 
     // MARK: - Songs
@@ -205,37 +217,7 @@ struct ArtistPageView: View {
                             artistName: artistName,
                             coverArtUrl: song.coverArt
                         )) {
-                            VStack(spacing: Theme.Spacing.sm) {
-                                if let url = song.coverArt,
-                                   let imageUrl = URL(string: url) {
-                                    AsyncImage(url: imageUrl) { image in
-                                        image.resizable().aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Theme.dividerColor)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                } else {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Theme.dividerColor)
-                                        .frame(width: 80, height: 80)
-                                        .overlay(
-                                            Image(systemName: "music.note")
-                                                .foregroundStyle(Theme.textMuted)
-                                        )
-                                }
-
-                                Text(song.title)
-                                    .font(Theme.dmSans(12))
-                                    .foregroundStyle(Theme.textPrimary)
-                                    .lineLimit(2)
-                                    .frame(width: 80)
-
-                                Text("\(song.count) save\(song.count == 1 ? "" : "s")")
-                                    .font(Theme.dmSans(11))
-                                    .foregroundStyle(Theme.textMuted)
-                            }
+                            songTile(song)
                         }
                     }
                 }
@@ -244,17 +226,38 @@ struct ArtistPageView: View {
         }
     }
 
-    // MARK: - Most Saved
+    @ViewBuilder
+    private func songTile(_ song: (title: String, coverArt: String?, count: Int)) -> some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            if let url = song.coverArt,
+               let imageUrl = URL(string: url) {
+                AsyncImage(url: imageUrl) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Theme.dividerColor)
+                }
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Theme.dividerColor)
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .foregroundStyle(Theme.textMuted)
+                    )
+            }
 
-    private func mostSavedSection(lyric: Lyric) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("most saved line")
-                .font(Theme.caveat(22))
-                .foregroundStyle(Theme.textSecondary)
-                .padding(.horizontal, Theme.Spacing.md)
+            Text(song.title)
+                .font(Theme.dmSans(12))
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(2)
+                .frame(width: 80)
 
-            CompactLyricCard(lyric: lyric)
-                .padding(.horizontal, Theme.Spacing.md)
+            Text("\(song.count) save\(song.count == 1 ? "" : "s")")
+                .font(Theme.dmSans(11))
+                .foregroundStyle(Theme.textMuted)
         }
     }
 
@@ -262,56 +265,19 @@ struct ArtistPageView: View {
 
     private var feedSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("recent saves")
+            Text("all saves")
                 .font(Theme.caveat(22))
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.horizontal, Theme.Spacing.md)
 
-            // Search + sort
-            HStack(spacing: Theme.Spacing.sm) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textMuted)
-                    TextField("Search lyrics...", text: $search)
-                        .font(Theme.dmSans(13))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(Theme.card)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            searchSortBar
 
-                Menu {
-                    ForEach(SortOption.allCases, id: \.self) { option in
-                        Button {
-                            sort = option
-                            Haptics.light()
-                        } label: {
-                            HStack {
-                                Text(option.rawValue)
-                                if sort == option {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 36, height: 36)
-                        .background(Theme.card)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-
-            ForEach(filteredLyrics) { lyric in
-                CompactLyricCard(lyric: lyric)
+            ForEach(filteredClusters) { cluster in
+                ClusteredLyricCard(cluster: cluster)
                     .padding(.horizontal, Theme.Spacing.md)
             }
 
-            if filteredLyrics.isEmpty && !isLoading {
+            if filteredClusters.isEmpty && !isLoading {
                 Text("No lyrics found")
                     .font(Theme.dmSans(14))
                     .foregroundStyle(Theme.textMuted)
@@ -319,6 +285,46 @@ struct ArtistPageView: View {
                     .padding(.vertical, Theme.Spacing.lg)
             }
         }
+    }
+
+    private var searchSortBar: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textMuted)
+                TextField("Search lyrics...", text: $search)
+                    .font(Theme.dmSans(13))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Menu {
+                ForEach(SortOption.allCases, id: \.self) { option in
+                    Button {
+                        sort = option
+                        Haptics.light()
+                    } label: {
+                        HStack {
+                            Text(option.rawValue)
+                            if sort == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
     }
 
     // MARK: - Data
