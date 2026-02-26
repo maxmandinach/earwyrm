@@ -40,7 +40,7 @@ struct ExploreFollowingView: View {
     var body: some View {
         LazyVStack(spacing: Theme.Spacing.md) {
             if followManager.follows.isEmpty {
-                FollowDiscoveryView(viewModel: viewModel)
+                FollowDiscoveryView()
                     .padding(.top, Theme.Spacing.md)
             } else {
                 // Follow chips

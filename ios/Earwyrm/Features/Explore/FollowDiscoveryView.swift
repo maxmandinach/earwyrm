@@ -1,9 +1,59 @@
 import SwiftUI
 
+struct SuggestedArtist {
+    let name: String
+    let genre: String
+}
+
 struct FollowDiscoveryView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(FollowManager.self) private var followManager
-    let viewModel: ExploreViewModel
+
+    var genreFilter: Set<String> = []
+
+    static let allGenres = ["Pop", "Hip-Hop", "R&B", "Rock", "Indie", "Country", "Latin"]
+
+    private static let suggestedArtists: [SuggestedArtist] = [
+        // Pop
+        SuggestedArtist(name: "Taylor Swift", genre: "Pop"),
+        SuggestedArtist(name: "Billie Eilish", genre: "Pop"),
+        SuggestedArtist(name: "Olivia Rodrigo", genre: "Pop"),
+        SuggestedArtist(name: "Dua Lipa", genre: "Pop"),
+        SuggestedArtist(name: "Harry Styles", genre: "Pop"),
+        SuggestedArtist(name: "Sabrina Carpenter", genre: "Pop"),
+        SuggestedArtist(name: "Beyoncé", genre: "Pop"),
+        // Hip-Hop
+        SuggestedArtist(name: "Kendrick Lamar", genre: "Hip-Hop"),
+        SuggestedArtist(name: "Drake", genre: "Hip-Hop"),
+        SuggestedArtist(name: "Tyler, the Creator", genre: "Hip-Hop"),
+        // R&B
+        SuggestedArtist(name: "SZA", genre: "R&B"),
+        SuggestedArtist(name: "The Weeknd", genre: "R&B"),
+        SuggestedArtist(name: "Frank Ocean", genre: "R&B"),
+        // Rock
+        SuggestedArtist(name: "Radiohead", genre: "Rock"),
+        SuggestedArtist(name: "Arctic Monkeys", genre: "Rock"),
+        SuggestedArtist(name: "Fleetwood Mac", genre: "Rock"),
+        SuggestedArtist(name: "The Beatles", genre: "Rock"),
+        SuggestedArtist(name: "Led Zeppelin", genre: "Rock"),
+        // Indie
+        SuggestedArtist(name: "Phoebe Bridgers", genre: "Indie"),
+        SuggestedArtist(name: "Hozier", genre: "Indie"),
+        SuggestedArtist(name: "Tame Impala", genre: "Indie"),
+        SuggestedArtist(name: "Bon Iver", genre: "Indie"),
+        // Country
+        SuggestedArtist(name: "Zach Bryan", genre: "Country"),
+        SuggestedArtist(name: "Noah Kahan", genre: "Country"),
+        // Latin
+        SuggestedArtist(name: "Bad Bunny", genre: "Latin"),
+    ]
+
+    private var filteredArtists: [SuggestedArtist] {
+        if genreFilter.isEmpty {
+            return Self.suggestedArtists
+        }
+        return Self.suggestedArtists.filter { genreFilter.contains($0.genre) }
+    }
 
     @State private var query = ""
     @State private var searchResults: [MBArtist] = []
@@ -113,16 +163,14 @@ struct FollowDiscoveryView: View {
 
     private var trendingSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            if !viewModel.trendingArtists.isEmpty {
-                Text("popular on earwyrm")
-                    .font(Theme.caveat(18))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, Theme.Spacing.md)
+            Text("popular artists")
+                .font(Theme.caveat(18))
+                .foregroundStyle(Theme.textSecondary)
+                .padding(.horizontal, Theme.Spacing.md)
 
-                ForEach(viewModel.trendingArtists, id: \.self) { artistName in
-                    artistRow(name: artistName, disambiguation: nil)
-                        .padding(.horizontal, Theme.Spacing.md)
-                }
+            ForEach(filteredArtists, id: \.name) { artist in
+                artistRow(name: artist.name, disambiguation: nil)
+                    .padding(.horizontal, Theme.Spacing.md)
             }
         }
     }

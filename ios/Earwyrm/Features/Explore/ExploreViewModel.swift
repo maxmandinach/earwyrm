@@ -40,19 +40,6 @@ final class ExploreViewModel {
     var profileMap: [UUID: String] = [:]
     var trendingTags: [TrendingTag] = []
     var isLoading = false
-
-    var trendingArtists: [String] {
-        var counts: [String: Int] = [:]
-        for lyric in allLyrics {
-            if let name = lyric.artistName, !name.isEmpty {
-                counts[name, default: 0] += 1
-            }
-        }
-        return counts
-            .sorted { $0.value > $1.value }
-            .prefix(8)
-            .map(\.key)
-    }
     var error: String?
 
     private static let lyricColumns = """

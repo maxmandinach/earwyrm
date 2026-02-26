@@ -12,7 +12,6 @@ struct ContentView: View {
     @AppStorage("hasSeenInterestPicker") private var hasSeenInterestPicker = false
     @State private var anonBrowsing = false
     @State private var showInterestPicker = false
-    @State private var interestPickerVM = ExploreViewModel()
 
     var body: some View {
         ZStack {
@@ -52,7 +51,7 @@ struct ContentView: View {
             EarwyrmPlusPaywall()
         }
         .sheet(isPresented: $showInterestPicker) {
-            InterestPickerSheet(viewModel: interestPickerVM)
+            InterestPickerSheet()
                 .presentationDetents([.large])
         }
         .onChange(of: auth.isAuthenticated) { _, isAuth in
@@ -60,11 +59,8 @@ struct ContentView: View {
                 authGate.showAuthSheet = false
                 anonBrowsing = false
                 if !hasSeenInterestPicker && followManager.follows.isEmpty {
-                    Task {
-                        await interestPickerVM.fetchPublicLyrics()
-                        showInterestPicker = true
-                        Analytics.track(.interestPickerShown)
-                    }
+                    showInterestPicker = true
+                    Analytics.track(.interestPickerShown)
                 }
             }
         }
