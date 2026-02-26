@@ -76,8 +76,8 @@ struct CollectionPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .font(Theme.dmSans(15, weight: .medium))
-                        .foregroundStyle(Theme.accent)
+                        .font(Theme.dmSans(15, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
                 }
             }
         }

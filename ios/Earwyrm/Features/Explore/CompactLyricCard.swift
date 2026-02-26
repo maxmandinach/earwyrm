@@ -9,6 +9,19 @@ struct CompactLyricCard: View {
     var onBlock: (() -> Void)?
     var isSaved: Bool = false
 
+    // Resonate state
+    var hasReacted: Bool = false
+    var reactionCount: Int?
+    var isResonateAnimating: Bool = false
+    var onResonate: (() -> Void)?
+
+    // Comment
+    var onComment: (() -> Void)?
+
+    private var displayReactionCount: Int {
+        reactionCount ?? lyric.reactionCount ?? 0
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Lyric content — 3-line clamp, smaller Caveat
@@ -50,22 +63,52 @@ struct CompactLyricCard: View {
                 }
             }
 
-            // Inline counts row: waveform + comments + share + username + timestamp
+            // Inline counts row
             HStack(spacing: Theme.Spacing.md) {
-                HStack(spacing: 4) {
-                    ResonateIcon(isActive: false, isAnimating: false, size: 14)
-                    Text("\(lyric.reactionCount ?? 0)")
-                        .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.textMuted)
+                // Resonate button
+                if let onResonate {
+                    Button(action: onResonate) {
+                        HStack(spacing: 4) {
+                            ResonateIcon(isActive: hasReacted, isAnimating: isResonateAnimating, size: 14)
+                            Text("\(displayReactionCount)")
+                                .font(Theme.dmSans(12))
+                                .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    HStack(spacing: 4) {
+                        ResonateIcon(isActive: false, isAnimating: false, size: 14)
+                        Text("\(displayReactionCount)")
+                            .font(Theme.dmSans(12))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                    .opacity(0.5)
                 }
 
-                HStack(spacing: 4) {
-                    Image(systemName: "bubble.left")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.textMuted)
-                    Text("\(lyric.commentCount ?? 0)")
-                        .font(Theme.dmSans(12))
-                        .foregroundStyle(Theme.textMuted)
+                // Comment button
+                if let onComment {
+                    Button(action: onComment) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "bubble.left")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.textMuted)
+                            Text("\(lyric.commentCount ?? 0)")
+                                .font(Theme.dmSans(12))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bubble.left")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.textMuted)
+                        Text("\(lyric.commentCount ?? 0)")
+                            .font(Theme.dmSans(12))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                    .opacity(0.5)
                 }
 
                 if let username {
@@ -107,6 +150,11 @@ struct CompactLyricCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
         .contextMenu {
+            if let onResonate {
+                Button { onResonate() } label: {
+                    Label(hasReacted ? "Remove Resonation" : "Resonate", systemImage: hasReacted ? "waveform.circle.fill" : "waveform.circle")
+                }
+            }
             if let onShare {
                 Button { onShare() } label: {
                     Label("Share", systemImage: "square.and.arrow.up")

@@ -7,12 +7,21 @@ struct ArtistPageView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(AuthGate.self) private var authGate
     @Environment(FollowManager.self) private var followManager
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(ToastManager.self) private var toastManager
 
     @State private var lyrics: [Lyric] = []
     @State private var isLoading = true
     @State private var search = ""
     @State private var sort: SortOption = .newest
     @State private var showPageShare = false
+
+    // Interaction state
+    @State private var reactionStates: [UUID: Bool] = [:]
+    @State private var reactionCounts: [UUID: Int] = [:]
+    @State private var animatingReactions: Set<UUID> = []
+    @State private var bookmarkLyricId: IdentifiableUUID?
+    @State private var shareLyric: Lyric?
 
     private var isFollowing: Bool {
         followManager.isFollowing(type: "artist", value: artistName)
@@ -119,8 +128,19 @@ struct ArtistPageView: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
+        .sheet(item: $shareLyric) { lyric in
+            ShareModalView(lyric: lyric, note: nil, username: nil)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .task {
             await fetchArtistLyrics()
+            await fetchReactionStates()
             Analytics.track(.artistPageViewed, ["artist": artistName])
         }
     }
@@ -273,8 +293,18 @@ struct ArtistPageView: View {
             searchSortBar
 
             ForEach(filteredClusters) { cluster in
-                ClusteredLyricCard(cluster: cluster)
-                    .padding(.horizontal, Theme.Spacing.md)
+                let lyric = cluster.representative
+                ClusteredLyricCard(
+                    cluster: cluster,
+                    hasReacted: reactionStates[lyric.id] ?? false,
+                    reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
+                    isResonateAnimating: animatingReactions.contains(lyric.id),
+                    onResonate: { toggleReaction(for: lyric) },
+                    onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                    onShare: { shareLyric = lyric },
+                    isSaved: collectionManager.isLyricSaved(lyric.id)
+                )
+                .padding(.horizontal, Theme.Spacing.md)
             }
 
             if filteredClusters.isEmpty && !isLoading {
@@ -346,5 +376,76 @@ struct ArtistPageView: View {
             print("Fetch artist lyrics error: \(error)")
         }
         isLoading = false
+    }
+
+    // MARK: - Reactions
+
+    private func fetchReactionStates() async {
+        guard let userId = auth.userId else { return }
+        let lyricIds = lyrics.map { $0.id.uuidString }
+        guard !lyricIds.isEmpty else { return }
+        do {
+            let reactions: [Reaction] = try await supabase
+                .from("reactions")
+                .select("id, lyric_id, user_id, created_at")
+                .eq("user_id", value: userId.uuidString)
+                .in("lyric_id", values: lyricIds)
+                .execute()
+                .value
+            for reaction in reactions {
+                reactionStates[reaction.lyricId] = true
+            }
+        } catch {
+            print("Fetch reaction states error: \(error)")
+        }
+    }
+
+    private func toggleReaction(for lyric: Lyric) {
+        guard let userId = auth.userId else {
+            authGate.showAuthSheet = true
+            return
+        }
+
+        let wasReacted = reactionStates[lyric.id] ?? false
+        let currentCount = reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
+
+        // Optimistic update
+        reactionStates[lyric.id] = !wasReacted
+        reactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
+
+        if !wasReacted {
+            animatingReactions.insert(lyric.id)
+            Haptics.medium()
+            Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                animatingReactions.remove(lyric.id)
+            }
+        } else {
+            Haptics.light()
+        }
+
+        Task {
+            do {
+                if wasReacted {
+                    try await supabase
+                        .from("reactions")
+                        .delete()
+                        .eq("lyric_id", value: lyric.id.uuidString)
+                        .eq("user_id", value: userId.uuidString)
+                        .execute()
+                } else {
+                    let insert = ReactionInsert(lyricId: lyric.id, userId: userId)
+                    try await supabase
+                        .from("reactions")
+                        .insert(insert)
+                        .execute()
+                }
+            } catch {
+                // Revert
+                reactionStates[lyric.id] = wasReacted
+                reactionCounts[lyric.id] = currentCount
+                toastManager.show("couldn't resonate, try again")
+            }
+        }
     }
 }
