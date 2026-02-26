@@ -7,6 +7,10 @@ struct ExploreForYouView: View {
     let viewModel: ExploreViewModel
     var onShare: ((Lyric, String?) -> Void)?
 
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(AuthGate.self) private var authGate
+    @Environment(ToastManager.self) private var toastManager
+
     @State private var search = ""
     @State private var reportLyric: Lyric?
     @State private var blockTarget: (userId: UUID, username: String)?
@@ -15,6 +19,12 @@ struct ExploreForYouView: View {
     @State private var sort: SortOption = .newest
     @State private var selectedTags: Set<String> = []
     @State private var visibleCount = 20
+
+    // Interaction state
+    @State private var reactionStates: [UUID: Bool] = [:]
+    @State private var reactionCounts: [UUID: Int] = [:]
+    @State private var animatingReactions: Set<UUID> = []
+    @State private var bookmarkLyricId: IdentifiableUUID?
 
     private var feed: [Lyric] {
         viewModel.forYouFeed(
@@ -64,11 +74,17 @@ struct ExploreForYouView: View {
                         lyric: lyric,
                         username: viewModel.profileMap[lyric.userId],
                         onShare: onShare != nil ? { onShare?(lyric, viewModel.profileMap[lyric.userId]) } : nil,
+                        onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
                         onReport: { reportLyric = lyric },
                         onBlock: {
                             blockTarget = (userId: lyric.userId, username: viewModel.profileMap[lyric.userId] ?? "user")
                             showBlockAlert = true
-                        }
+                        },
+                        isSaved: collectionManager.isLyricSaved(lyric.id),
+                        hasReacted: reactionStates[lyric.id] ?? false,
+                        reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
+                        isResonateAnimating: animatingReactions.contains(lyric.id),
+                        onResonate: { toggleReaction(for: lyric) }
                     )
                     .padding(.horizontal, Theme.Spacing.md)
                 }
@@ -115,6 +131,86 @@ struct ExploreForYouView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Their content will be hidden from your feeds.")
+        }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .task {
+            await fetchReactionStates()
+        }
+        .onChange(of: viewModel.isLoading) { _, isLoading in
+            if !isLoading { Task { await fetchReactionStates() } }
+        }
+    }
+
+    // MARK: - Reactions
+
+    private func fetchReactionStates() async {
+        guard let userId = auth.userId else { return }
+        let lyricIds = feed.map { $0.id.uuidString }
+        guard !lyricIds.isEmpty else { return }
+        do {
+            let reactions: [Reaction] = try await supabase
+                .from("reactions")
+                .select("id, lyric_id, user_id, created_at")
+                .eq("user_id", value: userId.uuidString)
+                .in("lyric_id", values: lyricIds)
+                .execute()
+                .value
+            for reaction in reactions {
+                reactionStates[reaction.lyricId] = true
+            }
+        } catch {
+            print("Fetch reaction states error: \(error)")
+        }
+    }
+
+    private func toggleReaction(for lyric: Lyric) {
+        guard let userId = auth.userId else {
+            authGate.showAuthSheet = true
+            return
+        }
+
+        let wasReacted = reactionStates[lyric.id] ?? false
+        let currentCount = reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
+
+        reactionStates[lyric.id] = !wasReacted
+        reactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
+
+        if !wasReacted {
+            animatingReactions.insert(lyric.id)
+            Haptics.medium()
+            Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                animatingReactions.remove(lyric.id)
+            }
+        } else {
+            Haptics.light()
+        }
+
+        Task {
+            do {
+                if wasReacted {
+                    try await supabase
+                        .from("reactions")
+                        .delete()
+                        .eq("lyric_id", value: lyric.id.uuidString)
+                        .eq("user_id", value: userId.uuidString)
+                        .execute()
+                } else {
+                    let insert = ReactionInsert(lyricId: lyric.id, userId: userId)
+                    try await supabase
+                        .from("reactions")
+                        .insert(insert)
+                        .execute()
+                }
+            } catch {
+                reactionStates[lyric.id] = wasReacted
+                reactionCounts[lyric.id] = currentCount
+                toastManager.show("couldn't resonate, try again")
+            }
         }
     }
 
