@@ -27,7 +27,7 @@ final class ToastManager {
         }
 
         dismissTask = Task {
-            try? await Task.sleep(for: .seconds(2.5))
+            try? await Task.sleep(for: .seconds(style == .success ? 3.5 : 2.5))
             guard !Task.isCancelled else { return }
             currentToast = nil
         }

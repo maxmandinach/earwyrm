@@ -48,11 +48,11 @@ struct InterestPickerSheet: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Skip") {
+                    Button(step == 2 && followCount > 0 ? "Done" : "Skip") {
                         complete()
                     }
-                    .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.textMuted)
+                    .font(Theme.dmSans(14, weight: step == 2 && followCount > 0 ? .semibold : .regular))
+                    .foregroundStyle(step == 2 && followCount > 0 ? Theme.accent : Theme.textMuted)
                 }
             }
         }
@@ -74,35 +74,47 @@ struct InterestPickerSheet: View {
             .padding(.top, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
 
-            LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 90), spacing: Theme.Spacing.sm)],
-                spacing: Theme.Spacing.sm
-            ) {
-                ForEach(FollowDiscoveryView.allGenres, id: \.self) { genre in
-                    genreChip(genre)
+            ScrollView {
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 90), spacing: Theme.Spacing.sm)],
+                    spacing: Theme.Spacing.sm
+                ) {
+                    ForEach(FollowDiscoveryView.allGenres, id: \.self) { genre in
+                        genreChip(genre)
+                    }
                 }
+                .padding(.horizontal, Theme.Spacing.lg)
+                .padding(.bottom, Theme.Spacing.xl)
             }
-            .padding(.horizontal, Theme.Spacing.lg)
 
-            Spacer()
+            if !selectedGenres.isEmpty {
+                Button {
+                    withAnimation { step = 2 }
+                    Haptics.light()
+                } label: {
+                    Text("Next")
+                        .font(Theme.dmSans(15, weight: .medium))
+                        .foregroundStyle(Theme.accent)
+                }
+                .padding(.bottom, Theme.Spacing.lg)
+                .transition(.opacity)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: selectedGenres)
     }
 
     private func genreChip(_ genre: String) -> some View {
         let isSelected = selectedGenres.contains(genre)
 
         return Button {
-            if isSelected {
-                selectedGenres.remove(genre)
-            } else {
-                selectedGenres.insert(genre)
-                Haptics.light()
-                // Auto-advance to step 2 after a brief moment
-                Task {
-                    try? await Task.sleep(for: .milliseconds(400))
-                    withAnimation { step = 2 }
+            withAnimation(.easeInOut(duration: 0.15)) {
+                if isSelected {
+                    selectedGenres.remove(genre)
+                } else {
+                    selectedGenres.insert(genre)
                 }
             }
+            Haptics.light()
         } label: {
             Text(genre)
                 .font(Theme.dmSans(14, weight: .medium))

@@ -50,7 +50,12 @@ struct ContentView: View {
         .sheet(isPresented: Bindable(subscriptionGate).showPaywall) {
             EarwyrmPlusPaywall()
         }
-        .sheet(isPresented: $showInterestPicker) {
+        .sheet(isPresented: $showInterestPicker, onDismiss: {
+            let count = followManager.follows.count
+            if count > 0 {
+                toastManager.show("following \(count) artist\(count == 1 ? "" : "s")", style: .success)
+            }
+        }) {
             InterestPickerSheet()
                 .presentationDetents([.large])
         }
