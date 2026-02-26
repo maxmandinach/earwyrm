@@ -209,6 +209,24 @@ struct FollowDiscoveryView: View {
     @State private var searchResults: [MBArtist] = []
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
+    @State private var currentSearchId: UUID?
+
+    /// Local recommended artists matching the query (instant, no network)
+    private var localMatches: [SuggestedArtist] {
+        guard query.count >= 2 else { return [] }
+        let q = query.lowercased()
+        return Self.suggestedArtists.filter { $0.name.lowercased().contains(q) }
+    }
+
+    /// Names already shown from API results, used to de-dupe local matches
+    private var apiNames: Set<String> {
+        Set(searchResults.map { $0.name.lowercased() })
+    }
+
+    /// Local matches not already in API results
+    private var uniqueLocalMatches: [SuggestedArtist] {
+        localMatches.filter { !apiNames.contains($0.name.lowercased()) }
+    }
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
@@ -241,6 +259,7 @@ struct FollowDiscoveryView: View {
                 Button {
                     query = ""
                     searchResults = []
+                    isSearching = false
                     Haptics.light()
                 } label: {
                     Image(systemName: "xmark")
@@ -259,14 +278,17 @@ struct FollowDiscoveryView: View {
             guard newValue.count >= 2 else {
                 searchResults = []
                 isSearching = false
+                currentSearchId = nil
                 return
             }
+            let thisSearchId = UUID()
+            currentSearchId = thisSearchId
             isSearching = true
             searchTask = Task {
                 try? await Task.sleep(for: .milliseconds(300))
-                guard !Task.isCancelled else { return }
-                let results = await MusicBrainzService.shared.searchArtists(query: newValue, limit: 5)
-                guard !Task.isCancelled else { return }
+                guard currentSearchId == thisSearchId else { return }
+                let results = await MusicBrainzService.shared.searchArtists(query: newValue, limit: 8)
+                guard currentSearchId == thisSearchId else { return }
                 searchResults = results
                 isSearching = false
             }
@@ -277,7 +299,20 @@ struct FollowDiscoveryView: View {
 
     private var searchResultsList: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if isSearching && searchResults.isEmpty {
+            // Show local matches immediately (no network needed)
+            if !uniqueLocalMatches.isEmpty {
+                ForEach(uniqueLocalMatches, id: \.name) { artist in
+                    artistRow(name: artist.name, disambiguation: nil)
+                        .padding(.horizontal, Theme.Spacing.md)
+
+                    Divider()
+                        .foregroundStyle(Theme.dividerColor)
+                        .padding(.horizontal, Theme.Spacing.md)
+                }
+            }
+
+            // API results
+            if isSearching && searchResults.isEmpty && uniqueLocalMatches.isEmpty {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.7)
@@ -288,7 +323,19 @@ struct FollowDiscoveryView: View {
                 }
                 .padding(12)
                 .padding(.horizontal, Theme.Spacing.md)
-            } else if searchResults.isEmpty && query.count >= 2 {
+            } else if isSearching && searchResults.isEmpty {
+                // Local results are showing, add subtle loading indicator
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                        .tint(Theme.textMuted)
+                    Text("searching more...")
+                        .font(Theme.dmSans(12))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .padding(8)
+                .padding(.horizontal, Theme.Spacing.md)
+            } else if searchResults.isEmpty && uniqueLocalMatches.isEmpty && query.count >= 2 {
                 Text("No artists found")
                     .font(Theme.dmSans(13))
                     .foregroundStyle(Theme.textMuted)

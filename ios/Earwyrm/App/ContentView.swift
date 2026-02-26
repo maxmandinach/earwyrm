@@ -51,6 +51,10 @@ struct ContentView: View {
             EarwyrmPlusPaywall()
         }
         .sheet(isPresented: $showInterestPicker, onDismiss: {
+            // Re-fetch follows so HomeView carousel populates immediately
+            if let userId = auth.userId {
+                Task { await followManager.fetchFollows(userId: userId) }
+            }
             let count = followManager.follows.count
             if count > 0 {
                 toastManager.show("following \(count) artist\(count == 1 ? "" : "s")", style: .success)
@@ -63,9 +67,14 @@ struct ContentView: View {
             if isAuth {
                 authGate.showAuthSheet = false
                 anonBrowsing = false
-                if !hasSeenInterestPicker && followManager.follows.isEmpty {
-                    showInterestPicker = true
-                    Analytics.track(.interestPickerShown)
+                Task {
+                    if let userId = auth.userId {
+                        await followManager.fetchFollows(userId: userId)
+                    }
+                    if !hasSeenInterestPicker && followManager.follows.isEmpty {
+                        showInterestPicker = true
+                        Analytics.track(.interestPickerShown)
+                    }
                 }
             }
         }

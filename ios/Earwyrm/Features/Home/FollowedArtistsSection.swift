@@ -86,11 +86,13 @@ struct FollowedArtistsSection: View {
         for follow in artistFollows {
             let name = follow.filterValue
             do {
+                // Pick the most recent lyric's cover art (matches artist page ordering)
                 let rows: [CoverArtRow] = try await supabase
                     .from("lyrics")
                     .select("cover_art_url")
                     .ilike("artist_name", pattern: name)
                     .not("cover_art_url", operator: .is, value: "null")
+                    .order("created_at", ascending: false)
                     .limit(1)
                     .execute()
                     .value

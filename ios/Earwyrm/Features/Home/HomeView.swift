@@ -71,6 +71,10 @@ struct HomeView: View {
                             // Empty state — CTA + trending content
                             emptyState
 
+                            // Show followed artists even without a current lyric
+                            FollowedArtistsSection(follows: followManager.follows)
+                                .cascadeReveal(delay: 0.35)
+
                             // Show trending even without a current lyric
                             TrendingSection(
                                 lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
