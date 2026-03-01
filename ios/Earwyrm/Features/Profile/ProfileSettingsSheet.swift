@@ -11,6 +11,7 @@ struct ProfileSettingsSheet: View {
     @State private var isSigningOut = false
     @State private var hasLoaded = false
     @State private var showPaywall = false
+    @AppStorage("preferredMusicService") private var preferredMusicService = "spotify"
 
     var body: some View {
         NavigationStack {
@@ -22,6 +23,7 @@ struct ProfileSettingsSheet: View {
                     VStack(spacing: Theme.Spacing.lg) {
                         subscriptionSection
                         appearanceSection
+                        musicServiceSection
                         editProfileSection
                         notificationsSection
                         privacySection
@@ -88,6 +90,41 @@ struct ProfileSettingsSheet: View {
             .pickerStyle(.segmented)
             .onChange(of: appearance.mode) { _, newMode in
                 Analytics.track(.appearanceChanged, ["mode": newMode.rawValue])
+            }
+        }
+    }
+
+    // MARK: - Music Service
+
+    private var musicServiceSection: some View {
+        settingsSection("music") {
+            VStack(spacing: Theme.Spacing.md) {
+                musicServiceRow("spotify", icon: "play.circle.fill", name: "Spotify", color: Color(red: 0.114, green: 0.725, blue: 0.329))
+                musicServiceRow("apple_music", icon: "applelogo", name: "Apple Music", color: Color(red: 0.988, green: 0.235, blue: 0.267))
+                musicServiceRow("youtube_music", icon: "play.rectangle.fill", name: "YouTube Music", color: .red)
+            }
+        }
+    }
+
+    private func musicServiceRow(_ value: String, icon: String, name: String, color: Color) -> some View {
+        Button {
+            preferredMusicService = value
+            Haptics.light()
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: icon)
+                    .font(.system(size: 15))
+                    .foregroundStyle(color)
+                    .frame(width: 24)
+                Text(name)
+                    .font(Theme.dmSans(15))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                if preferredMusicService == value {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Theme.accent)
+                }
             }
         }
     }

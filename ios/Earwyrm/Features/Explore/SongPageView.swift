@@ -19,6 +19,7 @@ struct SongPageView: View {
     @State private var sort: SortOption = .newest
     @State private var showPageShare = false
     @State private var selectedTab = 0
+    @AppStorage("preferredMusicService") private var preferredMusicService = "spotify"
 
     // Interaction state
     @State private var reactionStates: [UUID: Bool] = [:]
@@ -292,8 +293,71 @@ struct SongPageView: View {
                     authGate.showAuthSheet = true
                 }
             }
+
+            listenOnButton
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - Listen On
+
+    @ViewBuilder
+    private var listenOnButton: some View {
+        if let url = listenOnURL {
+            Link(destination: url) {
+                HStack(spacing: 6) {
+                    Image(systemName: musicServiceIcon)
+                        .font(.system(size: 12))
+                    Text(musicServiceLabel)
+                        .font(Theme.dmSans(13, weight: .medium))
+                }
+                .foregroundStyle(musicServiceColor)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(musicServiceColor.opacity(0.1))
+                .clipShape(Capsule())
+            }
+        }
+    }
+
+    private var listenOnURL: URL? {
+        guard let artist = artistName else { return nil }
+        let query = "\(artist) \(songTitle)"
+        switch preferredMusicService {
+        case "apple_music":
+            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+            return URL(string: "https://music.apple.com/search?term=\(encoded)")
+        case "youtube_music":
+            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+            return URL(string: "https://music.youtube.com/search?q=\(encoded)")
+        default:
+            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? query
+            return URL(string: "https://open.spotify.com/search/\(encoded)")
+        }
+    }
+
+    private var musicServiceColor: Color {
+        switch preferredMusicService {
+        case "apple_music": return Color(red: 0.988, green: 0.235, blue: 0.267)
+        case "youtube_music": return .red
+        default: return Color(red: 0.114, green: 0.725, blue: 0.329)
+        }
+    }
+
+    private var musicServiceIcon: String {
+        switch preferredMusicService {
+        case "apple_music": return "applelogo"
+        case "youtube_music": return "play.rectangle.fill"
+        default: return "play.circle.fill"
+        }
+    }
+
+    private var musicServiceLabel: String {
+        switch preferredMusicService {
+        case "apple_music": return "listen on Apple Music"
+        case "youtube_music": return "listen on YouTube Music"
+        default: return "listen on Spotify"
+        }
     }
 
     // MARK: - Posts Content

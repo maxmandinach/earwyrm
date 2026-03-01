@@ -38,6 +38,16 @@ export default function Settings() {
     return localStorage.getItem('earwyrm-theme') || 'auto'
   })
 
+  // Music service preference
+  const [musicService, setMusicService] = useState(() => {
+    return localStorage.getItem('earwyrm-music-service') || 'spotify'
+  })
+
+  const handleMusicServiceChange = (service) => {
+    setMusicService(service)
+    localStorage.setItem('earwyrm-music-service', service)
+  }
+
   const handleThemeChange = (preference) => {
     setThemePreference(preference)
     setColorSchemePreference(preference)
@@ -387,6 +397,39 @@ export default function Settings() {
                 </div>
               </label>
             </div>
+          </section>
+
+          {/* Music Service */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">music service</h2>
+
+            <div className="space-y-3">
+              {[
+                { value: 'spotify', label: 'Spotify', color: '#1DB954' },
+                { value: 'apple_music', label: 'Apple Music', color: '#FC3C44' },
+                { value: 'youtube_music', label: 'YouTube Music', color: '#FF0000' },
+              ].map(({ value, label, color }) => (
+                <label key={value} className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="musicService"
+                    value={value}
+                    checked={musicService === value}
+                    onChange={() => handleMusicServiceChange(value)}
+                    className="w-4 h-4 accent-charcoal cursor-pointer"
+                  />
+                  <span
+                    className="text-sm group-hover:opacity-80 transition-opacity font-medium"
+                    style={{ color }}
+                  >
+                    {label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-charcoal/30">
+              Song pages will link to your preferred service
+            </p>
           </section>
 
           {/* Email */}
