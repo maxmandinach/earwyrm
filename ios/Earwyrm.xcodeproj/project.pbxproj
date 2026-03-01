@@ -133,6 +133,11 @@
 		AA01BB02CC03DD04EE05FF11 /* PageShareImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF10 /* PageShareImageView.swift */; };
 		AA01BB02CC03DD04EE05FF13 /* PageShareRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF12 /* PageShareRenderer.swift */; };
 		AA01BB02CC03DD04EE05FF15 /* PageShareModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF14 /* PageShareModalView.swift */; };
+		5A1B2C3D4E5F6A7B8C9D0E2F /* SongLyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B2C3D4E5F6A7B8C9D0E1F /* SongLyricsService.swift */; };
+		6B2C3D4E5F6A7B8C9D0E1F3A /* FullLyricsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2C3D4E5F6A7B8C9D0E1F2A /* FullLyricsView.swift */; };
+		7C3D4E5F6A7B8C9D0E1F2A4B /* SongBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3D4E5F6A7B8C9D0E1F2A3B /* SongBackgroundView.swift */; };
+		8D4E5F6A7B8C9D0E1F2A3B5C /* SongBackgroundHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D4E5F6A7B8C9D0E1F2A3B4C /* SongBackgroundHistoryView.swift */; };
+		9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -264,6 +269,11 @@
 		AA01BB02CC03DD04EE05FF10 /* PageShareImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageShareImageView.swift; sourceTree = "<group>"; };
 		AA01BB02CC03DD04EE05FF12 /* PageShareRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageShareRenderer.swift; sourceTree = "<group>"; };
 		AA01BB02CC03DD04EE05FF14 /* PageShareModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageShareModalView.swift; sourceTree = "<group>"; };
+		5A1B2C3D4E5F6A7B8C9D0E1F /* SongLyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongLyricsService.swift; sourceTree = "<group>"; };
+		6B2C3D4E5F6A7B8C9D0E1F2A /* FullLyricsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullLyricsView.swift; sourceTree = "<group>"; };
+		7C3D4E5F6A7B8C9D0E1F2A3B /* SongBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongBackgroundView.swift; sourceTree = "<group>"; };
+		8D4E5F6A7B8C9D0E1F2A3B4C /* SongBackgroundHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongBackgroundHistoryView.swift; sourceTree = "<group>"; };
+		9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricBrowserView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -335,8 +345,11 @@
 				F5477BABCAABA9A2541CBAE9 /* FollowButton.swift */,
 				F5477BAC0AABA9A2541CBAF0 /* FollowDiscoveryView.swift */,
 				707D90B10C5C98B2D8BDDBAF /* FollowFilterSheet.swift */,
+				6B2C3D4E5F6A7B8C9D0E1F2A /* FullLyricsView.swift */,
 				AA01BB02CC03DD04EE05FF0E /* MostSavedSection.swift */,
 				AA01BB02CC03DD04EE05FF0A /* PageStatsRow.swift */,
+				8D4E5F6A7B8C9D0E1F2A3B4C /* SongBackgroundHistoryView.swift */,
+				7C3D4E5F6A7B8C9D0E1F2A3B /* SongBackgroundView.swift */,
 				0D09E8C4FB66B66D6E2C8CD0 /* SongPageView.swift */,
 				00EC35ECFD65FD0FC1BB1E08 /* TrendingTagsView.swift */,
 			);
@@ -362,6 +375,7 @@
 				CE5EC881B898EE5D5F671711 /* ArtistAutocompleteView.swift */,
 				FE643789E985F23CCE294DF8 /* CoverArtPreview.swift */,
 				F9353617E4B2C59722413D97 /* GeniusSuggestionBanner.swift */,
+				9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */,
 				0D03D1681F45BFC67D82E2D3 /* PostLyricView.swift */,
 				D831575F97C04CA00196F3A9 /* PostLyricViewModel.swift */,
 				9F7E438FF31141E174B4D649 /* SongAutocompleteView.swift */,
@@ -417,6 +431,7 @@
 				3D33781BE0CC84468C143B65 /* HTTPClient.swift */,
 				A7B8C9D0E1F2A3B4C5D6E7F9 /* LRCLIBService.swift */,
 				FBE78BE07D183762782D4192 /* MusicBrainzService.swift */,
+				5A1B2C3D4E5F6A7B8C9D0E1F /* SongLyricsService.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -814,6 +829,11 @@
 				AA01BB02CC03DD04EE05FF11 /* PageShareImageView.swift in Sources */,
 				AA01BB02CC03DD04EE05FF13 /* PageShareRenderer.swift in Sources */,
 				AA01BB02CC03DD04EE05FF15 /* PageShareModalView.swift in Sources */,
+				5A1B2C3D4E5F6A7B8C9D0E2F /* SongLyricsService.swift in Sources */,
+				6B2C3D4E5F6A7B8C9D0E1F3A /* FullLyricsView.swift in Sources */,
+				7C3D4E5F6A7B8C9D0E1F2A4B /* SongBackgroundView.swift in Sources */,
+				8D4E5F6A7B8C9D0E1F2A3B5C /* SongBackgroundHistoryView.swift in Sources */,
+				9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

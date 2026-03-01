@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import SuggestMatches from './SuggestMatches'
 import MusicBrainzAutocomplete from './MusicBrainzAutocomplete'
 import useLyricSuggestion from '../hooks/useLyricSuggestion'
+import LyricBrowser from './LyricBrowser'
 
 export default function LyricForm({ onSubmit, initialValues = {}, isLoading = false, error = null }) {
   const [content, setContent] = useState(initialValues.content || '')
@@ -14,6 +15,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
   const [musicbrainzData, setMusicbrainzData] = useState(null)
   const [artistMbid, setArtistMbid] = useState(null) // MusicBrainz artist ID for precise song search
   const [activeField, setActiveField] = useState(null) // 'artist' | 'song' | null
+  const [showLyricBrowser, setShowLyricBrowser] = useState(false)
   const textareaRef = useRef(null)
   const blurTimeoutRef = useRef(null)
 
@@ -279,6 +281,24 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
             onSelectSong={handleSongSelect}
             disabled={isLocked}
           />
+
+          {/* Browse full lyrics button */}
+          {artistName.trim() && songTitle.trim() && (
+            <button
+              type="button"
+              onClick={() => setShowLyricBrowser(true)}
+              className="flex items-center gap-1.5 mt-2 text-[#B8A99A] hover:opacity-70 transition-opacity"
+              style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: '0.8125rem' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              browse full lyrics
+            </button>
+          )}
         </div>
       </div>
 
@@ -315,6 +335,18 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
           {isLoading ? 'Saving...' : 'Save'}
         </button>
       </div>
+
+      {showLyricBrowser && (
+        <LyricBrowser
+          songTitle={songTitle}
+          artistName={artistName}
+          onSelect={(text) => {
+            setContent(text)
+            setIsLocked(true)
+          }}
+          onClose={() => setShowLyricBrowser(false)}
+        />
+      )}
     </form>
   )
 }

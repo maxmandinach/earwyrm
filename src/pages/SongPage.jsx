@@ -10,11 +10,19 @@ import PageShareModal from '../components/PageShareModal'
 import HorizontalCardCarousel from '../components/HorizontalCardCarousel'
 import ExploreSearchInput from '../components/ExploreSearchInput'
 import SortDropdown from '../components/SortDropdown'
+import FullLyricsTab from '../components/FullLyricsTab'
+import SongBackgroundTab from '../components/SongBackgroundTab'
 
 const TIME_OPTIONS = [
   { key: 'all', label: 'all time' },
   { key: 'week', label: 'this week' },
   { key: 'today', label: 'today' },
+]
+
+const TABS = [
+  { key: 'posts', label: 'posts' },
+  { key: 'lyrics', label: 'full lyrics' },
+  { key: 'background', label: 'background' },
 ]
 
 export default function SongPage() {
@@ -33,6 +41,7 @@ export default function SongPage() {
   const [sortBy, setSortBy] = useState('newest')
   const [timeRange, setTimeRange] = useState('all')
   const [showShareModal, setShowShareModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('posts')
   const searchContainerRef = useRef(null)
 
   const songTitle = decodeURIComponent(slug)
@@ -294,160 +303,201 @@ export default function SongPage() {
           </p>
         </div>
 
-        {/* Most Saved Line callout */}
-        {topCluster && topCluster.saveCount > 1 && (
-          <div className="mb-8">
-            <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide mb-3">Most saved line</h2>
-            <LyricCard
-              lyric={topCluster.representative}
-              hero
-              showTimestamp
-              linkable
-              className="border border-charcoal/10"
-              showActions
-              isAnon={isAnon}
-              isOwn={user?.id === topCluster.representative.user_id}
-              isPublic={topCluster.representative.is_public}
-              notes={topCluster.allNotes.length > 0 ? topCluster.allNotes : undefined}
-            />
-            <p className="text-xs text-charcoal/30 mt-1">
-              saved by {topCluster.saveCount} people
-            </p>
-          </div>
-        )}
-
-        {/* All lyrics — clustered by canonical, sorted by save count */}
-        {lyrics.length === 0 ? (
-          <div className="text-center py-12">
-            <p
-              className="text-xl mb-2"
-              style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
+        {/* Tab Bar */}
+        <div className="flex justify-center gap-6 mb-6 border-b border-charcoal/10">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`pb-2 text-sm transition-colors relative ${
+                activeTab === key
+                  ? 'text-charcoal/70'
+                  : 'text-charcoal/30 hover:text-charcoal/50'
+              }`}
             >
-              No one has shared from this song yet
-            </p>
-            <p className="text-sm text-charcoal/30">
-              Be the first to share a lyric
-            </p>
-          </div>
-        ) : (
+              {label}
+              {activeTab === key && (
+                <span className="absolute bottom-0 left-0 right-0 h-px bg-charcoal/40" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'posts' && (
           <>
-            {/* Search + Sort toolbar */}
-            {searchOpen ? (
-              <div ref={searchContainerRef} className="relative mb-4">
-                <ExploreSearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  placeholder="Search lyrics..."
-                  autoFocus
+            {/* Most Saved Line callout */}
+            {topCluster && topCluster.saveCount > 1 && (
+              <div className="mb-8">
+                <h2 className="text-sm font-light text-charcoal/40 lowercase tracking-wide mb-3">Most saved line</h2>
+                <LyricCard
+                  lyric={topCluster.representative}
+                  hero
+                  showTimestamp
+                  linkable
+                  className="border border-charcoal/10"
+                  showActions
+                  isAnon={isAnon}
+                  isOwn={user?.id === topCluster.representative.user_id}
+                  isPublic={topCluster.representative.is_public}
+                  notes={topCluster.allNotes.length > 0 ? topCluster.allNotes : undefined}
                 />
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={() => setSearchOpen(true)}
-                  className="p-2 -ml-2 text-charcoal/30 hover:text-charcoal/60 transition-colors"
-                  aria-label="Search"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.3-4.3" />
-                  </svg>
-                </button>
-
-                <div className="flex items-center gap-1 flex-1">
-                  {TIME_OPTIONS.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => setTimeRange(key)}
-                      className={`px-2 py-1 text-xs transition-colors ${
-                        timeRange === key
-                          ? 'text-charcoal/60'
-                          : 'text-charcoal/25 hover:text-charcoal/40'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+                <p className="text-xs text-charcoal/30 mt-1">
+                  saved by {topCluster.saveCount} people
+                </p>
               </div>
             )}
 
-            {(() => {
-              let filtered = clusters
-              // Apply time range
-              if (timeRange !== 'all') {
-                const now = new Date()
-                const cutoff = timeRange === 'today'
-                  ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
-                  : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                filtered = filtered.filter(c =>
-                  new Date(c.representative.created_at) >= cutoff
-                )
-              }
-              // Apply sort
-              if (sortBy === 'newest') {
-                filtered = [...filtered].sort((a, b) =>
-                  new Date(b.representative.created_at) - new Date(a.representative.created_at)
-                )
-              } else if (sortBy === 'resonated') {
-                filtered = [...filtered].sort((a, b) =>
-                  (b.representative.reaction_count || 0) - (a.representative.reaction_count || 0)
-                )
-              } else if (sortBy === 'discussed') {
-                filtered = [...filtered].sort((a, b) =>
-                  (b.representative.comment_count || 0) - (a.representative.comment_count || 0)
-                )
-              }
-              // Apply search
-              if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase()
-                filtered = filtered.filter(c =>
-                  c.representative.content.toLowerCase().includes(q)
-                )
-              }
-              return (
-                <div className="space-y-4">
-                  {filtered.map((cluster) => (
-                    <div key={cluster.id}>
-                      <LyricCard
-                        lyric={cluster.representative}
-                        showTimestamp
-                        linkable
-                        compact
-                        className="border border-charcoal/10"
-                        showActions
-                        isAnon={isAnon}
-                        isOwn={user?.id === cluster.representative.user_id}
-                        isPublic={cluster.representative.is_public}
-                      />
-                      {cluster.saveCount > 1 && (
-                        <p className="text-xs text-charcoal/30 mt-1">
-                          {cluster.saveCount} people saved this
-                        </p>
-                      )}
+            {/* All lyrics — clustered by canonical, sorted by save count */}
+            {lyrics.length === 0 ? (
+              <div className="text-center py-12">
+                <p
+                  className="text-xl mb-2"
+                  style={{ fontFamily: "'Caveat', cursive", color: 'var(--text-secondary, #6B635A)' }}
+                >
+                  No one has shared from this song yet
+                </p>
+                <p className="text-sm text-charcoal/30">
+                  Be the first to share a lyric
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Search + Sort toolbar */}
+                {searchOpen ? (
+                  <div ref={searchContainerRef} className="relative mb-4">
+                    <ExploreSearchInput
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      onClear={() => setSearchQuery('')}
+                      placeholder="Search lyrics..."
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 mb-4">
+                    <button
+                      onClick={() => setSearchOpen(true)}
+                      className="p-2 -ml-2 text-charcoal/30 hover:text-charcoal/60 transition-colors"
+                      aria-label="Search"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                      </svg>
+                    </button>
+
+                    <div className="flex items-center gap-1 flex-1">
+                      {TIME_OPTIONS.map(({ key, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => setTimeRange(key)}
+                          className={`px-2 py-1 text-xs transition-colors ${
+                            timeRange === key
+                              ? 'text-charcoal/60'
+                              : 'text-charcoal/25 hover:text-charcoal/40'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )
-            })()}
+
+                    <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+                  </div>
+                )}
+
+                {(() => {
+                  let filtered = clusters
+                  // Apply time range
+                  if (timeRange !== 'all') {
+                    const now = new Date()
+                    const cutoff = timeRange === 'today'
+                      ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
+                      : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                    filtered = filtered.filter(c =>
+                      new Date(c.representative.created_at) >= cutoff
+                    )
+                  }
+                  // Apply sort
+                  if (sortBy === 'newest') {
+                    filtered = [...filtered].sort((a, b) =>
+                      new Date(b.representative.created_at) - new Date(a.representative.created_at)
+                    )
+                  } else if (sortBy === 'resonated') {
+                    filtered = [...filtered].sort((a, b) =>
+                      (b.representative.reaction_count || 0) - (a.representative.reaction_count || 0)
+                    )
+                  } else if (sortBy === 'discussed') {
+                    filtered = [...filtered].sort((a, b) =>
+                      (b.representative.comment_count || 0) - (a.representative.comment_count || 0)
+                    )
+                  }
+                  // Apply search
+                  if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase()
+                    filtered = filtered.filter(c =>
+                      c.representative.content.toLowerCase().includes(q)
+                    )
+                  }
+                  return (
+                    <div className="space-y-4">
+                      {filtered.map((cluster) => (
+                        <div key={cluster.id}>
+                          <LyricCard
+                            lyric={cluster.representative}
+                            showTimestamp
+                            linkable
+                            compact
+                            className="border border-charcoal/10"
+                            showActions
+                            isAnon={isAnon}
+                            isOwn={user?.id === cluster.representative.user_id}
+                            isPublic={cluster.representative.is_public}
+                          />
+                          {cluster.saveCount > 1 && (
+                            <p className="text-xs text-charcoal/30 mt-1">
+                              {cluster.saveCount} people saved this
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </>
+            )}
+
+            {/* More from [Artist] */}
+            {moreSongs.length > 0 && (
+              <div className="mt-10">
+                <HorizontalCardCarousel
+                  title={`More from ${artistName}`}
+                  lyrics={moreSongs}
+                  linkTo={`/artist/${encodeURIComponent((artistName || '').toLowerCase())}`}
+                  linkLabel="See all →"
+                />
+              </div>
+            )}
           </>
         )}
 
-        {/* More from [Artist] */}
-        {moreSongs.length > 0 && (
-          <div className="mt-10">
-            <HorizontalCardCarousel
-              title={`More from ${artistName}`}
-              lyrics={moreSongs}
-              linkTo={`/artist/${encodeURIComponent((artistName || '').toLowerCase())}`}
-              linkLabel="See all →"
-            />
-          </div>
+        {activeTab === 'lyrics' && (
+          <FullLyricsTab
+            songTitle={songTitle}
+            artistName={artistName}
+            lyrics={lyrics}
+            onLineClick={() => setActiveTab('posts')}
+          />
+        )}
+
+        {activeTab === 'background' && (
+          <SongBackgroundTab
+            songTitle={songTitle}
+            artistName={artistName}
+          />
         )}
       </div>
 

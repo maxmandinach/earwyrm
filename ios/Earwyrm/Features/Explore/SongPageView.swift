@@ -18,6 +18,7 @@ struct SongPageView: View {
     @State private var search = ""
     @State private var sort: SortOption = .newest
     @State private var showPageShare = false
+    @State private var selectedTab = 0
 
     // Interaction state
     @State private var reactionStates: [UUID: Bool] = [:]
@@ -25,6 +26,8 @@ struct SongPageView: View {
     @State private var animatingReactions: Set<UUID> = []
     @State private var bookmarkLyricId: IdentifiableUUID?
     @State private var shareLyric: Lyric?
+
+    private let tabs = ["posts", "full lyrics", "background"]
 
     private var isFollowing: Bool {
         followManager.isFollowing(type: "song", value: songTitle)
@@ -91,12 +94,24 @@ struct SongPageView: View {
                     songHeader
                     PageStatsRow(stats: stats)
 
-                    MostSavedSection(clusters: topSavedClusters)
+                    tabBar
 
-                    feedSection
-
-                    if let artist = artistName, !uniqueMoreFromArtist.isEmpty {
-                        moreFromArtistSection(artistName: artist)
+                    switch selectedTab {
+                    case 0:
+                        postsContent
+                    case 1:
+                        FullLyricsView(
+                            songTitle: songTitle,
+                            artistName: artistName,
+                            savedLyrics: lyrics
+                        )
+                    case 2:
+                        SongBackgroundView(
+                            songTitle: songTitle,
+                            artistName: artistName
+                        )
+                    default:
+                        postsContent
                     }
                 }
                 .padding(.top, Theme.Spacing.md)
@@ -158,6 +173,45 @@ struct SongPageView: View {
             urlString += "?artist=\(artist)"
         }
         return URL(string: urlString)
+    }
+
+    // MARK: - Tab Bar
+
+    private var tabBar: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            ForEach(Array(tabs.enumerated()), id: \.offset) { index, title in
+                tabButton(title, tag: index)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Theme.dividerColor)
+                .frame(height: 0.5)
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    private func tabButton(_ title: String, tag: Int) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tag
+            }
+            Haptics.light()
+        } label: {
+            Text(title)
+                .font(Theme.dmSans(13))
+                .foregroundStyle(selectedTab == tag
+                                 ? Theme.textPrimary.opacity(0.7)
+                                 : Theme.textPrimary.opacity(0.3))
+                .padding(.bottom, Theme.Spacing.sm)
+                .overlay(alignment: .bottom) {
+                    if selectedTab == tag {
+                        Rectangle()
+                            .fill(Theme.textPrimary.opacity(0.4))
+                            .frame(height: 1)
+                    }
+                }
+        }
     }
 
     // MARK: - Loading
@@ -240,6 +294,20 @@ struct SongPageView: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - Posts Content
+
+    private var postsContent: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            MostSavedSection(clusters: topSavedClusters)
+
+            feedSection
+
+            if let artist = artistName, !uniqueMoreFromArtist.isEmpty {
+                moreFromArtistSection(artistName: artist)
+            }
+        }
     }
 
     // MARK: - Feed

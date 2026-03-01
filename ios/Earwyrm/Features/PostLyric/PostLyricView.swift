@@ -6,6 +6,7 @@ struct PostLyricView: View {
     @Environment(ToastManager.self) private var toastManager
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PostLyricViewModel()
+    @State private var showLyricBrowser = false
 
     let currentLyricId: UUID?
     let onSaved: () -> Void
@@ -61,6 +62,21 @@ struct PostLyricView: View {
                                     .font(Theme.dmSans(13))
                             }
                             .foregroundStyle(Theme.textMuted)
+                        }
+                    }
+
+                    // Browse full lyrics button
+                    if viewModel.isMetadataConfirmed && viewModel.fullLyrics != nil {
+                        Button {
+                            showLyricBrowser = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "text.page")
+                                    .font(.system(size: 13))
+                                Text("browse full lyrics")
+                                    .font(Theme.dmSans(13))
+                            }
+                            .foregroundStyle(Theme.accent)
                         }
                     }
 
@@ -133,6 +149,17 @@ struct PostLyricView: View {
             .animation(.easeInOut(duration: 0.25), value: viewModel.shouldShowGenius)
             .animation(.easeInOut(duration: 0.2), value: viewModel.suggestMatches.isEmpty)
             .animation(.easeOut(duration: 0.25), value: viewModel.shouldShowMetadata)
+            .sheet(isPresented: $showLyricBrowser) {
+                if let lyrics = viewModel.fullLyrics {
+                    LyricBrowserView(lyrics: lyrics) { selectedText in
+                        viewModel.content = selectedText
+                        viewModel.isContentLocked = true
+                        showLyricBrowser = false
+                    }
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                }
+            }
         }
     }
 
