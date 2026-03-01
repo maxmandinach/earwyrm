@@ -89,7 +89,7 @@ struct EarwyrmTabBar: View {
             tabButton(index: 0, label: "Home") {
                 CaveatText(
                     text: "e",
-                    size: 36,
+                    size: 42,
                     weight: .bold,
                     color: selectedTab == 0 ? Theme.accent : Theme.textMuted
                 )
