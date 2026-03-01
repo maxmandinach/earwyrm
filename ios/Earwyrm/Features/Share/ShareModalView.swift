@@ -11,7 +11,6 @@ struct ShareModalView: View {
     @State private var showActivitySheet = false
     @State private var copiedLink = false
     @State private var savedPhoto = false
-    @State private var savedWallpaper = false
     @Environment(\.dismiss) private var dismiss
 
     private var noteText: String? {
@@ -122,14 +121,6 @@ struct ShareModalView: View {
                         icon: savedPhoto ? "checkmark" : "arrow.down.to.line",
                         label: savedPhoto ? "Saved" : "Save to Photos",
                         action: saveToPhotos
-                    )
-
-                    dot
-
-                    secondaryButton(
-                        icon: savedWallpaper ? "checkmark" : "photo.on.rectangle",
-                        label: savedWallpaper ? "Saved" : "Set as Wallpaper",
-                        action: saveAsWallpaper
                     )
 
                     dot
@@ -258,25 +249,6 @@ struct ShareModalView: View {
         withAnimation { savedPhoto = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation { savedPhoto = false }
-        }
-    }
-
-    private func saveAsWallpaper() {
-        Analytics.track(.shareActionChosen, ["action": "wallpaper"])
-        renderer.format = .story
-        rerender()
-        guard let image = renderer.renderedImage else {
-            renderer.format = .square
-            rerender()
-            return
-        }
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-        renderer.format = .square
-        rerender()
-        Haptics.success()
-        withAnimation { savedWallpaper = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            withAnimation { savedWallpaper = false }
         }
     }
 

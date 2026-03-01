@@ -1,33 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useLyric } from '../contexts/LyricContext'
-import LyricForm from './LyricForm'
-import LyricCard from './LyricCard'
+import InterestPicker from './InterestPicker'
 
 export default function OnboardingFlow({ onComplete }) {
   const { updateProfile } = useAuth()
-  const { setLyric } = useLyric()
-  const [step, setStep] = useState(0) // 0: welcome, 1: first lyric, 2: discovery
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [sampleLyrics, setSampleLyrics] = useState([])
-
-  async function handleSubmitLyric(data) {
-    setIsLoading(true)
-    setError(null)
-    try {
-      await setLyric(data)
-      await finishOnboarding()
-    } catch (err) {
-      setError(err.message || 'Failed to save lyric')
-      setIsLoading(false)
-    }
-  }
-
-  async function handleSkip() {
-    await finishOnboarding()
-  }
+  const [step, setStep] = useState(0) // 0: welcome, 1: interest picker
 
   async function finishOnboarding() {
     try {
@@ -72,23 +49,7 @@ export default function OnboardingFlow({ onComplete }) {
   }
 
   if (step === 1) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <p
-          className="text-xl text-charcoal/60 mb-8 text-center"
-          style={{ fontFamily: "'Caveat', cursive" }}
-        >
-          What lyric is stuck in your head?
-        </p>
-        <LyricForm onSubmit={handleSubmitLyric} isLoading={isLoading} error={error} />
-        <button
-          onClick={handleSkip}
-          className="mt-8 text-sm text-charcoal/30 hover:text-charcoal/50 transition-colors"
-        >
-          Just here to browse? Skip this →
-        </button>
-      </div>
-    )
+    return <InterestPicker onComplete={finishOnboarding} />
   }
 
   return null

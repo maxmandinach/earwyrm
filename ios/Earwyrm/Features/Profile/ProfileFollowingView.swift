@@ -316,6 +316,28 @@ struct ProfileFollowingView: View {
         }
     }
 
+    // MARK: - Navigation
+
+    @ViewBuilder
+    private func followLink(follow: Follow, type: String) -> some View {
+        let label = Text(follow.filterValue)
+            .font(Theme.dmSans(15))
+            .foregroundStyle(Theme.textPrimary)
+
+        switch type {
+        case "artist":
+            NavigationLink(value: ArtistDestination(name: follow.filterValue)) {
+                label
+            }
+        case "song":
+            NavigationLink(value: SongDestination(title: follow.filterValue, artistName: nil, coverArtUrl: nil)) {
+                label
+            }
+        default:
+            label
+        }
+    }
+
     // MARK: - Empty State
 
     private var emptyState: some View {
@@ -353,9 +375,7 @@ struct ProfileFollowingView: View {
             VStack(spacing: 0) {
                 ForEach(follows) { follow in
                     HStack {
-                        Text(follow.filterValue)
-                            .font(Theme.dmSans(15))
-                            .foregroundStyle(Theme.textPrimary)
+                        followLink(follow: follow, type: type)
 
                         Spacer()
 

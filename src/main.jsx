@@ -6,6 +6,7 @@ import { NotificationProvider } from './contexts/NotificationContext'
 import { LyricProvider } from './contexts/LyricContext'
 import { CollectionProvider } from './contexts/CollectionContext'
 import { FollowProvider } from './contexts/FollowContext'
+import { BlockProvider } from './contexts/BlockContext'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
@@ -23,7 +24,9 @@ createRoot(document.getElementById('root')).render(
             <LyricProvider>
               <CollectionProvider>
                 <FollowProvider>
-                  <App />
+                  <BlockProvider>
+                    <App />
+                  </BlockProvider>
                 </FollowProvider>
               </CollectionProvider>
             </LyricProvider>

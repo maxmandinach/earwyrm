@@ -4,6 +4,7 @@ import { useCollection } from '../contexts/CollectionContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
+import SharePageButton from '../components/SharePageButton'
 import { supabase } from '../lib/supabase-wrapper'
 
 export default function CollectionDetail() {
@@ -222,6 +223,13 @@ export default function CollectionDetail() {
               >
                 + add lyrics
               </button>
+            )}
+            {/* Share button for public collections */}
+            {collection.is_public && (
+              <SharePageButton
+                url={`${window.location.origin}/collections/${collection.id}`}
+                title={`${collection.name} — earwyrm`}
+              />
             )}
             {/* Follow button for non-owners on public collections */}
             {!isOwner && isPublicView && user && (

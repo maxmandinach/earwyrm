@@ -63,7 +63,7 @@ struct PublicProfileView: View {
                     }
                 }
 
-                Spacer().frame(height: Theme.Spacing.xl)
+                Spacer().frame(height: 100)
             }
         }
         .background(Theme.background)

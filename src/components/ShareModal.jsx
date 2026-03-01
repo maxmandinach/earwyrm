@@ -181,6 +181,8 @@ export default function ShareModal({ lyric, onClose }) {
   const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode)
   const [visible, setVisible] = useState(false)
   const [username, setUsername] = useState(lyric.profiles?.username || null)
+  const [shareStyle, setShareStyle] = useState('minimal') // 'minimal' | 'coverArt'
+  const [coverArtImg, setCoverArtImg] = useState(null)
   const canvasRef = useRef(null)
 
   const profileUrl = authProfile?.username ? getPublicProfileUrl(authProfile.username) : ''
@@ -198,6 +200,16 @@ export default function ShareModal({ lyric, onClose }) {
     }
     fetchUsername()
   }, [lyric.user_id, username])
+
+  // Load cover art image for canvas rendering
+  useEffect(() => {
+    if (!lyric.cover_art_url) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => setCoverArtImg(img)
+    img.onerror = () => setCoverArtImg(null)
+    img.src = lyric.cover_art_url
+  }, [lyric.cover_art_url])
 
   // Animate in
   useEffect(() => {
@@ -248,6 +260,25 @@ export default function ShareModal({ lyric, onClose }) {
     canvas.height = height
 
     drawPaperTexture(ctx, width, height, isDarkMode)
+
+    // Draw cover art background at low opacity
+    if (shareStyle === 'coverArt' && coverArtImg) {
+      ctx.save()
+      ctx.globalAlpha = 0.08
+      const imgAspect = coverArtImg.width / coverArtImg.height
+      const canvasAspect = width / height
+      let sx = 0, sy = 0, sw = coverArtImg.width, sh = coverArtImg.height
+      if (imgAspect > canvasAspect) {
+        sw = coverArtImg.height * canvasAspect
+        sx = (coverArtImg.width - sw) / 2
+      } else {
+        sh = coverArtImg.width / canvasAspect
+        sy = (coverArtImg.height - sh) / 2
+      }
+      ctx.drawImage(coverArtImg, sx, sy, sw, sh, 0, 0, width, height)
+      ctx.globalAlpha = 1.0
+      ctx.restore()
+    }
 
     const scale = format === 'tall' ? 1.2 : 1
     const isTall = format === 'tall'
@@ -353,7 +384,28 @@ export default function ShareModal({ lyric, onClose }) {
       if (lyric.song_title && lyric.artist_name) attributionText += ' — '
       if (lyric.artist_name) attributionText += lyric.artist_name
 
-      ctx.fillText(attributionText, marginX, attrY)
+      // Draw cover art thumbnail next to attribution
+      let textOffsetX = marginX
+      if (shareStyle === 'coverArt' && coverArtImg) {
+        const thumbSize = Math.round(attributionFontSize * 1.8)
+        const thumbRadius = 4
+        ctx.save()
+        ctx.globalAlpha = 1.0
+        ctx.beginPath()
+        const tx = marginX, ty = attrY - 4
+        ctx.moveTo(tx + thumbRadius, ty)
+        ctx.arcTo(tx + thumbSize, ty, tx + thumbSize, ty + thumbSize, thumbRadius)
+        ctx.arcTo(tx + thumbSize, ty + thumbSize, tx, ty + thumbSize, thumbRadius)
+        ctx.arcTo(tx, ty + thumbSize, tx, ty, thumbRadius)
+        ctx.arcTo(tx, ty, tx + thumbSize, ty, thumbRadius)
+        ctx.closePath()
+        ctx.clip()
+        ctx.drawImage(coverArtImg, tx, ty, thumbSize, thumbSize)
+        ctx.restore()
+        textOffsetX = marginX + thumbSize + 12
+      }
+
+      ctx.fillText(attributionText, textOffsetX, attrY)
       ctx.globalAlpha = 1.0
     }
 
@@ -434,7 +486,7 @@ export default function ShareModal({ lyric, onClose }) {
 
   useEffect(() => {
     generateImage(selectedFormat)
-  }, [lyric, selectedFormat, isDarkMode, username])
+  }, [lyric, selectedFormat, isDarkMode, username, shareStyle, coverArtImg])
 
   useEffect(() => {
     async function ensureShareToken() {
@@ -699,6 +751,42 @@ export default function ShareModal({ lyric, onClose }) {
                   {isDarkMode ? '◐' : '○'}
                 </button>
               </div>
+
+              {/* Style toggle — only when cover art is available */}
+              {lyric.cover_art_url && coverArtImg && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+                    <button
+                      onClick={() => setShareStyle('minimal')}
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        fontSize: '0.8rem',
+                        backgroundColor: shareStyle === 'minimal' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: shareStyle === 'minimal' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Minimal
+                    </button>
+                    <button
+                      onClick={() => setShareStyle('coverArt')}
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        fontSize: '0.8rem',
+                        backgroundColor: shareStyle === 'coverArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: shareStyle === 'coverArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cover Art
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div style={{ marginTop: '1.5rem' }}>

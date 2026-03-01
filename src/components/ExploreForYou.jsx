@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useBlock } from '../contexts/BlockContext'
 import LyricCard from './LyricCard'
 import ExploreSearchInput from './ExploreSearchInput'
 import SortDropdown from './SortDropdown'
@@ -18,6 +19,7 @@ const TIME_OPTIONS = [
 export default function ExploreForYou() {
   const { user } = useAuth()
   const { follows } = useFollow()
+  const { isBlocked } = useBlock()
   const [lyrics, setLyrics] = useState([])
   const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
@@ -141,7 +143,7 @@ export default function ExploreForYou() {
   const songFollows = follows.filter(f => f.filter_type === 'song').map(f => f.filter_value)
   const tagFollows = follows.filter(f => f.filter_type === 'tag').map(f => f.filter_value)
 
-  let displayedLyrics = follows.length > 0
+  let displayedLyrics = (follows.length > 0
     ? lyrics.filter(l => {
         if (artistFollows.some(a => l.artist_name?.toLowerCase() === a.toLowerCase())) return false
         if (songFollows.some(s => l.song_title?.toLowerCase() === s.toLowerCase())) return false
@@ -149,6 +151,7 @@ export default function ExploreForYou() {
         return true
       })
     : lyrics
+  ).filter(l => !l.user_id || !isBlocked(l.user_id))
 
   // Apply tag filter
   if (activeTags !== null && activeTags.size > 0) {

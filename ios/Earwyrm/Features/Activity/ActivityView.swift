@@ -5,6 +5,7 @@ struct ActivityView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(NotificationManager.self) private var notificationManager
     @State private var selectedFilter = 0
+    @State private var navigationPath = NavigationPath()
 
     private let filters = ["All", "Resonances", "Comments", "Follows"]
 
@@ -18,7 +19,7 @@ struct ActivityView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 Theme.background
                     .ignoresSafeArea()
@@ -84,7 +85,11 @@ struct ActivityView: View {
                         }
                     }
                     .onChange(of: scrollToTop) { _, _ in
-                        withAnimation { proxy.scrollTo("activity-top", anchor: .top) }
+                        if !navigationPath.isEmpty {
+                            navigationPath = NavigationPath()
+                        } else {
+                            withAnimation { proxy.scrollTo("activity-top", anchor: .top) }
+                        }
                     }
                     } // ScrollViewReader
                 }

@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
+import { useFollow } from '../contexts/FollowContext'
+import { useBlock } from '../contexts/BlockContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
 import { setColorSchemePreference } from '../lib/paperTexture'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 export default function Settings() {
   const { user, profile, signOut, updateProfile } = useAuth()
   const { currentLyric, setVisibility } = useLyric()
+  const { follows } = useFollow()
+  const { blockedUserIds, unblockUser } = useBlock()
   const navigate = useNavigate()
+  const [blockedProfiles, setBlockedProfiles] = useState([])
 
   const [username, setUsername] = useState(profile?.username || '')
   const [isPublic, setIsPublic] = useState(profile?.is_public || false)
@@ -37,6 +42,23 @@ export default function Settings() {
     setThemePreference(preference)
     setColorSchemePreference(preference)
   }
+
+  // Fetch usernames for blocked users
+  useEffect(() => {
+    async function fetchBlockedProfiles() {
+      const ids = [...blockedUserIds]
+      if (ids.length === 0) {
+        setBlockedProfiles([])
+        return
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', ids)
+      setBlockedProfiles(data || [])
+    }
+    fetchBlockedProfiles()
+  }, [blockedUserIds])
 
   const publicUrl = getPublicProfileUrl(profile?.username)
 
@@ -262,6 +284,46 @@ export default function Settings() {
               )}
             </div>
           </section>
+
+          {/* Following */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">following</h2>
+            <Link
+              to="/following"
+              className="text-sm hover:text-charcoal transition-colors"
+              style={{ color: 'var(--text-secondary, #6B635A)' }}
+            >
+              Manage what you follow ({follows.length})
+            </Link>
+          </section>
+
+          {/* Blocked Users */}
+          {blockedUserIds.size > 0 && (
+            <section className="border-b border-charcoal/10 pb-8">
+              <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">
+                blocked users ({blockedUserIds.size})
+              </h2>
+              <div className="space-y-2">
+                {blockedProfiles.map(p => (
+                  <div key={p.id} className="flex items-center justify-between py-2">
+                    <Link
+                      to={`/u/${p.username}`}
+                      className="text-sm hover:text-charcoal transition-colors"
+                      style={{ color: 'var(--text-secondary, #6B635A)' }}
+                    >
+                      @{p.username}
+                    </Link>
+                    <button
+                      onClick={() => unblockUser(p.id)}
+                      className="text-xs px-3 py-1 border border-charcoal/20 hover:border-charcoal/40 text-charcoal/50 hover:text-charcoal transition-colors rounded-full"
+                    >
+                      Unblock
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Appearance */}
           <section className="border-b border-charcoal/10 pb-8">

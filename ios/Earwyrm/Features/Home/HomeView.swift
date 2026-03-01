@@ -25,6 +25,10 @@ struct HomeView: View {
     @State private var blockTarget: (userId: UUID, username: String)?
     @State private var showBlockAlert = false
 
+    // Carousel reaction state
+    @State private var carouselReactionStates: [UUID: Bool] = [:]
+    @State private var carouselReactionCounts: [UUID: Int] = [:]
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollViewReader { proxy in
@@ -86,6 +90,9 @@ struct HomeView: View {
                                 onSave: { item in
                                     bookmarkLyricId = IdentifiableUUID(item.lyric.id)
                                 },
+                                onResonate: { item in
+                                    toggleCarouselReaction(for: item.lyric)
+                                },
                                 onViewProfile: { item in
                                     navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
                                 },
@@ -96,7 +103,9 @@ struct HomeView: View {
                                     blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
                                     showBlockAlert = true
                                 },
-                                isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+                                isLyricSaved: { id in collectionManager.isLyricSaved(id) },
+                                hasReacted: { id in carouselReactionStates[id] ?? false },
+                                reactionCount: { id in carouselReactionCounts[id] ?? 0 }
                             )
                             .cascadeReveal(delay: 0.4)
 
@@ -113,7 +122,11 @@ struct HomeView: View {
                 }
                 .background(Theme.background)
                 .onChange(of: scrollToTop) { _, _ in
-                    withAnimation { proxy.scrollTo("home-top", anchor: .top) }
+                    if !navigationPath.isEmpty {
+                        navigationPath = NavigationPath()
+                    } else {
+                        withAnimation { proxy.scrollTo("home-top", anchor: .top) }
+                    }
                 }
             } // ScrollViewReader
             .navigationDestination(for: LyricWithProfile.self) { item in
@@ -151,6 +164,7 @@ struct HomeView: View {
                 // If no current lyric, still load trending so the screen isn't empty
                 if viewModel.currentLyric == nil {
                     await viewModel.fetchTrendingLyrics()
+                    await fetchCarouselReactionStates()
                 }
             }
         }
@@ -172,6 +186,7 @@ struct HomeView: View {
                         follows: followManager.follows,
                         memoryCutoff: subscriptionManager.memoryLaneCutoffDate
                     )
+                    await fetchCarouselReactionStates()
                 }
             } else {
                 resonateVM = nil
@@ -327,6 +342,9 @@ struct HomeView: View {
             onSave: { item in
                 bookmarkLyricId = IdentifiableUUID(item.lyric.id)
             },
+            onResonate: { item in
+                toggleCarouselReaction(for: item.lyric)
+            },
             onViewProfile: { item in
                 navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
             },
@@ -337,7 +355,9 @@ struct HomeView: View {
                 blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
                 showBlockAlert = true
             },
-            isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+            isLyricSaved: { id in collectionManager.isLyricSaved(id) },
+            hasReacted: { id in carouselReactionStates[id] ?? false },
+            reactionCount: { id in carouselReactionCounts[id] ?? 0 }
         )
         .cascadeReveal(delay: 0.65)
 
@@ -352,6 +372,9 @@ struct HomeView: View {
             onSave: { item in
                 bookmarkLyricId = IdentifiableUUID(item.lyric.id)
             },
+            onResonate: { item in
+                toggleCarouselReaction(for: item.lyric)
+            },
             onViewProfile: { item in
                 navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
             },
@@ -362,9 +385,83 @@ struct HomeView: View {
                 blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
                 showBlockAlert = true
             },
-            isLyricSaved: { id in collectionManager.isLyricSaved(id) }
+            isLyricSaved: { id in collectionManager.isLyricSaved(id) },
+            hasReacted: { id in carouselReactionStates[id] ?? false },
+            reactionCount: { id in carouselReactionCounts[id] ?? 0 }
         )
         .cascadeReveal(delay: 0.85)
+    }
+
+    // MARK: - Carousel Reactions
+
+    private func fetchCarouselReactionStates() async {
+        guard let userId = auth.userId else { return }
+        let allLyrics = viewModel.trendingLyrics + viewModel.followFeedLyrics
+        let lyricIds = allLyrics.map { $0.lyric.id.uuidString }
+        guard !lyricIds.isEmpty else { return }
+
+        // Initialize counts from lyric data
+        for item in allLyrics {
+            carouselReactionCounts[item.lyric.id] = item.lyric.reactionCount ?? 0
+        }
+
+        do {
+            let reactions: [Reaction] = try await supabase
+                .from("reactions")
+                .select("id, lyric_id, user_id, created_at")
+                .eq("user_id", value: userId.uuidString)
+                .in("lyric_id", values: lyricIds)
+                .execute()
+                .value
+            for reaction in reactions {
+                carouselReactionStates[reaction.lyricId] = true
+            }
+        } catch {
+            print("Fetch carousel reaction states error: \(error)")
+        }
+    }
+
+    private func toggleCarouselReaction(for lyric: Lyric) {
+        guard let userId = auth.userId else {
+            return
+        }
+
+        let wasReacted = carouselReactionStates[lyric.id] ?? false
+        let currentCount = carouselReactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
+
+        // Optimistic update
+        carouselReactionStates[lyric.id] = !wasReacted
+        carouselReactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
+
+        if !wasReacted {
+            Haptics.medium()
+        } else {
+            Haptics.light()
+        }
+
+        Task {
+            do {
+                if wasReacted {
+                    try await supabase
+                        .from("reactions")
+                        .delete()
+                        .eq("lyric_id", value: lyric.id.uuidString)
+                        .eq("user_id", value: userId.uuidString)
+                        .execute()
+                } else {
+                    let insert = ReactionInsert(lyricId: lyric.id, userId: userId)
+                    try await supabase
+                        .from("reactions")
+                        .insert(insert)
+                        .execute()
+                }
+            } catch {
+                // Revert
+                carouselReactionStates[lyric.id] = wasReacted
+                carouselReactionCounts[lyric.id] = currentCount
+                toastManager.show("couldn't resonate, try again")
+            }
+        }
     }
 
     private var emptyState: some View {

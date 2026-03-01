@@ -45,25 +45,20 @@ struct EditLyricView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                         .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
+                        .onChange(of: content) { _, newValue in
+                            if newValue.count > 500 {
+                                content = String(newValue.prefix(500))
+                            }
+                        }
 
-                    // Lyric soft guidance counter
-                    if content.count >= 300 {
-                        let count = content.count
-                        let counterColor: Color = count >= 500
-                            ? .orange
-                            : count >= 400
-                                ? Theme.accent
-                                : Theme.textMuted
-                        let counterOpacity: Double = count < 400
-                            ? Double(count - 300) / 100.0
-                            : 1.0
-                        Text("\(count) chars")
+                    // Lyric character counter
+                    if content.count >= 400 {
+                        Text("\(content.count)/500")
                             .font(Theme.dmSans(12))
-                            .foregroundStyle(counterColor)
-                            .opacity(counterOpacity)
+                            .foregroundStyle(content.count >= 500 ? .orange : Theme.accent)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .padding(.trailing, 4)
-                            .animation(.easeInOut(duration: 0.2), value: count)
+                            .animation(.easeInOut(duration: 0.2), value: content.count)
                     }
 
                     // Song + Artist

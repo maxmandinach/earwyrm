@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
+import { useFollow } from '../contexts/FollowContext'
 import LyricCard from '../components/LyricCard'
 import LyricForm from '../components/LyricForm'
 import ReplaceModal from '../components/ReplaceModal'
@@ -232,6 +233,7 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed, p
 export default function Home() {
   const { profile } = useAuth()
   const { currentLyric, loading, setLyric, replaceLyric, setVisibility, saveNote } = useLyric()
+  const { follows } = useFollow()
   const [revealed, setRevealed] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -279,12 +281,13 @@ export default function Home() {
     }
   }, [loading])
 
-  // Check if user needs onboarding (skip if draft was just saved)
+  // Check if user needs onboarding
+  // Skip if: already onboarded, draft was just saved, or user has follows (active iOS user)
   useEffect(() => {
-    if (!loading && profile && !profile.onboarded_at && !draftSaved) {
+    if (!loading && profile && !profile.onboarded_at && !draftSaved && follows.length === 0) {
       setShowOnboarding(true)
     }
-  }, [loading, profile?.onboarded_at, draftSaved])
+  }, [loading, profile?.onboarded_at, draftSaved, follows.length])
 
   const handleUpdate = async (data) => {
     await replaceLyric({
@@ -326,34 +329,42 @@ export default function Home() {
     return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
   }
 
-  // No current lyric
-  if (!currentLyric) {
-    return <EmptyState onSetLyric={setLyric} revealed={revealed} />
-  }
-
   const handleSaveAsEarwyrm = (prefillData) => {
     setShowIdentifyModal(false)
     setReplacePrefill(prefillData)
   }
 
-  // Poster view with social sections
+  // Home view — always show feed sections, with or without a current lyric
   return (
     <div className="flex-1 flex flex-col items-center px-4 py-8 space-y-10">
-      <LyricView
-        lyric={currentLyric}
-        onUpdate={handleUpdate}
-        onReplace={handleReplace}
-        onVisibilityChange={setVisibility}
-        revealed={revealed}
-        prefill={replacePrefill}
-        clearPrefill={() => setReplacePrefill(null)}
-      />
+      {currentLyric ? (
+        <LyricView
+          lyric={currentLyric}
+          onUpdate={handleUpdate}
+          onReplace={handleReplace}
+          onVisibilityChange={setVisibility}
+          revealed={revealed}
+          prefill={replacePrefill}
+          clearPrefill={() => setReplacePrefill(null)}
+        />
+      ) : (
+        <div
+          className="w-full max-w-lg mx-auto transition-all duration-700 ease-out"
+          style={{
+            opacity: revealed ? 1 : 0,
+            transform: revealed ? 'translateY(0)' : 'translateY(12px)',
+          }}
+        >
+          <CompactPostPrompt />
+          <EmptyState onSetLyric={setLyric} revealed={revealed} />
+        </div>
+      )}
 
       {/* Hub sections - staggered cascade after hero */}
       {[
-        { key: 'memory', delay: 600, component: <MemoryLaneCarousel /> },
+        { key: 'follows', delay: 600, component: <FollowFeed /> },
         { key: 'trending', delay: 800, component: <TrendingSection /> },
-        { key: 'follows', delay: 1000, component: <FollowFeed /> },
+        { key: 'memory', delay: 1000, component: <MemoryLaneCarousel /> },
         { key: 'collections', delay: 1200, component: <CollectionsCarousel /> },
       ].map(({ key, delay, component }) => (
         <div

@@ -147,7 +147,8 @@ export default function LyricCard({
           <>
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => { if (!isSaving) setContent(e.target.value.slice(0, 500)) }}
+              maxLength={500}
               className="w-full bg-transparent focus:outline-none resize-none mb-3"
               style={{
                 fontFamily: theme.fontFamily,
@@ -159,6 +160,9 @@ export default function LyricCard({
               rows={4}
               autoFocus
             />
+            {content.length > 400 && (
+              <p className="text-xs text-charcoal/30 text-right -mt-2 mb-2">{content.length}/500</p>
+            )}
 
             <div className="space-y-2 mt-4 pt-4 border-t border-charcoal/10">
               <input

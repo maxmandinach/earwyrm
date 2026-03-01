@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { formatRelativeTime } from '../lib/utils'
+import ReportModal from './ReportModal'
 
 export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt, highlightCommentId = null }) {
   const { user } = useAuth()
@@ -14,6 +15,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
   const [submitting, setSubmitting] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(startOpen)
   const [highlightedId, setHighlightedId] = useState(highlightCommentId)
+  const [reportingCommentId, setReportingCommentId] = useState(null)
 
   useEffect(() => {
     if (highlightCommentId) {
@@ -184,6 +186,14 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                       delete
                     </button>
                   )}
+                  {user && user.id !== comment.user_id && (
+                    <button
+                      onClick={() => setReportingCommentId(comment.id)}
+                      className="text-xs text-charcoal/15 hover:text-red-400/60 transition-colors"
+                    >
+                      report
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -216,14 +226,24 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                     >
                       {reply.content}
                     </p>
-                    {user?.id === reply.user_id && (
-                      <button
-                        onClick={() => handleDelete(reply.id)}
-                        className="text-xs text-charcoal/20 hover:text-charcoal/40 transition-colors mt-0.5"
-                      >
-                        delete
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3 mt-0.5">
+                      {user?.id === reply.user_id && (
+                        <button
+                          onClick={() => handleDelete(reply.id)}
+                          className="text-xs text-charcoal/20 hover:text-charcoal/40 transition-colors"
+                        >
+                          delete
+                        </button>
+                      )}
+                      {user && user.id !== reply.user_id && (
+                        <button
+                          onClick={() => setReportingCommentId(reply.id)}
+                          className="text-xs text-charcoal/15 hover:text-red-400/60 transition-colors"
+                        >
+                          report
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -279,6 +299,13 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
             hide thoughts
           </button>
         </>
+      )}
+      {reportingCommentId && (
+        <ReportModal
+          contentType="comment"
+          contentId={reportingCommentId}
+          onClose={() => setReportingCommentId(null)}
+        />
       )}
     </div>
   )

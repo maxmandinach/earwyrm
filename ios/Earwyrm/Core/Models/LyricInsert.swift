@@ -3,6 +3,7 @@ import Foundation
 /// Encodable struct for INSERT payload to lyrics table.
 /// Separate from Lyric because insert shape differs (no id, counts, timestamps).
 struct LyricInsert: Encodable {
+    let userId: UUID
     let content: String
     let songTitle: String?
     let artistName: String?
@@ -16,6 +17,7 @@ struct LyricInsert: Encodable {
     let musicbrainzReleaseId: String?
 
     enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
         case content
         case songTitle = "song_title"
         case artistName = "artist_name"

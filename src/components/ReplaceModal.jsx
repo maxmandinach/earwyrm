@@ -167,10 +167,11 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [], ini
                 <textarea
                   ref={textareaRef}
                   value={content}
-                  onChange={(e) => { if (!isLocked) setContent(e.target.value) }}
+                  onChange={(e) => { if (!isLocked) setContent(e.target.value.slice(0, 500)) }}
                   readOnly={isLocked}
                   placeholder="What's stuck in your head?"
                   rows={4}
+                  maxLength={500}
                   className={`w-full bg-transparent focus:outline-none resize-none placeholder:opacity-60 ${isLocked ? 'opacity-70' : ''}`}
                   style={{
                     fontFamily: "'Caveat', cursive",
@@ -180,6 +181,9 @@ export default function ReplaceModal({ onReplace, onClose, allUserTags = [], ini
                   }}
                   autoFocus={!isLocked}
                 />
+                {content.length > 400 && !isLocked && (
+                  <p className="text-xs text-charcoal/30 text-right mt-1">{content.length}/500</p>
+                )}
                 {isLocked && (
                   <button
                     type="button"

@@ -25,9 +25,10 @@ struct ExploreView: View {
     @State private var shareLyric: Lyric?
     @State private var shareUsername: String?
     @State private var shareOwnerId: UUID?
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 Theme.background
                     .ignoresSafeArea()
@@ -55,6 +56,7 @@ struct ExploreView: View {
                                 shareOwnerId = lyric.userId
                             }
                         }
+                        Spacer().frame(height: 80)
                     }
                     .refreshable {
                         await viewModel.fetchPublicLyrics()
@@ -64,7 +66,11 @@ struct ExploreView: View {
                         }
                     }
                     .onChange(of: scrollToTop) { _, _ in
-                        withAnimation { proxy.scrollTo("explore-top", anchor: .top) }
+                        if !navigationPath.isEmpty {
+                            navigationPath = NavigationPath()
+                        } else {
+                            withAnimation { proxy.scrollTo("explore-top", anchor: .top) }
+                        }
                     }
                     } // ScrollViewReader
                 }

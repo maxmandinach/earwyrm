@@ -21,6 +21,7 @@ const Explore = lazy(() => import('./pages/Explore'))
 const ArtistPage = lazy(() => import('./pages/ArtistPage'))
 const SongPage = lazy(() => import('./pages/SongPage'))
 const Activity = lazy(() => import('./pages/Activity'))
+const Following = lazy(() => import('./pages/Following'))
 const EmailConfirmed = lazy(() => import('./pages/EmailConfirmed'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 
@@ -153,7 +154,14 @@ export default function App() {
         />
         <Route path="explore" element={<Explore />} />
         <Route path="explore/:filterType/:filterValue" element={<Explore />} />
-        <Route path="following" element={<Navigate to="/explore?tab=following" replace />} />
+        <Route
+          path="following"
+          element={
+            <ProtectedRoute>
+              <Following />
+            </ProtectedRoute>
+          }
+        />
         <Route path="artist/:slug" element={<ArtistPage />} />
         <Route path="song/:slug" element={<SongPage />} />
         <Route path="auth/callback" element={<AuthCallback />} />

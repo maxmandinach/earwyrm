@@ -99,7 +99,8 @@ struct SongPageView: View {
                         moreFromArtistSection(artistName: artist)
                     }
                 }
-                .padding(.vertical, Theme.Spacing.md)
+                .padding(.top, Theme.Spacing.md)
+                .padding(.bottom, 100)
             }
         }
         .background(Theme.background)

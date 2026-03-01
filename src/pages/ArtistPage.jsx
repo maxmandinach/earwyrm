@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useFollow } from '../contexts/FollowContext'
 import { searchArtistImage } from '../lib/genius'
 import LyricCard from '../components/LyricCard'
-import SharePageButton from '../components/SharePageButton'
+import PageShareModal from '../components/PageShareModal'
 import ExploreSearchInput from '../components/ExploreSearchInput'
 import SortDropdown from '../components/SortDropdown'
 
@@ -30,6 +30,7 @@ export default function ArtistPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [timeRange, setTimeRange] = useState('all')
+  const [showShareModal, setShowShareModal] = useState(false)
   const searchContainerRef = useRef(null)
   const PAGE_SIZE = 20
 
@@ -269,7 +270,17 @@ export default function ArtistPage() {
                 )}
               </div>
             )}
-            <SharePageButton title={`${artistName} lyrics on earwyrm`} />
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="text-charcoal/25 hover:text-charcoal/50 transition-colors p-1"
+              title="Share"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
           </div>
 
           {/* Album covers row */}
@@ -471,6 +482,18 @@ export default function ArtistPage() {
           </>
         )}
       </div>
+
+      {showShareModal && (
+        <PageShareModal
+          pageTitle={artistName}
+          statsLine={`${lyrics.length} ${lyrics.length === 1 ? 'lyric' : 'lyrics'}${uniqueUsers > 1 ? ` · ${uniqueUsers} people` : ''}${totalResonances > 0 ? ` · ${totalResonances} resonances` : ''}`}
+          featuredLyric={topClusters[0]?.representative?.content}
+          coverArtUrl={artistImage}
+          shareUrl={window.location.href}
+          shareText={`${artistName} lyrics on earwyrm`}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase-wrapper'
 import { useFollow } from '../contexts/FollowContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useBlock } from '../contexts/BlockContext'
 import LyricCard from './LyricCard'
 import ExploreSearchInput from './ExploreSearchInput'
 import SortDropdown from './SortDropdown'
@@ -20,6 +21,7 @@ const TIME_OPTIONS = [
 export default function ExploreFollowing() {
   const { user } = useAuth()
   const { follows, loading: followsLoading } = useFollow()
+  const { isBlocked } = useBlock()
   const [allMatched, setAllMatched] = useState([])
   const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
@@ -119,12 +121,13 @@ export default function ExploreFollowing() {
     ? follows
     : follows.filter(f => activeFilterIds.has(f.id))
 
-  // Filter lyrics by active follows
-  let displayedLyrics = activeFilterIds === null
+  // Filter lyrics by active follows, excluding blocked users
+  let displayedLyrics = (activeFilterIds === null
     ? allMatched
     : allMatched.filter(l =>
         l._matchingFollowIds.some(id => activeFilterIds.has(id))
       )
+  ).filter(l => !l.user_id || !isBlocked(l.user_id))
 
   // Apply time range filter
   if (timeRange !== 'all') {

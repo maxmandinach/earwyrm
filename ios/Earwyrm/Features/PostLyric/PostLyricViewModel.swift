@@ -392,6 +392,7 @@ final class PostLyricViewModel {
             let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
 
             let insert = LyricInsert(
+                userId: userId,
                 content: trimmedContent,
                 songTitle: trimmedSong.isEmpty ? nil : trimmedSong,
                 artistName: trimmedArtist.isEmpty ? nil : trimmedArtist,

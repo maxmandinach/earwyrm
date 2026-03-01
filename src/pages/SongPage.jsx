@@ -6,7 +6,7 @@ import { useFollow } from '../contexts/FollowContext'
 import { searchByArtistAndSongWithCoverArt } from '../lib/musicbrainz'
 import { searchByLyrics } from '../lib/genius'
 import LyricCard from '../components/LyricCard'
-import SharePageButton from '../components/SharePageButton'
+import PageShareModal from '../components/PageShareModal'
 import HorizontalCardCarousel from '../components/HorizontalCardCarousel'
 import ExploreSearchInput from '../components/ExploreSearchInput'
 import SortDropdown from '../components/SortDropdown'
@@ -32,6 +32,7 @@ export default function SongPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [timeRange, setTimeRange] = useState('all')
+  const [showShareModal, setShowShareModal] = useState(false)
   const searchContainerRef = useRef(null)
 
   const songTitle = decodeURIComponent(slug)
@@ -272,7 +273,17 @@ export default function SongPage() {
                 )}
               </div>
             )}
-            <SharePageButton title={`"${songTitle}" lyrics on earwyrm`} />
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="text-charcoal/25 hover:text-charcoal/50 transition-colors p-1"
+              title="Share"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
           </div>
           {/* Aggregate stats */}
           <p className="text-xs text-charcoal/30">
@@ -439,6 +450,19 @@ export default function SongPage() {
           </div>
         )}
       </div>
+
+      {showShareModal && (
+        <PageShareModal
+          pageTitle={songTitle}
+          pageSubtitle={artistName}
+          statsLine={`${lyrics.length} ${lyrics.length === 1 ? 'lyric' : 'lyrics'} shared${uniqueUsers > 1 ? ` · ${uniqueUsers} people` : ''}${totalResonances > 0 ? ` · ${totalResonances} resonances` : ''}`}
+          featuredLyric={clusters[0]?.representative?.content}
+          coverArtUrl={coverArt}
+          shareUrl={window.location.href}
+          shareText={`"${songTitle}" lyrics on earwyrm`}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   )
 }

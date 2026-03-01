@@ -4,10 +4,13 @@ struct SocialLyricCard: View {
     let item: LyricWithProfile
     var onShare: (() -> Void)?
     var onSave: (() -> Void)?
+    var onResonate: (() -> Void)?
     var onViewProfile: (() -> Void)?
     var onReport: (() -> Void)?
     var onBlock: (() -> Void)?
     var isSaved: Bool = false
+    var hasReacted: Bool = false
+    var reactionCount: Int = 0
 
     private var lyric: Lyric { item.lyric }
 
@@ -33,8 +36,8 @@ struct SocialLyricCard: View {
                     .lineLimit(1)
             }
 
-            // Username + share + resonation count
-            HStack {
+            // Username + actions
+            HStack(spacing: 0) {
                 if let username = item.username {
                     Text("@\(username)")
                         .font(Theme.dmSans(11))
@@ -43,34 +46,46 @@ struct SocialLyricCard: View {
 
                 Spacer()
 
+                // Resonate
+                if let onResonate {
+                    Button {
+                        onResonate()
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "waveform.path")
+                                .font(.system(size: 11))
+                            if reactionCount > 0 {
+                                Text("\(reactionCount)")
+                                    .font(Theme.dmSans(11, weight: .medium))
+                            }
+                        }
+                        .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
+                        .frame(minWidth: 36, minHeight: 36)
+                    }
+                }
+
+                // Save
                 if let onSave {
                     Button {
                         onSave()
                     } label: {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
+                            .frame(minWidth: 36, minHeight: 36)
                     }
                 }
 
+                // Share
                 if let onShare {
                     Button {
                         onShare()
                     } label: {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Theme.textMuted)
+                            .frame(minWidth: 36, minHeight: 36)
                     }
-                }
-
-                if let count = lyric.reactionCount, count > 0 {
-                    HStack(spacing: 3) {
-                        Image(systemName: "waveform.path")
-                            .font(.system(size: 10))
-                        Text("\(count)")
-                            .font(Theme.dmSans(11, weight: .medium))
-                    }
-                    .foregroundStyle(Theme.accent)
                 }
             }
         }

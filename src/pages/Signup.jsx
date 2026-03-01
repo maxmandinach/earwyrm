@@ -6,13 +6,11 @@ import { isValidUsername } from '../lib/utils'
 export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [confirmationEmail, setConfirmationEmail] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const { signUp } = useAuth()
   const navigate = useNavigate()
@@ -31,11 +29,6 @@ export default function Signup() {
       return
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
     setIsLoading(true)
 
     try {
@@ -43,8 +36,7 @@ export default function Signup() {
 
       // Check if email confirmation is required
       if (data?.user && !data?.session) {
-        setSuccess(true)
-        setError('Please check your email to confirm your account before logging in.')
+        setConfirmationEmail(email)
       } else {
         // Auto-logged in, redirect to home
         navigate('/')
@@ -60,29 +52,34 @@ export default function Signup() {
     }
   }
 
-  if (success) {
+  if (confirmationEmail) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <h1 className="text-2xl font-light text-charcoal mb-8 lowercase">account created!</h1>
+        <h1
+          className="text-3xl text-charcoal mb-6"
+          style={{ fontFamily: "'Caveat', cursive", fontWeight: 600 }}
+        >
+          check your email
+        </h1>
 
-        <div className="w-full max-w-sm">
-          <div className="mb-6 p-4 text-sm text-green-800 bg-green-50 border border-green-200">
-            Your account has been successfully created for <strong>@{username}</strong>.
-            {error ? (
-              <div className="mt-2 pt-2 border-t border-green-300">
-                {error}
-              </div>
-            ) : (
-              <div className="mt-2">
-                You can now log in with your credentials.
-              </div>
-            )}
-          </div>
+        <div className="w-full max-w-sm text-center">
+          <p className="text-sm text-charcoal/60 mb-2 leading-relaxed">
+            We sent a confirmation link to
+          </p>
+          <p className="text-sm font-medium text-charcoal mb-6">
+            {confirmationEmail}
+          </p>
+          <p className="text-sm text-charcoal/40 mb-8 leading-relaxed">
+            Tap the link in your email to activate your account, then come back here to sign in.
+          </p>
 
           <Link
             to="/login"
-            className="block w-full py-3 text-sm font-medium text-center text-charcoal
-                       border border-charcoal/30 hover:border-charcoal/60 transition-colors lowercase"
+            className="inline-block px-8 py-3 text-sm font-medium transition-colors lowercase"
+            style={{
+              backgroundColor: 'var(--text-primary, #2C2825)',
+              color: 'var(--surface-bg, #FAF8F5)',
+            }}
           >
             go to login
           </Link>
@@ -157,27 +154,6 @@ export default function Signup() {
               At least 6 characters
             </p>
           </div>
-
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="confirm password"
-              required
-              minLength={6}
-              className="w-full px-4 py-3 pr-20 bg-transparent border border-charcoal/20
-                         focus:border-charcoal/40 focus:outline-none
-                         placeholder:text-charcoal/30 text-charcoal"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-charcoal/40 hover:text-charcoal"
-            >
-              {showConfirmPassword ? 'hide' : 'show'}
-            </button>
-          </div>
         </div>
 
         <button
@@ -190,6 +166,13 @@ export default function Signup() {
         >
           {isLoading ? 'creating account...' : 'create account'}
         </button>
+
+        <p className="mt-4 text-xs text-charcoal/30 text-center leading-relaxed">
+          By creating an account, you agree to our{' '}
+          <Link to="/terms" className="underline hover:text-charcoal/50">Terms of Service</Link>
+          {' '}and{' '}
+          <Link to="/privacy" className="underline hover:text-charcoal/50">Privacy Policy</Link>.
+        </p>
       </form>
 
       <p className="mt-8 text-sm text-charcoal/40">

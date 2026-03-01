@@ -180,28 +180,21 @@ struct PostLyricView: View {
                     }
                     return .ignored
                 }
-                .onChange(of: viewModel.content) { _, _ in
+                .onChange(of: viewModel.content) { _, newValue in
+                    if newValue.count > 500 {
+                        viewModel.content = String(newValue.prefix(500))
+                    }
                     viewModel.contentDidChange()
                 }
 
-            // Lyric soft guidance counter — fades in at 300 chars
-            if viewModel.content.count >= 300 {
-                let count = viewModel.content.count
-                let counterColor: Color = count >= 500
-                    ? .orange
-                    : count >= 400
-                        ? Theme.accent
-                        : Theme.textMuted
-                let counterOpacity: Double = count < 400
-                    ? Double(count - 300) / 100.0
-                    : 1.0
-                Text("\(count) chars")
+            // Lyric character counter
+            if viewModel.content.count >= 400 {
+                Text("\(viewModel.content.count)/500")
                     .font(Theme.dmSans(12))
-                    .foregroundStyle(counterColor)
-                    .opacity(counterOpacity)
+                    .foregroundStyle(viewModel.content.count >= 500 ? .orange : Theme.accent)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 4)
-                    .animation(.easeInOut(duration: 0.2), value: count)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.content.count)
             }
 
             if viewModel.ghostText != nil {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
+import { useBlock } from '../contexts/BlockContext'
 import LyricCard from '../components/LyricCard'
 
 function AnonymousFooter({ username }) {
@@ -30,6 +31,7 @@ function AnonymousFooter({ username }) {
 export default function PublicProfile({ showHistory = false }) {
   const { username } = useParams()
   const { user } = useAuth()
+  const { blockUser, unblockUser, isBlocked } = useBlock()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [lyric, setLyric] = useState(null)
@@ -37,8 +39,11 @@ export default function PublicProfile({ showHistory = false }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isPrivate, setIsPrivate] = useState(false)
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false)
 
   const isAnonymous = !user
+  const isOwnProfile = user && profile && user.id === profile.id
+  const profileIsBlocked = profile ? isBlocked(profile.id) : false
 
   useEffect(() => {
     async function fetchProfile() {
@@ -139,14 +144,31 @@ export default function PublicProfile({ showHistory = false }) {
           earwyrm
         </Link>
 
-        {user && (
-          <Link
-            to="/home"
-            className="text-sm text-charcoal/40 hover:text-charcoal/60 transition-colors"
-          >
-            Your page
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {user && !isOwnProfile && profile && (
+            <button
+              onClick={() => {
+                if (profileIsBlocked) {
+                  unblockUser(profile.id)
+                } else {
+                  setShowBlockConfirm(true)
+                }
+              }}
+              className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+              title={profileIsBlocked ? 'Unblock user' : 'Block user'}
+            >
+              {profileIsBlocked ? 'Unblock' : 'Block'}
+            </button>
+          )}
+          {user && (
+            <Link
+              to="/home"
+              className="text-sm text-charcoal/40 hover:text-charcoal/60 transition-colors"
+            >
+              Your page
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
@@ -206,6 +228,50 @@ export default function PublicProfile({ showHistory = false }) {
 
       {/* Footer for anonymous users */}
       {isAnonymous && <AnonymousFooter username={username} />}
+
+      {/* Block confirmation */}
+      {showBlockConfirm && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setShowBlockConfirm(false) }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
+          <div
+            className="w-full max-w-xs rounded-lg p-6 text-center"
+            style={{
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              color: 'var(--text-primary, #2C2825)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            }}
+          >
+            <h3 className="text-base font-medium mb-2">
+              Block @{username}?
+            </h3>
+            <p className="text-sm opacity-50 mb-6">
+              Their content will be hidden from your feeds. You can unblock from Settings.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBlockConfirm(false)}
+                className="flex-1 py-2.5 text-sm"
+                style={{ color: 'var(--text-secondary, #6B635A)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (profile) blockUser(profile.id)
+                  setShowBlockConfirm(false)
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-white"
+                style={{ backgroundColor: '#D4756A', borderRadius: '10px' }}
+              >
+                Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

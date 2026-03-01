@@ -10,13 +10,14 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var followerCount: Int = 0
     @State private var followingCount: Int = 0
+    @State private var navigationPath = NavigationPath()
 
     @Environment(CollectionManager.self) private var collectionManager
 
     private let tabs = ["lyrics", "resonated", "notes", "collections", "following"]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 Theme.background
                     .ignoresSafeArea()
@@ -60,7 +61,11 @@ struct ProfileView: View {
                         }
                     }
                     .onChange(of: scrollToTop) { _, _ in
-                        withAnimation { proxy.scrollTo("profile-top", anchor: .top) }
+                        if !navigationPath.isEmpty {
+                            navigationPath = NavigationPath()
+                        } else {
+                            withAnimation { proxy.scrollTo("profile-top", anchor: .top) }
+                        }
                     }
                     } // ScrollViewReader
                 }
@@ -73,6 +78,16 @@ struct ProfileView: View {
             }
             .navigationDestination(for: ProfileDestination.self) { dest in
                 PublicProfileView(userId: dest.userId, username: dest.username)
+            }
+            .navigationDestination(for: ArtistDestination.self) { dest in
+                ArtistPageView(artistName: dest.name)
+            }
+            .navigationDestination(for: SongDestination.self) { dest in
+                SongPageView(
+                    songTitle: dest.title,
+                    artistName: dest.artistName,
+                    coverArtUrl: dest.coverArtUrl
+                )
             }
             .earwyrmBranding()
             .toolbar {
