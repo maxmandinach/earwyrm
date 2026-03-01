@@ -306,8 +306,11 @@ struct SongPageView: View {
         if let url = listenOnURL {
             Link(destination: url) {
                 HStack(spacing: 6) {
-                    Image(systemName: musicServiceIcon)
-                        .font(.system(size: 12))
+                    Image(musicServiceIcon)
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 14, height: 14)
                     Text(musicServiceLabel)
                         .font(Theme.dmSans(13, weight: .medium))
                 }
@@ -346,9 +349,9 @@ struct SongPageView: View {
 
     private var musicServiceIcon: String {
         switch preferredMusicService {
-        case "apple_music": return "applelogo"
-        case "youtube_music": return "play.rectangle.fill"
-        default: return "play.circle.fill"
+        case "apple_music": return "AppleMusicIcon"
+        case "youtube_music": return "YouTubeMusicIcon"
+        default: return "SpotifyIcon"
         }
     }
 

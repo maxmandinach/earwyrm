@@ -99,9 +99,9 @@ struct ProfileSettingsSheet: View {
     private var musicServiceSection: some View {
         settingsSection("music") {
             VStack(spacing: Theme.Spacing.md) {
-                musicServiceRow("spotify", icon: "play.circle.fill", name: "Spotify", color: Color(red: 0.114, green: 0.725, blue: 0.329))
-                musicServiceRow("apple_music", icon: "applelogo", name: "Apple Music", color: Color(red: 0.988, green: 0.235, blue: 0.267))
-                musicServiceRow("youtube_music", icon: "play.rectangle.fill", name: "YouTube Music", color: .red)
+                musicServiceRow("spotify", icon: "SpotifyIcon", name: "Spotify", color: Color(red: 0.114, green: 0.725, blue: 0.329))
+                musicServiceRow("apple_music", icon: "AppleMusicIcon", name: "Apple Music", color: Color(red: 0.988, green: 0.235, blue: 0.267))
+                musicServiceRow("youtube_music", icon: "YouTubeMusicIcon", name: "YouTube Music", color: .red)
             }
         }
     }
@@ -112,8 +112,11 @@ struct ProfileSettingsSheet: View {
             Haptics.light()
         } label: {
             HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: icon)
-                    .font(.system(size: 15))
+                Image(icon)
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 18, height: 18)
                     .foregroundStyle(color)
                     .frame(width: 24)
                 Text(name)
