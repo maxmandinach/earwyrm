@@ -340,6 +340,7 @@ export default function LyricForm({ onSubmit, initialValues = {}, isLoading = fa
         <LyricBrowser
           songTitle={songTitle}
           artistName={artistName}
+          currentContent={content}
           onSelect={(text) => {
             setContent(text)
             setIsLocked(true)

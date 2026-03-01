@@ -151,7 +151,7 @@ struct PostLyricView: View {
             .animation(.easeOut(duration: 0.25), value: viewModel.shouldShowMetadata)
             .sheet(isPresented: $showLyricBrowser) {
                 if let lyrics = viewModel.fullLyrics {
-                    LyricBrowserView(lyrics: lyrics) { selectedText in
+                    LyricBrowserView(lyrics: lyrics, currentContent: viewModel.content) { selectedText in
                         viewModel.content = selectedText
                         viewModel.isContentLocked = true
                         showLyricBrowser = false

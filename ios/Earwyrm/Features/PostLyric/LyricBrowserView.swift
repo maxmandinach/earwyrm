@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LyricBrowserView: View {
     let lyrics: String
+    let currentContent: String
     let onSelect: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -28,9 +29,27 @@ struct LyricBrowserView: View {
             .joined(separator: "\n")
     }
 
+    private var instructionText: String {
+        if startLine == nil {
+            return "tap a line to start selecting"
+        } else if endLine == nil {
+            return "tap another line to complete your selection"
+        } else {
+            return "tap a line to adjust · clear to start over"
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Instruction bar
+                Text(instructionText)
+                    .font(Theme.dmSans(12))
+                    .foregroundStyle(Theme.textMuted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Theme.card)
+
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
@@ -130,19 +149,76 @@ struct LyricBrowserView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
+            .onAppear {
+                restoreSelectionFromContent()
+            }
         }
     }
 
     private func handleLineTap(_ index: Int) {
         if startLine == nil {
+            // First tap: set start
             startLine = index
             endLine = nil
         } else if endLine == nil {
+            // Second tap: set end
             endLine = index
         } else {
-            // Reset: start new selection
-            startLine = index
-            endLine = nil
+            // Already have a range — adjust nearest endpoint
+            guard let start = startLine, let end = endLine else { return }
+            let lo = min(start, end)
+            let hi = max(start, end)
+            let mid = (lo + hi) / 2
+
+            if index <= mid {
+                startLine = min(index, hi)
+                endLine = max(index, hi)
+            } else {
+                startLine = lo
+                endLine = index
+            }
         }
+    }
+
+    /// If content already has text from a previous selection, find and highlight those lines.
+    private func restoreSelectionFromContent() {
+        let trimmed = currentContent.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let contentLines = trimmed.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard let firstContent = contentLines.first,
+              let lastContent = contentLines.last else { return }
+
+        let normalizedFirst = normalize(firstContent)
+        let normalizedLast = normalize(lastContent)
+
+        var foundStart: Int?
+        var foundEnd: Int?
+
+        for (index, line) in lines.enumerated() {
+            let normalizedLine = normalize(line)
+            guard normalizedLine.count >= 3 else { continue }
+
+            if foundStart == nil && normalizedLine.contains(normalizedFirst) {
+                foundStart = index
+            }
+            if normalizedLine.contains(normalizedLast) {
+                foundEnd = index
+            }
+        }
+
+        if let s = foundStart, let e = foundEnd {
+            startLine = s
+            endLine = e
+        }
+    }
+
+    private func normalize(_ text: String) -> String {
+        text.lowercased()
+            .replacingOccurrences(of: "[^a-z0-9\\s]", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
     }
 }

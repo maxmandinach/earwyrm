@@ -109,17 +109,27 @@ export default function FullLyricsTab({ songTitle, artistName, lyrics = [], onLi
       </div>
 
       {/* Attribution */}
-      <p className="text-center mt-8 text-xs text-charcoal/30">
-        lyrics from{' '}
-        <a
-          href="https://lrclib.net"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#B8A99A] hover:underline"
-        >
-          lrclib
-        </a>
-      </p>
+      <div className="text-center mt-8 space-y-1">
+        <p className="text-xs text-charcoal/30">
+          lyrics from{' '}
+          <a
+            href="https://lrclib.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#B8A99A] hover:underline"
+          >
+            lrclib
+          </a>
+        </p>
+        <p className="text-[10px] text-charcoal/20">
+          <a
+            href="mailto:hello@earwyrm.app?subject=Lyrics%20inquiry"
+            className="hover:text-charcoal/40 transition-colors"
+          >
+            issue with these lyrics?
+          </a>
+        </p>
+      </div>
     </div>
   )
 }

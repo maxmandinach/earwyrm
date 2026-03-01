@@ -75,13 +75,18 @@ struct FullLyricsView: View {
             }
 
             // Attribution footer
-            HStack(spacing: 4) {
-                Text("lyrics from")
-                    .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.textMuted)
-                Text("lrclib")
-                    .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.accent)
+            VStack(spacing: 4) {
+                HStack(spacing: 4) {
+                    Text("lyrics from")
+                        .font(Theme.dmSans(11))
+                        .foregroundStyle(Theme.textMuted)
+                    Text("lrclib")
+                        .font(Theme.dmSans(11))
+                        .foregroundStyle(Theme.accent)
+                }
+                Link("issue with these lyrics?", destination: URL(string: "mailto:hello@earwyrm.app?subject=Lyrics%20inquiry")!)
+                    .font(Theme.dmSans(10))
+                    .foregroundStyle(Theme.textMuted.opacity(0.6))
             }
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.top, Theme.Spacing.lg)

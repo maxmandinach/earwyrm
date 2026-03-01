@@ -16,6 +16,8 @@ struct EditLyricView: View {
     @State private var existingNote: LyricNote?
     @State private var isSaving = false
     @State private var error: String?
+    @State private var showLyricBrowser = false
+    @State private var fullLyrics: String?
 
     init(lyric: Lyric, onSaved: @escaping () -> Void) {
         self.lyric = lyric
@@ -67,6 +69,21 @@ struct EditLyricView: View {
                         editField("artist", text: $artistName)
                     }
 
+                    // Browse full lyrics
+                    if fullLyrics != nil {
+                        Button {
+                            showLyricBrowser = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "text.page")
+                                    .font(.system(size: 13))
+                                Text("browse full lyrics")
+                                    .font(Theme.dmSans(13))
+                            }
+                            .foregroundStyle(Theme.accent)
+                        }
+                    }
+
                     // Note
                     noteSection
 
@@ -113,6 +130,17 @@ struct EditLyricView: View {
             .toolbarBackground(Theme.card, for: .navigationBar)
             .task {
                 await loadNote()
+                await fetchLyrics()
+            }
+            .sheet(isPresented: $showLyricBrowser) {
+                if let lyrics = fullLyrics {
+                    LyricBrowserView(lyrics: lyrics, currentContent: content) { selectedText in
+                        content = selectedText
+                        showLyricBrowser = false
+                    }
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                }
             }
         }
     }
@@ -214,6 +242,13 @@ struct EditLyricView: View {
         } catch {
             print("Load note error: \(error)")
         }
+    }
+
+    private func fetchLyrics() async {
+        let artist = artistName.trimmingCharacters(in: .whitespaces)
+        let song = songTitle.trimmingCharacters(in: .whitespaces)
+        guard !artist.isEmpty, !song.isEmpty else { return }
+        fullLyrics = await SongLyricsService.fetchLyrics(songTitle: song, artistName: artist)
     }
 
     private func editField(_ placeholder: String, text: Binding<String>) -> some View {

@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { fetchSongLyrics } from '../lib/song-lyrics'
 
-export default function LyricBrowser({ songTitle, artistName, onSelect, onClose }) {
+function normalize(text) {
+  return text.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+export default function LyricBrowser({ songTitle, artistName, currentContent = '', onSelect, onClose }) {
   const [fullLyrics, setFullLyrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [startLine, setStartLine] = useState(null)
   const [endLine, setEndLine] = useState(null)
+
+  const lines = useMemo(() => fullLyrics ? fullLyrics.split('\n') : [], [fullLyrics])
 
   useEffect(() => {
     let cancelled = false
@@ -22,7 +28,31 @@ export default function LyricBrowser({ songTitle, artistName, onSelect, onClose 
     return () => { cancelled = true }
   }, [songTitle, artistName])
 
-  const lines = fullLyrics ? fullLyrics.split('\n') : []
+  // Restore selection from current content when lyrics load
+  useEffect(() => {
+    if (!fullLyrics || !currentContent.trim()) return
+    const contentLines = currentContent.trim().split('\n').map(l => l.trim()).filter(Boolean)
+    if (contentLines.length === 0) return
+
+    const normalizedFirst = normalize(contentLines[0])
+    const normalizedLast = normalize(contentLines[contentLines.length - 1])
+    const lyricsLines = fullLyrics.split('\n')
+
+    let foundStart = null
+    let foundEnd = null
+
+    for (let i = 0; i < lyricsLines.length; i++) {
+      const nl = normalize(lyricsLines[i])
+      if (nl.length < 3) continue
+      if (foundStart === null && nl.includes(normalizedFirst)) foundStart = i
+      if (nl.includes(normalizedLast)) foundEnd = i
+    }
+
+    if (foundStart !== null && foundEnd !== null) {
+      setStartLine(foundStart)
+      setEndLine(foundEnd)
+    }
+  }, [fullLyrics, currentContent])
 
   function getSelectedRange() {
     if (startLine === null) return null
@@ -47,13 +77,25 @@ export default function LyricBrowser({ songTitle, artistName, onSelect, onClose 
 
   function handleLineTap(index) {
     if (startLine === null) {
+      // First tap: set start
       setStartLine(index)
       setEndLine(null)
     } else if (endLine === null) {
+      // Second tap: set end
       setEndLine(index)
     } else {
-      setStartLine(index)
-      setEndLine(null)
+      // Already have a range — adjust nearest endpoint
+      const lo = Math.min(startLine, endLine)
+      const hi = Math.max(startLine, endLine)
+      const mid = Math.floor((lo + hi) / 2)
+
+      if (index <= mid) {
+        setStartLine(Math.min(index, hi))
+        setEndLine(Math.max(index, hi))
+      } else {
+        setStartLine(lo)
+        setEndLine(index)
+      }
     }
   }
 
@@ -63,6 +105,12 @@ export default function LyricBrowser({ songTitle, artistName, onSelect, onClose 
       onSelect(text)
       onClose()
     }
+  }
+
+  function getInstructionText() {
+    if (startLine === null) return 'tap a line to start selecting'
+    if (endLine === null) return 'tap another line to complete your selection'
+    return 'tap a line to adjust \u00b7 clear to start over'
   }
 
   const content = (
@@ -93,6 +141,18 @@ export default function LyricBrowser({ songTitle, artistName, onSelect, onClose 
             browse lyrics
           </span>
           <div className="w-12" />
+        </div>
+
+        {/* Instruction bar */}
+        <div
+          className="px-4 py-2 text-center text-xs"
+          style={{
+            backgroundColor: 'var(--surface-card, #F5F2ED)',
+            color: 'var(--text-muted, #9C948A)',
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+          }}
+        >
+          {getInstructionText()}
         </div>
 
         {/* Content */}
