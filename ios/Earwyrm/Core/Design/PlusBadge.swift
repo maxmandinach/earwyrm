@@ -4,8 +4,6 @@ struct PlusBadge: View {
     var size: CGFloat = 12
 
     var body: some View {
-        Text("e")
-            .font(.custom("Caveat", size: size).weight(.semibold))
-            .foregroundStyle(Theme.accent)
+        CaveatText(text: "e", size: size, weight: .semibold, color: Theme.textSecondary)
     }
 }

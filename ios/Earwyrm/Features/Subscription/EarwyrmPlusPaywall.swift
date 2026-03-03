@@ -152,9 +152,7 @@ struct EarwyrmPlusPaywall: View {
     private func featureRow(icon: String? = nil, badgeIcon: Bool = false, title: String, subtitle: String) -> some View {
         HStack(spacing: 14) {
             if badgeIcon {
-                Text("e")
-                    .font(.custom("Caveat", size: 26).weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+                CaveatText(text: "e", size: 26, weight: .semibold, color: Theme.textSecondary)
                     .frame(width: 36)
             } else if let icon {
                 Image(systemName: icon)

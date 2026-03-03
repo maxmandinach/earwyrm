@@ -4,7 +4,7 @@ export default function PlusBadge({ size = 14 }) {
       fontFamily: "'Caveat', cursive",
       fontSize: size,
       fontWeight: 600,
-      color: 'var(--accent, #B8A99A)',
+      color: 'var(--color-charcoal-muted, #9C948A)',
       marginLeft: 2,
     }}>e</span>
   )

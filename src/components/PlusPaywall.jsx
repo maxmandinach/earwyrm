@@ -106,7 +106,7 @@ export default function PlusPaywall({ onClose }) {
                   fontSize: isBadge ? '1.5rem' : '1.25rem',
                   width: '2rem',
                   textAlign: 'center',
-                  color: 'var(--accent, #B8A99A)',
+                  color: isBadge ? 'var(--color-charcoal-muted, #9C948A)' : 'var(--accent, #B8A99A)',
                   fontFamily: isBadge ? "'Caveat', cursive" : 'inherit',
                   fontWeight: isBadge ? 600 : 'inherit',
                 }}>
