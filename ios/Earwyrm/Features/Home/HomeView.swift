@@ -183,8 +183,7 @@ struct HomeView: View {
                     await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
                     await viewModel.loadAllSections(
                         userId: userId,
-                        follows: followManager.follows,
-                        memoryCutoff: subscriptionManager.memoryLaneCutoffDate
+                        follows: followManager.follows
                     )
                     await fetchCarouselReactionStates()
                 }

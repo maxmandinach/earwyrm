@@ -39,9 +39,14 @@ struct SocialLyricCard: View {
             // Username + actions
             HStack(spacing: 0) {
                 if let username = item.username {
-                    Text("@\(username)")
-                        .font(Theme.dmSans(11))
-                        .foregroundStyle(Theme.textMuted)
+                    HStack(spacing: 2) {
+                        Text("@\(username)")
+                            .font(Theme.dmSans(11))
+                            .foregroundStyle(Theme.textMuted)
+                        if item.isPlus {
+                            PlusBadge()
+                        }
+                    }
                 }
 
                 Spacer()

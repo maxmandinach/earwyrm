@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PlusBadge from './PlusBadge'
 
 export default function NotePeek({ notes }) {
   const [expanded, setExpanded] = useState(false)
@@ -55,6 +56,7 @@ export default function NotePeek({ notes }) {
           {note.profiles?.username && (
             <span className="text-xs text-charcoal/30 mt-1 inline-block">
               @{note.profiles.username}
+              {note.profiles?.subscription_tier === 'plus' && <PlusBadge />}
             </span>
           )}
         </div>

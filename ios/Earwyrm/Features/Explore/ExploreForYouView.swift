@@ -73,6 +73,7 @@ struct ExploreForYouView: View {
                     CompactLyricCard(
                         lyric: lyric,
                         username: viewModel.profileMap[lyric.userId],
+                        isPlus: viewModel.plusMap[lyric.userId] ?? false,
                         onShare: onShare != nil ? { onShare?(lyric, viewModel.profileMap[lyric.userId]) } : nil,
                         onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
                         onReport: { reportLyric = lyric },

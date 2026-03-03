@@ -12,15 +12,11 @@ struct ProfileCollectionsView: View {
         GridItem(.flexible(), spacing: Theme.Spacing.md)
     ]
 
-    private var manualCollectionCount: Int {
-        collectionManager.collections.filter { $0.isSmart != true }.count
-    }
-
     private func handleNewCollection() {
-        if subscriptionManager.canCreateCollection(currentCount: manualCollectionCount) {
+        if subscriptionManager.canCreateCollection() {
             showCreateSheet = true
         } else {
-            Analytics.track(.collectionCapHit, ["count": "\(manualCollectionCount)"])
+            Analytics.track(.collectionCapHit)
             showPaywall = true
         }
     }

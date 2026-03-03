@@ -24,15 +24,8 @@ final class SubscriptionManager {
 
     // MARK: - Business Rules
 
-    private static let freeCollectionLimit = 3
-    private static let freeMemoryLaneDays = 30
-
-    func canCreateCollection(currentCount: Int) -> Bool {
-        isPlus || currentCount < Self.freeCollectionLimit
-    }
-
-    var memoryLaneCutoffDate: Date? {
-        isPlus ? nil : Calendar.current.date(byAdding: .day, value: -Self.freeMemoryLaneDays, to: .now)
+    func canCreateCollection() -> Bool {
+        isPlus
     }
 
     // MARK: - Sorted Products

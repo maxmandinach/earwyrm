@@ -5,6 +5,7 @@ import { isValidUsername } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 import { signatureStyle } from '../lib/themes'
 import SuggestMatches from '../components/SuggestMatches'
+import PlusBadge from '../components/PlusBadge'
 
 const CYCLE_INTERVAL = 6000
 const FADE_DURATION = 600
@@ -74,7 +75,7 @@ export default function Landing() {
           .from('lyrics')
           .select(`
             *,
-            profiles:user_id(username),
+            profiles:user_id(username, subscription_tier),
             lyric_notes(content, note_types)
           `)
           .eq('is_public', true)
@@ -604,6 +605,7 @@ export default function Landing() {
                       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
                     >
                       shared by @{activeLyric.profiles?.username || 'anonymous'}
+                      {activeLyric.profiles?.subscription_tier === 'plus' && <PlusBadge />}
                     </p>
                   </div>
                 </div>

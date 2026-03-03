@@ -47,7 +47,7 @@ struct CollectionPickerSheet: View {
 
                             // New collection row
                             Button {
-                                if subscriptionManager.canCreateCollection(currentCount: manualCollections.count) {
+                                if subscriptionManager.canCreateCollection() {
                                     showCreateSheet = true
                                 } else {
                                     showPaywall = true

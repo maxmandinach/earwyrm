@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useBlock } from '../contexts/BlockContext'
 import LyricCard from '../components/LyricCard'
+import PlusBadge from '../components/PlusBadge'
 
 function AnonymousFooter({ username }) {
   return (
@@ -184,7 +185,7 @@ export default function PublicProfile({ showHistory = false }) {
           <div className="w-full max-w-lg">
             {/* Context — who and what */}
             <p className="text-xs text-charcoal/30 mb-4 text-center">
-              on <span className="text-charcoal/50">@{username}</span>'s mind right now
+              on <span className="text-charcoal/50">@{username}{profile?.subscription_tier === 'plus' && <PlusBadge />}</span>'s mind right now
             </p>
 
             <LyricCard

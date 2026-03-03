@@ -2,14 +2,27 @@ import { useState, useRef, useEffect } from 'react'
 import TagInput from './TagInput'
 import CollectionPicker from './CollectionPicker'
 import ModalSheet from './ModalSheet'
+import PlusPaywall from './PlusPaywall'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase-wrapper'
+import { generateCardArt } from '../lib/card-art'
 
 export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [] }) {
+  const { profile } = useAuth()
+  const isPlus = profile?.subscription_tier === 'plus'
   const [content, setContent] = useState(lyric.content)
   const [songTitle, setSongTitle] = useState(lyric.song_title || '')
   const [artistName, setArtistName] = useState(lyric.artist_name || '')
   const [tags, setTags] = useState(lyric.tags || [])
   const [saveState, setSaveState] = useState('idle') // idle | saving | saved
   const [error, setError] = useState(null)
+
+  // Artwork state
+  const [artUrl, setArtUrl] = useState(lyric.card_art_url || null)
+  const [artLoading, setArtLoading] = useState(false)
+  const [artRemaining, setArtRemaining] = useState(null)
+  const [artError, setArtError] = useState(null)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const handleClear = () => {
     setContent('')
@@ -39,6 +52,54 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
       console.error('Error updating lyric:', err)
       setError(err.message || 'Failed to update lyric. Please try again.')
       setSaveState('idle')
+    }
+  }
+
+  function artRemainingLabel(prefix) {
+    if (artRemaining !== null) {
+      return artRemaining > 0 ? `${prefix} (${artRemaining} remaining)` : 'Daily limit reached'
+    }
+    return prefix
+  }
+
+  async function handleGenerateArt() {
+    setArtLoading(true)
+    setArtError(null)
+    try {
+      const session = await supabase.auth.getSession()
+      const accessToken = session?.data?.session?.access_token
+      if (!accessToken) throw new Error('Not signed in')
+
+      const result = await generateCardArt({
+        lyricContent: content,
+        noteContent: null,
+        songTitle: songTitle || null,
+        artistName: artistName || null,
+        tags,
+        lyricId: lyric.id,
+      }, accessToken)
+
+      setArtUrl(result.image_url)
+      setArtRemaining(result.remaining)
+    } catch (err) {
+      setArtError(err.message || 'Generation failed')
+    } finally {
+      setArtLoading(false)
+    }
+  }
+
+  async function handleDeleteArt() {
+    try {
+      const path = `${lyric.id}.png`
+      await supabase.storage.from('card-art').remove([path])
+      await supabase
+        .from('lyrics')
+        .update({ card_art_url: null })
+        .eq('id', lyric.id)
+      setArtUrl(null)
+    } catch (err) {
+      setArtError('Failed to delete artwork')
+      console.error('Delete art error:', err)
     }
   }
 
@@ -136,6 +197,53 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             <h3 className="text-sm font-medium text-charcoal mb-3">Collections</h3>
             <CollectionPicker lyricId={lyric.id} />
           </div>
+
+          {/* Artwork Section */}
+          <div className="mt-6 pt-6 border-t border-charcoal/10 w-full max-w-md mx-auto">
+            <h3 className="text-sm font-medium text-charcoal mb-3">Artwork</h3>
+            {artUrl ? (
+              <div className="flex items-center gap-4">
+                <img
+                  src={artUrl}
+                  alt="Lyric artwork"
+                  className="w-16 h-16 object-cover rounded-lg"
+                />
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleGenerateArt}
+                    disabled={artLoading}
+                    className="text-xs text-left hover:opacity-70 transition-opacity disabled:opacity-40"
+                    style={{ color: 'var(--accent, #B8A99A)' }}
+                  >
+                    {artLoading ? 'Generating...' : artRemainingLabel('Regenerate')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteArt}
+                    className="text-xs text-left text-red-400 hover:text-red-500 transition-colors"
+                  >
+                    Delete artwork
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => isPlus ? handleGenerateArt() : setShowPaywall(true)}
+                disabled={artLoading}
+                className="text-xs hover:opacity-70 transition-opacity disabled:opacity-40"
+                style={{ color: 'var(--accent, #B8A99A)' }}
+              >
+                {artLoading ? '✦ Generating...' : `✦ ${artRemainingLabel('Generate artwork')}`}
+              </button>
+            )}
+            {artError && (
+              <p className="text-xs text-red-400 mt-2">{artError}</p>
+            )}
+          </div>
+
+          {showPaywall && <PlusPaywall onClose={() => setShowPaywall(false)} />}
 
           {/* Save Button - ceremonial */}
           <div className="mt-8 pt-8 flex justify-center">

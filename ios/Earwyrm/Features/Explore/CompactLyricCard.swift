@@ -3,6 +3,7 @@ import SwiftUI
 struct CompactLyricCard: View {
     let lyric: Lyric
     var username: String?
+    var isPlus: Bool = false
     var onShare: (() -> Void)?
     var onSave: (() -> Void)?
     var onReport: (() -> Void)?
@@ -113,9 +114,14 @@ struct CompactLyricCard: View {
 
                 if let username {
                     NavigationLink(value: ProfileDestination(userId: lyric.userId, username: username)) {
-                        Text("@\(username)")
-                            .font(Theme.dmSans(11))
-                            .foregroundStyle(Theme.accent)
+                        HStack(spacing: 2) {
+                            Text("@\(username)")
+                                .font(Theme.dmSans(11))
+                                .foregroundStyle(Theme.accent)
+                            if isPlus {
+                                PlusBadge()
+                            }
+                        }
                     }
                 }
 

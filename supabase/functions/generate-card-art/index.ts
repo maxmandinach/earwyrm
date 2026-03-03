@@ -84,6 +84,28 @@ serve(async (req) => {
       })
     }
 
+    // Rate limiting: 5 generations per day
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { data: recentGens, error: rateError } = await supabaseAdmin
+      .from("card_art_generations")
+      .select("id")
+      .eq("user_id", user.id)
+      .gte("created_at", twentyFourHoursAgo)
+
+    if (rateError) {
+      console.error("Rate limit check error:", rateError)
+    }
+
+    const genCount = recentGens?.length || 0
+    const remaining = Math.max(0, 5 - genCount)
+
+    if (genCount >= 5) {
+      return new Response(JSON.stringify({ error: "Daily limit reached (5/day)", remaining: 0 }), {
+        status: 429,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      })
+    }
+
     // Step 1: MusicBrainz genre lookup (cached)
     let genreTags: string[] = []
     if (artist_name) {
@@ -107,7 +129,18 @@ serve(async (req) => {
     // Step 5: Upload to Supabase Storage
     const imageUrl = await uploadToStorage(supabaseAdmin, lyric_id, imageData)
 
-    return new Response(JSON.stringify({ image_url: imageUrl }), {
+    // Step 6: Save URL to lyric record
+    await supabaseAdmin
+      .from("lyrics")
+      .update({ card_art_url: imageUrl })
+      .eq("id", lyric_id)
+
+    // Step 7: Record generation for rate limiting
+    await supabaseAdmin
+      .from("card_art_generations")
+      .insert({ user_id: user.id, lyric_id: lyric_id })
+
+    return new Response(JSON.stringify({ image_url: imageUrl, remaining: remaining - 1 }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     })
   } catch (err) {

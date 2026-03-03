@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { formatRelativeTime } from '../lib/utils'
 import ReportModal from './ReportModal'
+import PlusBadge from './PlusBadge'
 
 export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt, highlightCommentId = null }) {
   const { user } = useAuth()
@@ -40,7 +41,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
         if (!error && data) {
           const userIds = [...new Set(data.map(c => c.user_id))]
           const { data: profiles } = userIds.length > 0
-            ? await supabase.from('profiles').select('id, username').in('id', userIds)
+            ? await supabase.from('profiles').select('id, username, subscription_tier').in('id', userIds)
             : { data: [] }
           const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
           setComments(data.map(c => ({ ...c, profiles: profileMap[c.user_id] || null })))
@@ -74,7 +75,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
       // Attach current user's profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, subscription_tier')
         .eq('id', user.id)
         .single()
 
@@ -154,6 +155,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                       className="text-xs text-charcoal/50 hover:text-charcoal transition-colors font-medium"
                     >
                       @{comment.profiles.username}
+                      {comment.profiles.subscription_tier === 'plus' && <PlusBadge />}
                     </Link>
                   )}
                   <span className="text-xs text-charcoal/20">
@@ -214,6 +216,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
                           className="text-xs text-charcoal/50 hover:text-charcoal transition-colors font-medium"
                         >
                           @{reply.profiles.username}
+                          {reply.profiles.subscription_tier === 'plus' && <PlusBadge />}
                         </Link>
                       )}
                       <span className="text-xs text-charcoal/20">

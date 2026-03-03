@@ -6,6 +6,7 @@ import CompactCommentModal from './CompactCommentModal'
 import SavePopover from './SavePopover'
 import ShareModal from './ShareModal'
 import SignupOverlay from './SignupOverlay'
+import PlusBadge from './PlusBadge'
 
 /**
  * Compact lyric card for horizontal carousels.
@@ -66,7 +67,10 @@ function CompactCard({ lyric }) {
       >
         {/* Username */}
         {username && (
-          <p className="text-xs text-charcoal/30 mb-2 truncate">@{username}</p>
+          <p className="text-xs text-charcoal/30 mb-2 truncate">
+            @{username}
+            {lyric.profiles?.subscription_tier === 'plus' && <PlusBadge />}
+          </p>
         )}
 
         {/* Lyric snippet — 3 lines max */}

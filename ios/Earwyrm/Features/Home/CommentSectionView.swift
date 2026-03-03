@@ -149,9 +149,14 @@ struct CommentSectionView: View {
             // Username + timestamp
             HStack(spacing: 6) {
                 if let username = comment.username {
-                    Text("@\(username)")
-                        .font(Theme.dmSans(12, weight: .medium))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                    HStack(spacing: 2) {
+                        Text("@\(username)")
+                            .font(Theme.dmSans(12, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                        if comment.isPlus {
+                            PlusBadge()
+                        }
+                    }
                 }
                 Text(formatRelativeTime(comment.createdAt))
                     .font(Theme.dmSans(11))
@@ -304,23 +309,25 @@ struct CommentSectionView: View {
             // Get unique user IDs and fetch profiles
             let userIds = Array(Set(rawComments.map(\.userId)))
             var profileMap: [UUID: String] = [:]
+            var plusMap: [UUID: Bool] = [:]
 
             if !userIds.isEmpty {
                 let profiles: [CommentProfile] = try await supabase
                     .from("profiles")
-                    .select("id, username")
+                    .select("id, username, subscription_tier")
                     .in("id", values: userIds.map(\.uuidString))
                     .execute()
                     .value
 
                 for p in profiles {
                     profileMap[p.id] = p.username
+                    plusMap[p.id] = p.isPlus
                 }
             }
 
             // Combine
             comments = rawComments.map { c in
-                CommentWithProfile(comment: c, username: profileMap[c.userId])
+                CommentWithProfile(comment: c, username: profileMap[c.userId], isPlus: plusMap[c.userId] ?? false)
             }
             count = rawComments.count
         } catch {
@@ -358,7 +365,7 @@ struct CommentSectionView: View {
                 // Fetch own profile for display
                 let profiles: [CommentProfile] = try await supabase
                     .from("profiles")
-                    .select("id, username")
+                    .select("id, username, subscription_tier")
                     .eq("id", value: userId.uuidString)
                     .limit(1)
                     .execute()
@@ -366,7 +373,8 @@ struct CommentSectionView: View {
 
                 let withProfile = CommentWithProfile(
                     comment: created,
-                    username: profiles.first?.username
+                    username: profiles.first?.username,
+                    isPlus: profiles.first?.isPlus ?? false
                 )
 
                 Haptics.success()

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
+import PlusBadge from './PlusBadge'
 
 function formatTime(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -48,7 +49,7 @@ export default function CompactCommentModal({ lyricId, shareToken, onClose, onCo
         if (!error && data) {
           const userIds = [...new Set(data.map(c => c.user_id))]
           const { data: profiles } = userIds.length > 0
-            ? await supabase.from('profiles').select('id, username').in('id', userIds)
+            ? await supabase.from('profiles').select('id, username, subscription_tier').in('id', userIds)
             : { data: [] }
           const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]))
           setComments(data.map(c => ({ ...c, profiles: profileMap[c.user_id] || null })))
@@ -159,6 +160,7 @@ export default function CompactCommentModal({ lyricId, shareToken, onClose, onCo
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs font-medium text-charcoal/50">
                     @{comment.profiles?.username || 'anon'}
+                    {comment.profiles?.subscription_tier === 'plus' && <PlusBadge />}
                   </span>
                   <span className="text-[10px] text-charcoal/20">{formatTime(comment.created_at)}</span>
                 </div>

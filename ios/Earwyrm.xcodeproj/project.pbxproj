@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00682B7318916EBA43D0684D /* Follow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E393D761C12E15A59F0C47 /* Follow.swift */; };
+		PB01PB01PB01PB01PB01PB01 /* PlusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = PB02PB02PB02PB02PB02PB02 /* PlusBadge.swift */; };
 		02BF2A679CDCA584D2B473F6 /* Caveat-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2B70628A59D7DE003626271D /* Caveat-Variable.ttf */; };
 		06AD373F64856502CC505A76 /* DMSans-Italic-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B0C5040C3F4CCEFB0C6491AB /* DMSans-Italic-Variable.ttf */; };
 		10BCF77112A2A3107E029717 /* SuggestMatchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72A5BF13B3D61F152E65F388 /* SuggestMatchesView.swift */; };
@@ -144,6 +145,7 @@
 
 /* Begin PBXFileReference section */
 		00EC35ECFD65FD0FC1BB1E08 /* TrendingTagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendingTagsView.swift; sourceTree = "<group>"; };
+		PB02PB02PB02PB02PB02PB02 /* PlusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusBadge.swift; sourceTree = "<group>"; };
 		00EDCDA3576B454DD2084818 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		98B59CCFF4872610C4BCFC8A /* AppearanceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceManager.swift; sourceTree = "<group>"; };
 		00FAE7BC822CB9DF633CD43E /* CommentSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentSectionView.swift; sourceTree = "<group>"; };
@@ -463,6 +465,7 @@
 				98B59CCFF4872610C4BCFC8A /* AppearanceManager.swift */,
 				47946B7ED7858D8588F43FA0 /* Haptics.swift */,
 				E306E726CE544900D1B78E9F /* OfflineBanner.swift */,
+				PB02PB02PB02PB02PB02PB02 /* PlusBadge.swift */,
 				00EDCDA3576B454DD2084818 /* Theme.swift */,
 				T0A5T1B6C7D8E9F0A1B2C3D5 /* ToastManager.swift */,
 				T0A5T1B6C7D8E9F0A1B2C3D7 /* ToastOverlay.swift */,
@@ -827,6 +830,7 @@
 				AB30AB30AB30AB30AB30AB31 /* ReportSheet.swift in Sources */,
 				AB344FF51373753FA6DC92A3 /* NetworkMonitor.swift in Sources */,
 				7A14728EE00A024818CB9DF2 /* OfflineBanner.swift in Sources */,
+				PB01PB01PB01PB01PB01PB01 /* PlusBadge.swift in Sources */,
 				AA01BB02CC03DD04EE05FF07 /* LyricCluster.swift in Sources */,
 				AA01BB02CC03DD04EE05FF09 /* PageStats.swift in Sources */,
 				AA01BB02CC03DD04EE05FF0B /* PageStatsRow.swift in Sources */,

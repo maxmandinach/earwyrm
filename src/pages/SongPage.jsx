@@ -150,7 +150,7 @@ export default function SongPage() {
           const lyricIds = data.map(l => l.id)
           const { data: notesData } = await supabase
             .from('lyric_notes')
-            .select('*, profiles:user_id(username)')
+            .select('*, profiles:user_id(username, subscription_tier)')
             .in('lyric_id', lyricIds)
             .eq('is_public', true)
 
@@ -198,7 +198,7 @@ export default function SongPage() {
       try {
         const { data } = await supabase
           .from('lyrics')
-          .select('*, profiles:user_id(username)')
+          .select('*, profiles:user_id(username, subscription_tier)')
           .eq('is_public', true)
           .ilike('artist_name', artistName)
           .neq('song_title', songTitle)

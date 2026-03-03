@@ -89,17 +89,17 @@ struct EarwyrmPlusPaywall: View {
                     featureRow(
                         icon: "wand.and.stars",
                         title: "AI-generated lyric art",
-                        subtitle: "Unique artwork for every share card"
+                        subtitle: "5 unique artworks per day"
                     )
                     featureRow(
                         icon: "square.stack.3d.up",
-                        title: "Unlimited collections",
-                        subtitle: "Free tier limited to 3"
+                        title: "Custom collections",
+                        subtitle: "Free tier includes favorites only"
                     )
                     featureRow(
-                        icon: "clock.arrow.circlepath",
-                        title: "Your complete memory lane",
-                        subtitle: "Free tier limited to 30 days"
+                        badgeIcon: true,
+                        title: "Plus badge on your profile",
+                        subtitle: "Show your support everywhere"
                     )
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
@@ -149,12 +149,19 @@ struct EarwyrmPlusPaywall: View {
 
     // MARK: - Feature Row
 
-    private func featureRow(icon: String, title: String, subtitle: String) -> some View {
+    private func featureRow(icon: String? = nil, badgeIcon: Bool = false, title: String, subtitle: String) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundStyle(Theme.accent)
-                .frame(width: 36)
+            if badgeIcon {
+                Text("e")
+                    .font(.custom("Caveat", size: 26).weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 36)
+            } else if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 36)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

@@ -180,7 +180,7 @@ struct ProfileSettingsSheet: View {
                         Text("free tier")
                             .font(Theme.dmSans(15, weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("AI lyric art, unlimited collections & more")
+                        Text("AI lyric art, custom collections & more")
                             .font(Theme.dmSans(13))
                             .foregroundStyle(Theme.textMuted)
                     }

@@ -18,6 +18,7 @@ final class ShareImageRenderer {
     var aiArtURL: URL?
     private(set) var isGeneratingArt = false
     var aiArtError: String?
+    var artRemaining: Int?
 
     func render(lyric: Lyric, note: String?, username: String?) {
         isRendering = true
@@ -49,6 +50,16 @@ final class ShareImageRenderer {
             cachedCoverArt = await downloadImage(from: urlString)
             cachedCoverArtUrl = urlString
         }
+
+        // Pre-load existing card art if available
+        if let cardArtUrlString = lyric.cardArtUrl, aiArtImage == nil {
+            aiArtImage = await downloadImage(from: cardArtUrlString)
+            if aiArtImage != nil {
+                aiArtURL = URL(string: cardArtUrlString)
+                style = .aiArt
+            }
+        }
+
         render(lyric: lyric, note: note, username: username)
     }
 
@@ -57,9 +68,10 @@ final class ShareImageRenderer {
         aiArtError = nil
 
         do {
-            let url = try await CardArtService.generateArt(lyric: lyric, note: note)
-            aiArtURL = url
-            aiArtImage = await CardArtService.downloadImage(from: url)
+            let result = try await CardArtService.generateArt(lyric: lyric, note: note)
+            aiArtURL = result.url
+            artRemaining = result.remaining
+            aiArtImage = await CardArtService.downloadImage(from: result.url)
             style = .aiArt
             render(lyric: lyric, note: note, username: username)
             Analytics.track(.aiArtGenerated)

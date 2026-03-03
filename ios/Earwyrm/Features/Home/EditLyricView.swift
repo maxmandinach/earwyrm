@@ -19,6 +19,14 @@ struct EditLyricView: View {
     @State private var showLyricBrowser = false
     @State private var fullLyrics: String?
 
+    // Artwork
+    @Environment(SubscriptionManager.self) private var subscriptionManager
+    @State private var artImage: UIImage?
+    @State private var isGeneratingArt = false
+    @State private var artRemaining: Int?
+    @State private var artError: String?
+    @State private var showArtPaywall = false
+
     init(lyric: Lyric, onSaved: @escaping () -> Void) {
         self.lyric = lyric
         self.onSaved = onSaved
@@ -87,6 +95,9 @@ struct EditLyricView: View {
                     // Note
                     noteSection
 
+                    // Artwork
+                    artworkSection
+
                     if let error {
                         Text(error)
                             .font(Theme.dmSans(13))
@@ -131,6 +142,7 @@ struct EditLyricView: View {
             .task {
                 await loadNote()
                 await fetchLyrics()
+                await loadArtwork()
             }
             .sheet(isPresented: $showLyricBrowser) {
                 if let lyrics = fullLyrics {
@@ -143,6 +155,134 @@ struct EditLyricView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Artwork Section
+
+    private var artworkSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            if let artImage {
+                // Show existing artwork thumbnail
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(uiImage: artImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 64, height: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("lyric artwork")
+                            .font(Theme.dmSans(13, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Button {
+                                generateArt()
+                            } label: {
+                                Text(artRemainingLabel("Regenerate"))
+                                    .font(Theme.dmSans(12))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            .disabled(isGeneratingArt)
+
+                            Button {
+                                deleteArt()
+                            } label: {
+                                Text("Delete")
+                                    .font(Theme.dmSans(12))
+                                    .foregroundStyle(.red.opacity(0.7))
+                            }
+                        }
+                    }
+                }
+            } else {
+                // No artwork — show generate button
+                Button {
+                    if subscriptionManager.isPlus {
+                        generateArt()
+                    } else {
+                        showArtPaywall = true
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isGeneratingArt {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .tint(Theme.accent)
+                        } else {
+                            Image(systemName: "wand.and.stars")
+                                .font(.system(size: 13))
+                        }
+                        Text(isGeneratingArt ? "Generating..." : artRemainingLabel("Generate artwork"))
+                            .font(Theme.dmSans(13))
+                    }
+                    .foregroundStyle(Theme.accent)
+                }
+                .disabled(isGeneratingArt)
+            }
+
+            if let artError {
+                Text(artError)
+                    .font(Theme.dmSans(12))
+                    .foregroundStyle(.red.opacity(0.7))
+            }
+        }
+        .sheet(isPresented: $showArtPaywall) {
+            EarwyrmPlusPaywall()
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func artRemainingLabel(_ prefix: String) -> String {
+        if let remaining = artRemaining {
+            return remaining > 0 ? "\(prefix) (\(remaining) remaining)" : "Daily limit reached"
+        }
+        return prefix
+    }
+
+    private func generateArt() {
+        isGeneratingArt = true
+        artError = nil
+
+        Task {
+            do {
+                let result = try await CardArtService.generateArt(lyric: lyric, note: noteContent.isEmpty ? nil : noteContent)
+                artRemaining = result.remaining
+                artImage = await CardArtService.downloadImage(from: result.url)
+                Analytics.track(.aiArtGenerated)
+            } catch {
+                artError = error.localizedDescription
+            }
+            isGeneratingArt = false
+        }
+    }
+
+    private func deleteArt() {
+        Task {
+            do {
+                // Delete from storage
+                let path = "\(lyric.id.uuidString).png"
+                try await supabase.storage.from("card-art").remove(paths: [path])
+
+                // Clear URL from lyric
+                try await supabase
+                    .from("lyrics")
+                    .update(["card_art_url": nil] as [String: String?])
+                    .eq("id", value: lyric.id.uuidString)
+                    .execute()
+
+                artImage = nil
+                Haptics.light()
+            } catch {
+                artError = "Failed to delete artwork"
+                print("Delete art error: \(error)")
+            }
+        }
+    }
+
+    private func loadArtwork() async {
+        guard let urlString = lyric.cardArtUrl else { return }
+        artImage = await CardArtService.downloadImage(from: URL(string: urlString)!)
     }
 
     // MARK: - Note Section

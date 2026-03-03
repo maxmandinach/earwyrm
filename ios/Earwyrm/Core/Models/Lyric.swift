@@ -17,6 +17,7 @@ struct Lyric: Codable, Identifiable {
     let musicbrainzReleaseId: String?
     let reactionCount: Int?
     let commentCount: Int?
+    let cardArtUrl: String?
     let createdAt: Date
     let replacedAt: Date?
 
@@ -37,6 +38,7 @@ struct Lyric: Codable, Identifiable {
         case musicbrainzReleaseId = "musicbrainz_release_id"
         case reactionCount = "reaction_count"
         case commentCount = "comment_count"
+        case cardArtUrl = "card_art_url"
         case createdAt = "created_at"
         case replacedAt = "replaced_at"
     }

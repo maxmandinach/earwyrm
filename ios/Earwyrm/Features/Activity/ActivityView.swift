@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct ActivityView: View {
     var scrollToTop: Bool = false
@@ -6,6 +7,7 @@ struct ActivityView: View {
     @Environment(NotificationManager.self) private var notificationManager
     @State private var selectedFilter = 0
     @State private var navigationPath = NavigationPath()
+    @State private var actorPlusMap: [UUID: Bool] = [:]
 
     private let filters = ["All", "Resonances", "Comments", "Follows"]
 
@@ -45,7 +47,10 @@ struct ActivityView: View {
                             LazyVStack(spacing: 0) {
                                 ForEach(filteredNotifications) { notification in
                                     NavigationLink(value: notificationDestination(notification)) {
-                                        NotificationRow(notification: notification)
+                                        NotificationRow(
+                                            notification: notification,
+                                            isActorPlus: notification.actorId.flatMap { actorPlusMap[$0] } ?? false
+                                        )
                                     }
                                     .buttonStyle(.plain)
 
@@ -82,6 +87,7 @@ struct ActivityView: View {
                     .refreshable {
                         if let userId = auth.userId {
                             await notificationManager.fetchNotifications(userId: userId)
+                            await fetchActorPlusStatus()
                         }
                     }
                     .onChange(of: scrollToTop) { _, _ in
@@ -107,7 +113,32 @@ struct ActivityView: View {
         .task {
             if let userId = auth.userId {
                 await notificationManager.fetchNotifications(userId: userId)
+                await fetchActorPlusStatus()
             }
+        }
+        .onChange(of: notificationManager.notifications.count) { _, _ in
+            Task { await fetchActorPlusStatus() }
+        }
+    }
+
+    // MARK: - Actor Plus Status
+
+    private func fetchActorPlusStatus() async {
+        let actorIds = Array(Set(notificationManager.notifications.compactMap(\.actorId)))
+        let newIds = actorIds.filter { actorPlusMap[$0] == nil }
+        guard !newIds.isEmpty else { return }
+        do {
+            let profiles: [CommentProfile] = try await supabase
+                .from("profiles")
+                .select("id, username, subscription_tier")
+                .in("id", values: newIds.map(\.uuidString))
+                .execute()
+                .value
+            for p in profiles {
+                actorPlusMap[p.id] = p.isPlus
+            }
+        } catch {
+            print("Fetch actor plus status error: \(error)")
         }
     }
 
@@ -189,6 +220,7 @@ enum ActivityDestination: Hashable {
 
 private struct NotificationRow: View {
     let notification: AppNotification
+    var isActorPlus: Bool = false
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
@@ -198,10 +230,15 @@ private struct NotificationRow: View {
 
             // Content
             VStack(alignment: .leading, spacing: 4) {
-                Text(notificationText)
-                    .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(2)
+                HStack(spacing: 2) {
+                    Text(notificationText)
+                        .font(Theme.dmSans(14))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(2)
+                    if isActorPlus && notification.actorUsername != nil {
+                        PlusBadge()
+                    }
+                }
 
                 // Lyric snippet
                 if let snippet = notification.lyricSnippet {

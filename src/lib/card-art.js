@@ -16,7 +16,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
  * @param {string[]} [params.tags] - User tags
  * @param {string} params.lyricId - Lyric UUID
  * @param {string} accessToken - User's Supabase access token
- * @returns {Promise<string>} The public URL of the generated image
+ * @returns {Promise<{image_url: string, remaining: number}>} The public URL of the generated image and remaining daily count
  */
 export async function generateCardArt({ lyricContent, noteContent, songTitle, artistName, tags, lyricId }, accessToken) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-card-art`, {
@@ -41,7 +41,7 @@ export async function generateCardArt({ lyricContent, noteContent, songTitle, ar
   }
 
   const data = await res.json()
-  return data.image_url
+  return data
 }
 
 /**

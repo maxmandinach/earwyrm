@@ -23,6 +23,13 @@ struct Comment: Codable, Identifiable {
 struct CommentWithProfile: Identifiable {
     let comment: Comment
     let username: String?
+    let isPlus: Bool
+
+    init(comment: Comment, username: String?, isPlus: Bool = false) {
+        self.comment = comment
+        self.username = username
+        self.isPlus = isPlus
+    }
 
     var id: UUID { comment.id }
     var content: String { comment.content }
@@ -50,4 +57,13 @@ struct CommentInsert: Encodable {
 struct CommentProfile: Codable, Identifiable {
     let id: UUID
     let username: String
+    let subscriptionTier: String?
+
+    var isPlus: Bool { subscriptionTier == "plus" }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case username
+        case subscriptionTier = "subscription_tier"
+    }
 }

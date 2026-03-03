@@ -6,6 +6,13 @@ import Supabase
 struct LyricWithProfile: Identifiable, Hashable {
     let lyric: Lyric
     let username: String?
+    let isPlus: Bool
+
+    init(lyric: Lyric, username: String?, isPlus: Bool = false) {
+        self.lyric = lyric
+        self.username = username
+        self.isPlus = isPlus
+    }
 
     var id: UUID { lyric.id }
 
@@ -15,6 +22,17 @@ struct LyricWithProfile: Identifiable, Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+    }
+}
+
+private struct ProfileWithTier: Codable, Identifiable {
+    let id: UUID
+    let username: String
+    let subscriptionTier: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, username
+        case subscriptionTier = "subscription_tier"
     }
 }
 
@@ -50,7 +68,7 @@ final class HomeViewModel {
         id, user_id, content, song_title, artist_name, cover_art_url, \
         album_name, is_current, is_public, tags, share_token, \
         canonical_lyric_id, musicbrainz_recording_id, musicbrainz_release_id, \
-        reaction_count, comment_count, created_at, replaced_at
+        reaction_count, comment_count, card_art_url, created_at, replaced_at
         """
 
     // MARK: - Current Lyric
@@ -125,20 +143,13 @@ final class HomeViewModel {
 
     // MARK: - Memory Lane
 
-    func fetchPastLyrics(userId: UUID, cutoffDate: Date? = nil) async {
+    func fetchPastLyrics(userId: UUID) async {
         do {
-            var query = supabase
+            let lyrics: [Lyric] = try await supabase
                 .from("lyrics")
                 .select(Self.lyricColumns)
                 .eq("user_id", value: userId.uuidString)
                 .eq("is_current", value: false)
-
-            if let cutoff = cutoffDate {
-                let formatter = ISO8601DateFormatter()
-                query = query.gte("created_at", value: formatter.string(from: cutoff))
-            }
-
-            let lyrics: [Lyric] = try await query
                 .order("created_at", ascending: false)
                 .limit(8)
                 .execute()
@@ -169,22 +180,24 @@ final class HomeViewModel {
             // Batch-fetch profiles for these lyrics
             let userIds = Array(Set(lyrics.map(\.userId)))
             var profileMap: [UUID: String] = [:]
+            var plusMap: [UUID: Bool] = [:]
 
             if !userIds.isEmpty {
-                let profiles: [CommentProfile] = try await supabase
+                let profiles: [ProfileWithTier] = try await supabase
                     .from("profiles")
-                    .select("id, username")
+                    .select("id, username, subscription_tier")
                     .in("id", values: userIds.map(\.uuidString))
                     .execute()
                     .value
 
                 for p in profiles {
                     profileMap[p.id] = p.username
+                    plusMap[p.id] = p.subscriptionTier == "plus"
                 }
             }
 
             let mapped = lyrics.map { lyric in
-                LyricWithProfile(lyric: lyric, username: profileMap[lyric.userId])
+                LyricWithProfile(lyric: lyric, username: profileMap[lyric.userId], isPlus: plusMap[lyric.userId] ?? false)
             }
 
             print("Trending lyrics fetched: \(mapped.count)")
@@ -224,22 +237,24 @@ final class HomeViewModel {
             // Batch-fetch profiles
             let userIds = Array(Set(top.map(\.userId)))
             var profileMap: [UUID: String] = [:]
+            var plusMap: [UUID: Bool] = [:]
 
             if !userIds.isEmpty {
-                let profiles: [CommentProfile] = try await supabase
+                let profiles: [ProfileWithTier] = try await supabase
                     .from("profiles")
-                    .select("id, username")
+                    .select("id, username, subscription_tier")
                     .in("id", values: userIds.map(\.uuidString))
                     .execute()
                     .value
 
                 for p in profiles {
                     profileMap[p.id] = p.username
+                    plusMap[p.id] = p.subscriptionTier == "plus"
                 }
             }
 
             let mapped = top.map { lyric in
-                LyricWithProfile(lyric: lyric, username: profileMap[lyric.userId])
+                LyricWithProfile(lyric: lyric, username: profileMap[lyric.userId], isPlus: plusMap[lyric.userId] ?? false)
             }
 
             print("Follow feed lyrics fetched: \(mapped.count)")
@@ -346,9 +361,9 @@ final class HomeViewModel {
 
     // MARK: - Load All Sections
 
-    func loadAllSections(userId: UUID, follows: [Follow], memoryCutoff: Date? = nil) async {
+    func loadAllSections(userId: UUID, follows: [Follow]) async {
         print("loadAllSections called — follows: \(follows.count)")
-        async let past: () = fetchPastLyrics(userId: userId, cutoffDate: memoryCutoff)
+        async let past: () = fetchPastLyrics(userId: userId)
         async let trending: () = fetchTrendingLyrics()
         async let feed: () = fetchFollowFeedLyrics(userId: userId, follows: follows)
         _ = await (past, trending, feed)

@@ -188,6 +188,7 @@ export default function ShareModal({ lyric, onClose }) {
   const [aiArtImg, setAiArtImg] = useState(null)
   const [aiArtLoading, setAiArtLoading] = useState(false)
   const [aiArtError, setAiArtError] = useState('')
+  const [artRemaining, setArtRemaining] = useState(null)
   const [showPaywall, setShowPaywall] = useState(false)
   const canvasRef = useRef(null)
 
@@ -219,6 +220,19 @@ export default function ShareModal({ lyric, onClose }) {
     img.src = lyric.cover_art_url
   }, [lyric.cover_art_url])
 
+  // Pre-load existing card art if available
+  useEffect(() => {
+    if (!lyric.card_art_url) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      setAiArtImg(img)
+      setShareStyle('aiArt')
+    }
+    img.onerror = () => {} // silently fail
+    img.src = lyric.card_art_url
+  }, [lyric.card_art_url])
+
   // Animate in
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -243,7 +257,7 @@ export default function ShareModal({ lyric, onClose }) {
       const accessToken = session?.data?.session?.access_token
       if (!accessToken) throw new Error('Not signed in')
 
-      const imageUrl = await generateCardArt({
+      const result = await generateCardArt({
         lyricContent: lyric.content,
         noteContent: lyric.note_content || null,
         songTitle: lyric.song_title,
@@ -252,13 +266,15 @@ export default function ShareModal({ lyric, onClose }) {
         lyricId: lyric.id,
       }, accessToken)
 
+      setArtRemaining(result.remaining)
+
       // Load the image
       const img = new Image()
       img.crossOrigin = 'anonymous'
       await new Promise((resolve, reject) => {
         img.onload = resolve
         img.onerror = reject
-        img.src = imageUrl
+        img.src = result.image_url
       })
 
       setAiArtImg(img)
@@ -940,7 +956,7 @@ export default function ShareModal({ lyric, onClose }) {
                       cursor: 'pointer',
                     }}
                   >
-                    ↻ Regenerate artwork
+                    ↻ {artRemaining !== null ? (artRemaining > 0 ? `Regenerate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Regenerate artwork'}
                   </button>
                 ) : (
                   <button
@@ -957,7 +973,7 @@ export default function ShareModal({ lyric, onClose }) {
                     }}
                   >
                     <span>✦</span>
-                    <span>Generate artwork</span>
+                    <span>{artRemaining !== null ? (artRemaining > 0 ? `Generate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Generate artwork'}</span>
                     {!isPlus && (
                       <span style={{
                         fontSize: '0.625rem',

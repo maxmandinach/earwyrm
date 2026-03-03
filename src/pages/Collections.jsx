@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useCollection } from '../contexts/CollectionContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
+import PlusPaywall from '../components/PlusPaywall'
 
 function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
   const [showMenu, setShowMenu] = useState(false)
@@ -104,11 +105,13 @@ function CollectionCard({ collection, lyricCount, onEdit, onDelete }) {
 }
 
 export default function Collections() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const isPlus = profile?.subscription_tier === 'plus'
   const { collections, loading, createCollection, updateCollection, deleteCollection, getAllUserTags } = useCollection()
   const [lyricCounts, setLyricCounts] = useState({})
   const [loadingCounts, setLoadingCounts] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
   const [editingCollection, setEditingCollection] = useState(null)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [newCollectionDescription, setNewCollectionDescription] = useState('')
@@ -278,7 +281,15 @@ export default function Collections() {
         <div className="flex justify-between items-start mb-2">
           <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase">collections</h1>
           <button
-            onClick={() => showCreateForm ? handleCancelForm() : setShowCreateForm(true)}
+            onClick={() => {
+              if (showCreateForm) {
+                handleCancelForm()
+              } else if (!isPlus) {
+                setShowPaywall(true)
+              } else {
+                setShowCreateForm(true)
+              }
+            }}
             className="text-xs text-charcoal/40 hover:text-charcoal/60 transition-colors"
           >
             {showCreateForm ? 'cancel' : '+ new'}
@@ -395,6 +406,10 @@ export default function Collections() {
             />
           ))}
         </div>
+      )}
+
+      {showPaywall && (
+        <PlusPaywall onClose={() => setShowPaywall(false)} />
       )}
     </div>
   )

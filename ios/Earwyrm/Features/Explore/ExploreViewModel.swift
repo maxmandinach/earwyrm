@@ -38,6 +38,7 @@ struct TrendingTag: Identifiable {
 final class ExploreViewModel {
     var allLyrics: [Lyric] = []
     var profileMap: [UUID: String] = [:]
+    var plusMap: [UUID: Bool] = [:]
     var trendingTags: [TrendingTag] = []
     var isLoading = false
     var error: String?
@@ -70,12 +71,13 @@ final class ExploreViewModel {
             if !userIds.isEmpty {
                 let profiles: [CommentProfile] = try await supabase
                     .from("profiles")
-                    .select("id, username")
+                    .select("id, username, subscription_tier")
                     .in("id", values: userIds.map(\.uuidString))
                     .execute()
                     .value
                 for p in profiles {
                     profileMap[p.id] = p.username
+                    plusMap[p.id] = p.isPlus
                 }
             }
         } catch {

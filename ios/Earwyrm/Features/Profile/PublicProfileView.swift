@@ -160,9 +160,14 @@ struct PublicProfileView: View {
                 }
 
             // Username
-            Text("@\(username)")
-                .font(Theme.dmSans(18, weight: .medium))
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 2) {
+                Text("@\(username)")
+                    .font(Theme.dmSans(18, weight: .medium))
+                    .foregroundStyle(Theme.textPrimary)
+                if profile?.isPlus == true {
+                    PlusBadge(size: 16)
+                }
+            }
 
             // Display name
             if let displayName = profile?.displayName {

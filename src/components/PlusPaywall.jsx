@@ -38,9 +38,9 @@ export default function PlusPaywall({ onClose }) {
   }
 
   const features = [
-    { icon: '✦', title: 'AI-generated lyric art', desc: 'Unique artwork for every share card' },
-    { icon: '◫', title: 'Unlimited collections', desc: 'Free tier limited to 3' },
-    { icon: '↻', title: 'Your complete memory lane', desc: 'Free tier limited to 30 days' },
+    { icon: '✦', title: 'AI-generated lyric art', desc: '5 unique artworks per day' },
+    { icon: '◫', title: 'Custom collections', desc: 'Free tier includes favorites only' },
+    { icon: 'e', isBadge: true, title: 'Plus badge on your profile', desc: 'Show your support everywhere' },
   ]
 
   return createPortal(
@@ -90,7 +90,7 @@ export default function PlusPaywall({ onClose }) {
 
           {/* Features */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            {features.map(({ icon, title, desc }) => (
+            {features.map(({ icon, isBadge, title, desc }) => (
               <div
                 key={title}
                 style={{
@@ -102,7 +102,14 @@ export default function PlusPaywall({ onClose }) {
                   borderRadius: '12px',
                 }}
               >
-                <span style={{ fontSize: '1.25rem', width: '2rem', textAlign: 'center', color: 'var(--accent, #B8A99A)' }}>
+                <span style={{
+                  fontSize: isBadge ? '1.5rem' : '1.25rem',
+                  width: '2rem',
+                  textAlign: 'center',
+                  color: 'var(--accent, #B8A99A)',
+                  fontFamily: isBadge ? "'Caveat', cursive" : 'inherit',
+                  fontWeight: isBadge ? 600 : 'inherit',
+                }}>
                   {icon}
                 </span>
                 <div>

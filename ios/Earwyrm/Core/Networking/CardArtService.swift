@@ -27,14 +27,21 @@ enum CardArtService {
 
     struct CardArtResponse: Decodable {
         let imageUrl: String
+        let remaining: Int?
 
         enum CodingKeys: String, CodingKey {
             case imageUrl = "image_url"
+            case remaining
         }
     }
 
+    struct GenerateResult {
+        let url: URL
+        let remaining: Int
+    }
+
     /// Generate AI artwork for a lyric's share card. Requires Plus subscription.
-    static func generateArt(lyric: Lyric, note: String?) async throws -> URL {
+    static func generateArt(lyric: Lyric, note: String?) async throws -> GenerateResult {
         // Get the user's access token for authenticated request
         let session = try await supabase.auth.session
         let accessToken = session.accessToken
@@ -60,7 +67,7 @@ enum CardArtService {
             throw HTTPError.invalidURL
         }
 
-        return url
+        return GenerateResult(url: url, remaining: response.remaining ?? 0)
     }
 
     /// Download an image from a URL, returning a UIImage.

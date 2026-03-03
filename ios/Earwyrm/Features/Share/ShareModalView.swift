@@ -211,6 +211,13 @@ struct ShareModalView: View {
 
     // MARK: - AI Art Button
 
+    private func artButtonLabel(_ prefix: String) -> String {
+        if let remaining = renderer.artRemaining {
+            return remaining > 0 ? "\(prefix) (\(remaining) remaining)" : "Daily limit reached"
+        }
+        return prefix
+    }
+
     @ViewBuilder
     private var aiArtButton: some View {
         if renderer.hasAIArt {
@@ -224,12 +231,12 @@ struct ShareModalView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 12, weight: .medium))
-                    Text("Regenerate artwork")
+                    Text(artButtonLabel("Regenerate artwork"))
                         .font(Theme.dmSans(13, weight: .medium))
                 }
                 .foregroundStyle(Theme.accent)
             }
-            .disabled(renderer.isGeneratingArt)
+            .disabled(renderer.isGeneratingArt || renderer.artRemaining == 0)
             .opacity(renderer.isGeneratingArt ? 0.5 : 1)
         } else {
             // Generate button — visible to all users
@@ -246,7 +253,7 @@ struct ShareModalView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "wand.and.stars")
                         .font(.system(size: 13, weight: .medium))
-                    Text("Generate artwork")
+                    Text(artButtonLabel("Generate artwork"))
                         .font(Theme.dmSans(13, weight: .medium))
                     if !subscriptionManager.isPlus {
                         Text("plus")
