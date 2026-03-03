@@ -19,6 +19,8 @@ final class ShareImageRenderer {
     private(set) var isGeneratingArt = false
     var aiArtError: String?
     var artRemaining: Int?
+    var needsUpgrade = false
+    var wasFreeTierGen = false
 
     func render(lyric: Lyric, note: String?, username: String?) {
         isRendering = true
@@ -66,15 +68,20 @@ final class ShareImageRenderer {
     func generateAIArt(lyric: Lyric, note: String?, username: String?) async {
         isGeneratingArt = true
         aiArtError = nil
+        needsUpgrade = false
+        wasFreeTierGen = false
 
         do {
             let result = try await CardArtService.generateArt(lyric: lyric, note: note)
             aiArtURL = result.url
             artRemaining = result.remaining
+            wasFreeTierGen = result.isFreeTier
             aiArtImage = await CardArtService.downloadImage(from: result.url)
             style = .aiArt
             render(lyric: lyric, note: note, username: username)
             Analytics.track(.aiArtGenerated)
+        } catch CardArtService.CardArtError.upgradeRequired {
+            needsUpgrade = true
         } catch {
             aiArtError = error.localizedDescription
             print("AI art generation failed: \(error)")

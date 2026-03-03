@@ -82,7 +82,11 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
       setArtUrl(result.image_url)
       setArtRemaining(result.remaining)
     } catch (err) {
-      setArtError(err.message || 'Generation failed')
+      if (err.upgrade) {
+        setShowPaywall(true)
+      } else {
+        setArtError(err.message || 'Generation failed')
+      }
     } finally {
       setArtLoading(false)
     }
@@ -230,7 +234,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             ) : (
               <button
                 type="button"
-                onClick={() => isPlus ? handleGenerateArt() : setShowPaywall(true)}
+                onClick={handleGenerateArt}
                 disabled={artLoading}
                 className="text-xs hover:opacity-70 transition-opacity disabled:opacity-40"
                 style={{ color: 'var(--accent, #B8A99A)' }}

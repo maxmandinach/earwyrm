@@ -203,6 +203,13 @@ struct ShareModalView: View {
                 .presentationDetents([.medium])
             }
         }
+        .onChange(of: renderer.needsUpgrade) { _, needsUpgrade in
+            if needsUpgrade {
+                Analytics.track(.aiArtPaywallHit)
+                showPaywall = true
+                renderer.needsUpgrade = false
+            }
+        }
         .sheet(isPresented: $showPaywall) {
             EarwyrmPlusPaywall()
                 .presentationDragIndicator(.visible)
@@ -233,28 +240,6 @@ struct ShareModalView: View {
                         .font(.system(size: 12, weight: .medium))
                     Text(artButtonLabel("Regenerate artwork"))
                         .font(Theme.dmSans(13, weight: .medium))
-                }
-                .foregroundStyle(Theme.accent)
-            }
-            .disabled(renderer.isGeneratingArt || renderer.artRemaining == 0)
-            .opacity(renderer.isGeneratingArt ? 0.5 : 1)
-        } else {
-            // Generate button — visible to all users
-            Button {
-                if subscriptionManager.isPlus {
-                    Task {
-                        await renderer.generateAIArt(lyric: lyric, note: noteText, username: username)
-                    }
-                } else {
-                    Analytics.track(.aiArtPaywallHit)
-                    showPaywall = true
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "wand.and.stars")
-                        .font(.system(size: 13, weight: .medium))
-                    Text(artButtonLabel("Generate artwork"))
-                        .font(Theme.dmSans(13, weight: .medium))
                     if !subscriptionManager.isPlus {
                         Text("plus")
                             .font(Theme.dmSans(10, weight: .semibold))
@@ -267,8 +252,32 @@ struct ShareModalView: View {
                 }
                 .foregroundStyle(Theme.accent)
             }
+            .disabled(renderer.isGeneratingArt || renderer.artRemaining == 0)
+            .opacity(renderer.isGeneratingArt ? 0.5 : 1)
+        } else {
+            // Generate button — visible to all users, server enforces limits
+            Button {
+                Task {
+                    await renderer.generateAIArt(lyric: lyric, note: noteText, username: username)
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: 13, weight: .medium))
+                    Text(artButtonLabel("Generate artwork"))
+                        .font(Theme.dmSans(13, weight: .medium))
+                }
+                .foregroundStyle(Theme.accent)
+            }
             .disabled(renderer.isGeneratingArt)
             .opacity(renderer.isGeneratingArt ? 0.5 : 1)
+        }
+
+        // Upgrade nudge after free generation
+        if renderer.wasFreeTierGen && !subscriptionManager.isPlus {
+            Text("Upgrade for unlimited artwork")
+                .font(Theme.dmSans(11))
+                .foregroundStyle(Theme.textMuted)
         }
 
         if let error = renderer.aiArtError {

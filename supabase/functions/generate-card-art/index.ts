@@ -60,19 +60,14 @@ serve(async (req) => {
       })
     }
 
-    // Check Plus subscription
+    // Check subscription tier
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("subscription_tier")
       .eq("id", user.id)
       .single()
 
-    if (profile?.subscription_tier !== "plus") {
-      return new Response(JSON.stringify({ error: "Plus subscription required" }), {
-        status: 403,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      })
-    }
+    const isPlus = profile?.subscription_tier === "plus"
 
     const body: CardArtRequest = await req.json()
     const { lyric_content, note_content, song_title, artist_name, tags, lyric_id } = body
@@ -84,26 +79,51 @@ serve(async (req) => {
       })
     }
 
-    // Rate limiting: 5 generations per day
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    const { data: recentGens, error: rateError } = await supabaseAdmin
-      .from("card_art_generations")
-      .select("id")
-      .eq("user_id", user.id)
-      .gte("created_at", twentyFourHoursAgo)
+    let remaining: number
+    let isFreeTier = false
 
-    if (rateError) {
-      console.error("Rate limit check error:", rateError)
-    }
+    if (isPlus) {
+      // Plus: 5 generations per day
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const { data: recentGens, error: rateError } = await supabaseAdmin
+        .from("card_art_generations")
+        .select("id")
+        .eq("user_id", user.id)
+        .gte("created_at", twentyFourHoursAgo)
 
-    const genCount = recentGens?.length || 0
-    const remaining = Math.max(0, 5 - genCount)
+      if (rateError) {
+        console.error("Rate limit check error:", rateError)
+      }
 
-    if (genCount >= 5) {
-      return new Response(JSON.stringify({ error: "Daily limit reached (5/day)", remaining: 0 }), {
-        status: 429,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      })
+      const genCount = recentGens?.length || 0
+      remaining = Math.max(0, 5 - genCount)
+
+      if (genCount >= 5) {
+        return new Response(JSON.stringify({ error: "Daily limit reached (5/day)", remaining: 0 }), {
+          status: 429,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        })
+      }
+    } else {
+      // Free: 1 lifetime generation
+      const { data: allGens, error: countError } = await supabaseAdmin
+        .from("card_art_generations")
+        .select("id")
+        .eq("user_id", user.id)
+
+      if (countError) {
+        console.error("Free gen count check error:", countError)
+      }
+
+      if ((allGens?.length || 0) >= 1) {
+        return new Response(JSON.stringify({ error: "Free generation used", upgrade: true }), {
+          status: 403,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        })
+      }
+
+      remaining = 0
+      isFreeTier = true
     }
 
     // Step 1: MusicBrainz genre lookup (cached)
@@ -140,7 +160,7 @@ serve(async (req) => {
       .from("card_art_generations")
       .insert({ user_id: user.id, lyric_id: lyric_id })
 
-    return new Response(JSON.stringify({ image_url: imageUrl, remaining: remaining - 1 }), {
+    return new Response(JSON.stringify({ image_url: imageUrl, remaining: isPlus ? remaining - 1 : 0, is_free_gen: isFreeTier }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     })
   } catch (err) {

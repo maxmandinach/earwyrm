@@ -196,13 +196,9 @@ struct EditLyricView: View {
                     }
                 }
             } else {
-                // No artwork — show generate button
+                // No artwork — show generate button, server enforces limits
                 Button {
-                    if subscriptionManager.isPlus {
-                        generateArt()
-                    } else {
-                        showArtPaywall = true
-                    }
+                    generateArt()
                 } label: {
                     HStack(spacing: 6) {
                         if isGeneratingArt {
@@ -250,6 +246,8 @@ struct EditLyricView: View {
                 artRemaining = result.remaining
                 artImage = await CardArtService.downloadImage(from: result.url)
                 Analytics.track(.aiArtGenerated)
+            } catch CardArtService.CardArtError.upgradeRequired {
+                showArtPaywall = true
             } catch {
                 artError = error.localizedDescription
             }

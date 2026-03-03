@@ -243,14 +243,12 @@ export default function ShareModal({ lyric, onClose }) {
     setTimeout(onClose, 250)
   }
 
-  const handleGenerateArt = async () => {
-    if (!isPlus) {
-      setShowPaywall(true)
-      return
-    }
+  const [wasFreeTierGen, setWasFreeTierGen] = useState(false)
 
+  const handleGenerateArt = async () => {
     setAiArtLoading(true)
     setAiArtError('')
+    setWasFreeTierGen(false)
 
     try {
       const session = await supabase.auth.getSession()
@@ -267,6 +265,7 @@ export default function ShareModal({ lyric, onClose }) {
       }, accessToken)
 
       setArtRemaining(result.remaining)
+      if (result.is_free_gen) setWasFreeTierGen(true)
 
       // Load the image
       const img = new Image()
@@ -280,8 +279,12 @@ export default function ShareModal({ lyric, onClose }) {
       setAiArtImg(img)
       setShareStyle('aiArt')
     } catch (err) {
-      console.error('AI art generation failed:', err)
-      setAiArtError(err.message || 'Generation failed')
+      if (err.upgrade) {
+        setShowPaywall(true)
+      } else {
+        console.error('AI art generation failed:', err)
+        setAiArtError(err.message || 'Generation failed')
+      }
     } finally {
       setAiArtLoading(false)
     }
@@ -946,18 +949,40 @@ export default function ShareModal({ lyric, onClose }) {
                     <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
                   </div>
                 ) : aiArtImg ? (
-                  <button
-                    onClick={handleGenerateArt}
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--accent, #B8A99A)',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ↻ {artRemaining !== null ? (artRemaining > 0 ? `Regenerate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Regenerate artwork'}
-                  </button>
+                  <>
+                    <button
+                      onClick={handleGenerateArt}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.375rem',
+                        fontSize: '0.8rem',
+                        color: 'var(--accent, #B8A99A)',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <span>↻ {artRemaining !== null ? (artRemaining > 0 ? `Regenerate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Regenerate artwork'}</span>
+                      {!isPlus && (
+                        <span style={{
+                          fontSize: '0.625rem',
+                          fontWeight: 600,
+                          padding: '0.125rem 0.375rem',
+                          backgroundColor: 'var(--accent, #B8A99A)',
+                          color: 'white',
+                          borderRadius: '999px',
+                        }}>
+                          plus
+                        </span>
+                      )}
+                    </button>
+                    {wasFreeTierGen && !isPlus && (
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted, #9E9589)', marginTop: '0.25rem' }}>
+                        Upgrade for unlimited artwork
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <button
                     onClick={handleGenerateArt}
@@ -974,18 +999,6 @@ export default function ShareModal({ lyric, onClose }) {
                   >
                     <span>✦</span>
                     <span>{artRemaining !== null ? (artRemaining > 0 ? `Generate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Generate artwork'}</span>
-                    {!isPlus && (
-                      <span style={{
-                        fontSize: '0.625rem',
-                        fontWeight: 600,
-                        padding: '0.125rem 0.375rem',
-                        backgroundColor: 'var(--accent, #B8A99A)',
-                        color: 'white',
-                        borderRadius: '999px',
-                      }}>
-                        plus
-                      </span>
-                    )}
                   </button>
                 )}
                 {aiArtError && (

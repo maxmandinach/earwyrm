@@ -28,25 +28,43 @@ enum CardArtService {
     struct CardArtResponse: Decodable {
         let imageUrl: String
         let remaining: Int?
+        let isFreeTier: Bool?
 
         enum CodingKeys: String, CodingKey {
             case imageUrl = "image_url"
             case remaining
+            case isFreeTier = "is_free_gen"
         }
+    }
+
+    private struct ErrorResponse: Decodable {
+        let error: String?
+        let upgrade: Bool?
     }
 
     struct GenerateResult {
         let url: URL
         let remaining: Int
+        let isFreeTier: Bool
     }
 
-    /// Generate AI artwork for a lyric's share card. Requires Plus subscription.
+    enum CardArtError: LocalizedError {
+        case upgradeRequired
+
+        var errorDescription: String? {
+            switch self {
+            case .upgradeRequired:
+                return "You've used your free artwork"
+            }
+        }
+    }
+
+    /// Generate AI artwork for a lyric's share card.
     static func generateArt(lyric: Lyric, note: String?) async throws -> GenerateResult {
-        // Get the user's access token for authenticated request
         let session = try await supabase.auth.session
         let accessToken = session.accessToken
 
-        let request = CardArtRequest(
+        let body = CardArtRequest(
             lyricContent: lyric.content,
             noteContent: note,
             songTitle: lyric.songTitle,
@@ -55,19 +73,37 @@ enum CardArtService {
             lyricId: lyric.id.uuidString
         )
 
-        let response: CardArtResponse = try await HTTPClient.post(
-            endpoint,
-            body: request,
-            headers: [
-                "Authorization": "Bearer \(accessToken)"
-            ]
-        )
-
-        guard let url = URL(string: response.imageUrl) else {
+        guard let url = URL(string: endpoint) else {
             throw HTTPError.invalidURL
         }
 
-        return GenerateResult(url: url, remaining: response.remaining ?? 0)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            if let errorBody = try? JSONDecoder().decode(ErrorResponse.self, from: data),
+               errorBody.upgrade == true {
+                throw CardArtError.upgradeRequired
+            }
+            throw HTTPError.badStatus(http.statusCode)
+        }
+
+        let artResponse = try JSONDecoder().decode(CardArtResponse.self, from: data)
+
+        guard let imageUrl = URL(string: artResponse.imageUrl) else {
+            throw HTTPError.invalidURL
+        }
+
+        return GenerateResult(
+            url: imageUrl,
+            remaining: artResponse.remaining ?? 0,
+            isFreeTier: artResponse.isFreeTier ?? false
+        )
     }
 
     /// Download an image from a URL, returning a UIImage.

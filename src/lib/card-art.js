@@ -37,7 +37,9 @@ export async function generateCardArt({ lyricContent, noteContent, songTitle, ar
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `Card art generation failed (${res.status})`)
+    const error = new Error(err.error || `Card art generation failed (${res.status})`)
+    if (err.upgrade) error.upgrade = true
+    throw error
   }
 
   const data = await res.json()
