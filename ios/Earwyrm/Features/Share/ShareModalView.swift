@@ -11,7 +11,9 @@ struct ShareModalView: View {
     @State private var showActivitySheet = false
     @State private var copiedLink = false
     @State private var savedPhoto = false
+    @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     private var noteText: String? {
         guard let content = note?.content, !content.isEmpty else { return nil }
@@ -27,28 +29,53 @@ struct ShareModalView: View {
         lyric.coverArtUrl != nil
     }
 
+    /// The style options visible to the user depend on what's available
+    private var availableStyles: [ShareStyle] {
+        var styles: [ShareStyle] = [.minimal]
+        if hasCoverArt { styles.append(.coverArt) }
+        if renderer.hasAIArt { styles.append(.aiArt) }
+        return styles
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Live image preview
-                if let image = renderer.renderedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxHeight: 420)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Theme.card)
-                        .frame(height: 420)
-                        .overlay {
-                            ProgressView()
-                                .tint(Theme.accent)
-                        }
+                ZStack {
+                    if let image = renderer.renderedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxHeight: 420)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Theme.card)
+                            .frame(height: 420)
+                            .overlay {
+                                ProgressView()
+                                    .tint(Theme.accent)
+                            }
+                    }
+
+                    // AI art generation overlay
+                    if renderer.isGeneratingArt {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Theme.card.opacity(0.85))
+                            .frame(height: 420)
+                            .overlay {
+                                VStack(spacing: 12) {
+                                    ProgressView()
+                                        .tint(Theme.accent)
+                                    Text("generating artwork...")
+                                        .font(Theme.dmSans(14))
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                            }
+                    }
                 }
 
-                // Flexible spacers distribute remaining space evenly between controls
                 Spacer()
 
                 // Theme + Style pickers
@@ -64,9 +91,9 @@ struct ShareModalView: View {
 
                     Spacer()
 
-                    if hasCoverArt {
+                    if availableStyles.count > 1 {
                         segmentedPicker(
-                            options: ShareStyle.allCases,
+                            options: availableStyles,
                             selected: renderer.style,
                             label: { $0.label }
                         ) { style in
@@ -89,6 +116,11 @@ struct ShareModalView: View {
                         rerender()
                     }
                 }
+
+                Spacer()
+
+                // AI Art generate / regenerate button
+                aiArtButton
 
                 Spacer()
 
@@ -170,6 +202,73 @@ struct ShareModalView: View {
                 }
                 .presentationDetents([.medium])
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            EarwyrmPlusPaywall()
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    // MARK: - AI Art Button
+
+    @ViewBuilder
+    private var aiArtButton: some View {
+        if renderer.hasAIArt {
+            // Regenerate button
+            Button {
+                Analytics.track(.aiArtRegenerated)
+                Task {
+                    await renderer.generateAIArt(lyric: lyric, note: noteText, username: username)
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("Regenerate artwork")
+                        .font(Theme.dmSans(13, weight: .medium))
+                }
+                .foregroundStyle(Theme.accent)
+            }
+            .disabled(renderer.isGeneratingArt)
+            .opacity(renderer.isGeneratingArt ? 0.5 : 1)
+        } else {
+            // Generate button — visible to all users
+            Button {
+                if subscriptionManager.isPlus {
+                    Task {
+                        await renderer.generateAIArt(lyric: lyric, note: noteText, username: username)
+                    }
+                } else {
+                    Analytics.track(.aiArtPaywallHit)
+                    showPaywall = true
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Generate artwork")
+                        .font(Theme.dmSans(13, weight: .medium))
+                    if !subscriptionManager.isPlus {
+                        Text("plus")
+                            .font(Theme.dmSans(10, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.accent)
+                            .clipShape(Capsule())
+                    }
+                }
+                .foregroundStyle(Theme.accent)
+            }
+            .disabled(renderer.isGeneratingArt)
+            .opacity(renderer.isGeneratingArt ? 0.5 : 1)
+        }
+
+        if let error = renderer.aiArtError {
+            Text(error)
+                .font(Theme.dmSans(11))
+                .foregroundStyle(.red.opacity(0.7))
+                .lineLimit(2)
         }
     }
 

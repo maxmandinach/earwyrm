@@ -87,6 +87,11 @@ struct EarwyrmPlusPaywall: View {
                 // Feature rows
                 VStack(spacing: Theme.Spacing.md) {
                     featureRow(
+                        icon: "wand.and.stars",
+                        title: "AI-generated lyric art",
+                        subtitle: "Unique artwork for every share card"
+                    )
+                    featureRow(
                         icon: "square.stack.3d.up",
                         title: "Unlimited collections",
                         subtitle: "Free tier limited to 3"

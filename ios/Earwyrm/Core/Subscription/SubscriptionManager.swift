@@ -15,6 +15,13 @@ final class SubscriptionManager {
     static let yearlyId = "earwyrmplus_yearly"
     private static let productIds: Set<String> = [monthlyId, yearlyId]
 
+    // Tip jar
+    static let tipSmallId = "earwyrm_tip_small"
+    static let tipMediumId = "earwyrm_tip_medium"
+    static let tipLargeId = "earwyrm_tip_large"
+    private static let tipIds: Set<String> = [tipSmallId, tipMediumId, tipLargeId]
+    private(set) var tipProducts: [Product] = []
+
     // MARK: - Business Rules
 
     private static let freeCollectionLimit = 3
@@ -56,7 +63,15 @@ final class SubscriptionManager {
 
     func loadProducts() async {
         do {
-            products = try await Product.products(for: Self.productIds)
+            let allIds = Self.productIds.union(Self.tipIds)
+            let allProducts = try await Product.products(for: allIds)
+
+            products = allProducts
+                .filter { Self.productIds.contains($0.id) }
+                .sorted { $0.price < $1.price }
+
+            tipProducts = allProducts
+                .filter { Self.tipIds.contains($0.id) }
                 .sorted { $0.price < $1.price }
         } catch {
             print("Failed to load products: \(error)")
@@ -76,6 +91,28 @@ final class SubscriptionManager {
             let transaction = try Self.checkVerified(verification)
             isPlus = true
             await syncToSupabase(productId: product.id, expiresAt: transaction.expirationDate)
+            await transaction.finish()
+        case .userCancelled:
+            break
+        case .pending:
+            break
+        @unknown default:
+            break
+        }
+    }
+
+    // MARK: - Tip Jar
+
+    func purchaseTip(_ product: Product) async throws {
+        isLoading = true
+        error = nil
+        defer { isLoading = false }
+
+        let result = try await product.purchase()
+        switch result {
+        case .success(let verification):
+            let transaction = try Self.checkVerified(verification)
+            Analytics.track(.tipPurchased, ["amount": product.displayPrice, "product": product.id])
             await transaction.finish()
         case .userCancelled:
             break

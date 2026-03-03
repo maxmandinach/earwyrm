@@ -138,6 +138,8 @@
 		7C3D4E5F6A7B8C9D0E1F2A4B /* SongBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3D4E5F6A7B8C9D0E1F2A3B /* SongBackgroundView.swift */; };
 		8D4E5F6A7B8C9D0E1F2A3B5C /* SongBackgroundHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D4E5F6A7B8C9D0E1F2A3B4C /* SongBackgroundHistoryView.swift */; };
 		9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */; };
+		CA3DA3CA3DA3CA3DA3CA3DA2 /* CardArtService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3DA3CA3DA3CA3DA3CA3DA1 /* CardArtService.swift */; };
+		71F3A371F3A371F3A371F3A2 /* TipJarSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F3A371F3A371F3A371F3A1 /* TipJarSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -274,6 +276,8 @@
 		7C3D4E5F6A7B8C9D0E1F2A3B /* SongBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongBackgroundView.swift; sourceTree = "<group>"; };
 		8D4E5F6A7B8C9D0E1F2A3B4C /* SongBackgroundHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongBackgroundHistoryView.swift; sourceTree = "<group>"; };
 		9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricBrowserView.swift; sourceTree = "<group>"; };
+		CA3DA3CA3DA3CA3DA3CA3DA1 /* CardArtService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardArtService.swift; sourceTree = "<group>"; };
+		71F3A371F3A371F3A371F3A1 /* TipJarSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -427,6 +431,7 @@
 		61366DC4CDA939A88105C554 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
+				CA3DA3CA3DA3CA3DA3CA3DA1 /* CardArtService.swift */,
 				F81A96190CDE5DD2C71FC596 /* GeniusService.swift */,
 				3D33781BE0CC84468C143B65 /* HTTPClient.swift */,
 				A7B8C9D0E1F2A3B4C5D6E7F9 /* LRCLIBService.swift */,
@@ -631,6 +636,7 @@
 			children = (
 				CC01CC01CC01CC01CC01CC01 /* EarwyrmPlusPaywall.swift */,
 				DD01DD01DD01DD01DD01DD01 /* MemoryLaneUpsellCard.swift */,
+				71F3A371F3A371F3A371F3A1 /* TipJarSheet.swift */,
 			);
 			path = Subscription;
 			sourceTree = "<group>";
@@ -834,6 +840,8 @@
 				7C3D4E5F6A7B8C9D0E1F2A4B /* SongBackgroundView.swift in Sources */,
 				8D4E5F6A7B8C9D0E1F2A3B5C /* SongBackgroundHistoryView.swift in Sources */,
 				9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */,
+				CA3DA3CA3DA3CA3DA3CA3DA2 /* CardArtService.swift in Sources */,
+				71F3A371F3A371F3A371F3A2 /* TipJarSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

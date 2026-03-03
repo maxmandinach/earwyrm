@@ -5,6 +5,8 @@ import { signatureStyle, darkVariant } from '../lib/themes'
 import { generateShareToken, getShareableUrl, getPublicProfileUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 import { applyPaperTextureToCanvas, applyDarkPaperTexture } from '../lib/paperTexture'
+import { generateCardArt } from '../lib/card-art'
+import PlusPaywall from './PlusPaywall'
 
 const FORMATS = {
   square: { width: 1080, height: 1080, label: 'Square', hint: '1:1' },
@@ -181,9 +183,15 @@ export default function ShareModal({ lyric, onClose }) {
   const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode)
   const [visible, setVisible] = useState(false)
   const [username, setUsername] = useState(lyric.profiles?.username || null)
-  const [shareStyle, setShareStyle] = useState('minimal') // 'minimal' | 'coverArt'
+  const [shareStyle, setShareStyle] = useState('minimal') // 'minimal' | 'coverArt' | 'aiArt'
   const [coverArtImg, setCoverArtImg] = useState(null)
+  const [aiArtImg, setAiArtImg] = useState(null)
+  const [aiArtLoading, setAiArtLoading] = useState(false)
+  const [aiArtError, setAiArtError] = useState('')
+  const [showPaywall, setShowPaywall] = useState(false)
   const canvasRef = useRef(null)
+
+  const isPlus = authProfile?.subscription_tier === 'plus'
 
   const profileUrl = authProfile?.username ? getPublicProfileUrl(authProfile.username) : ''
 
@@ -219,6 +227,48 @@ export default function ShareModal({ lyric, onClose }) {
   function handleClose() {
     setVisible(false)
     setTimeout(onClose, 250)
+  }
+
+  const handleGenerateArt = async () => {
+    if (!isPlus) {
+      setShowPaywall(true)
+      return
+    }
+
+    setAiArtLoading(true)
+    setAiArtError('')
+
+    try {
+      const session = await supabase.auth.getSession()
+      const accessToken = session?.data?.session?.access_token
+      if (!accessToken) throw new Error('Not signed in')
+
+      const imageUrl = await generateCardArt({
+        lyricContent: lyric.content,
+        noteContent: lyric.note_content || null,
+        songTitle: lyric.song_title,
+        artistName: lyric.artist_name,
+        tags: lyric.tags,
+        lyricId: lyric.id,
+      }, accessToken)
+
+      // Load the image
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = imageUrl
+      })
+
+      setAiArtImg(img)
+      setShareStyle('aiArt')
+    } catch (err) {
+      console.error('AI art generation failed:', err)
+      setAiArtError(err.message || 'Generation failed')
+    } finally {
+      setAiArtLoading(false)
+    }
   }
 
   const copyLink = async (url) => {
@@ -277,6 +327,34 @@ export default function ShareModal({ lyric, onClose }) {
       }
       ctx.drawImage(coverArtImg, sx, sy, sw, sh, 0, 0, width, height)
       ctx.globalAlpha = 1.0
+      ctx.restore()
+    }
+
+    // Draw AI art background at high opacity with gradient overlay
+    if (shareStyle === 'aiArt' && aiArtImg) {
+      ctx.save()
+      ctx.globalAlpha = 0.8
+      const imgAspect = aiArtImg.width / aiArtImg.height
+      const canvasAspect = width / height
+      let sx = 0, sy = 0, sw = aiArtImg.width, sh = aiArtImg.height
+      if (imgAspect > canvasAspect) {
+        sw = aiArtImg.height * canvasAspect
+        sx = (aiArtImg.width - sw) / 2
+      } else {
+        sh = aiArtImg.width / canvasAspect
+        sy = (aiArtImg.height - sh) / 2
+      }
+      ctx.drawImage(aiArtImg, sx, sy, sw, sh, 0, 0, width, height)
+      ctx.globalAlpha = 1.0
+
+      // Gradient overlay for text legibility
+      const gradient = ctx.createLinearGradient(0, 0, 0, height)
+      const bgColor = isDarkMode ? '37, 34, 32' : '245, 242, 237'
+      gradient.addColorStop(0, `rgba(${bgColor}, 0.3)`)
+      gradient.addColorStop(0.5, `rgba(${bgColor}, 0.6)`)
+      gradient.addColorStop(1, `rgba(${bgColor}, 0.85)`)
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, width, height)
       ctx.restore()
     }
 
@@ -486,7 +564,7 @@ export default function ShareModal({ lyric, onClose }) {
 
   useEffect(() => {
     generateImage(selectedFormat)
-  }, [lyric, selectedFormat, isDarkMode, username, shareStyle, coverArtImg])
+  }, [lyric, selectedFormat, isDarkMode, username, shareStyle, coverArtImg, aiArtImg])
 
   useEffect(() => {
     async function ensureShareToken() {
@@ -687,7 +765,7 @@ export default function ShareModal({ lyric, onClose }) {
               </p>
 
               {/* Preview */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
                 <canvas
                   ref={canvasRef}
                   style={{
@@ -695,8 +773,28 @@ export default function ShareModal({ lyric, onClose }) {
                     aspectRatio: selectedFormat === 'tall' ? '9/16' : '1/1',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
                     transition: 'all 0.3s ease-out',
+                    opacity: aiArtLoading ? 0.4 : 1,
                   }}
                 />
+                {aiArtLoading && (
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <div style={{
+                      width: '2rem',
+                      height: '2rem',
+                      border: '2px solid var(--border-medium, rgba(0,0,0,0.1))',
+                      borderTopColor: 'var(--accent, #B8A99A)',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                    }} />
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                  </div>
+                )}
               </div>
 
               {/* Controls */}
@@ -752,8 +850,8 @@ export default function ShareModal({ lyric, onClose }) {
                 </button>
               </div>
 
-              {/* Style toggle — only when cover art is available */}
-              {lyric.cover_art_url && coverArtImg && (
+              {/* Style toggle — when cover art or AI art is available */}
+              {(lyric.cover_art_url && coverArtImg) || aiArtImg ? (
                 <div style={{ marginTop: '0.75rem' }}>
                   <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
                     <button
@@ -770,26 +868,117 @@ export default function ShareModal({ lyric, onClose }) {
                     >
                       Minimal
                     </button>
-                    <button
-                      onClick={() => setShareStyle('coverArt')}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        fontSize: '0.8rem',
-                        backgroundColor: shareStyle === 'coverArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                        color: shareStyle === 'coverArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                        border: 'none',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Cover Art
-                    </button>
+                    {lyric.cover_art_url && coverArtImg && (
+                      <button
+                        onClick={() => setShareStyle('coverArt')}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem',
+                          fontSize: '0.8rem',
+                          backgroundColor: shareStyle === 'coverArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                          color: shareStyle === 'coverArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cover Art
+                      </button>
+                    )}
+                    {aiArtImg && (
+                      <button
+                        onClick={() => setShareStyle('aiArt')}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem',
+                          fontSize: '0.8rem',
+                          backgroundColor: shareStyle === 'aiArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                          color: shareStyle === 'aiArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        AI Art
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
+              ) : null}
+
+              {/* AI Art generate / regenerate button */}
+              <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+                {aiArtLoading ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.375rem',
+                    padding: '0.5rem 0',
+                  }}>
+                    <span style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--accent, #B8A99A)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}>
+                      ✦ generating unique artwork...
+                    </span>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      color: 'var(--text-muted, #9E9589)',
+                    }}>
+                      this takes about 10 seconds
+                    </span>
+                    <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+                  </div>
+                ) : aiArtImg ? (
+                  <button
+                    onClick={handleGenerateArt}
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--accent, #B8A99A)',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ↻ Regenerate artwork
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleGenerateArt}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      fontSize: '0.8rem',
+                      color: 'var(--accent, #B8A99A)',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span>✦</span>
+                    <span>Generate artwork</span>
+                    {!isPlus && (
+                      <span style={{
+                        fontSize: '0.625rem',
+                        fontWeight: 600,
+                        padding: '0.125rem 0.375rem',
+                        backgroundColor: 'var(--accent, #B8A99A)',
+                        color: 'white',
+                        borderRadius: '999px',
+                      }}>
+                        plus
+                      </span>
+                    )}
+                  </button>
+                )}
+                {aiArtError && (
+                  <p style={{ fontSize: '0.7rem', color: '#c44', marginTop: '0.25rem' }}>{aiArtError}</p>
+                )}
+              </div>
 
               {/* Actions */}
-              <div style={{ marginTop: '1.5rem' }}>
+              <div style={{ marginTop: '1rem' }}>
                 <button
                   onClick={share}
                   style={{
@@ -831,5 +1020,10 @@ export default function ShareModal({ lyric, onClose }) {
     </div>
   )
 
-  return createPortal(modalContent, document.body)
+  return (
+    <>
+      {createPortal(modalContent, document.body)}
+      {showPaywall && <PlusPaywall onClose={() => setShowPaywall(false)} />}
+    </>
+  )
 }

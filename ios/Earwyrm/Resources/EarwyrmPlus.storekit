@@ -4,7 +4,51 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "earwyrm_tip_small_001",
+      "localizations" : [
+        {
+          "description" : "A small tip to support earwyrm",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "earwyrm_tip_small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "earwyrm_tip_medium_001",
+      "localizations" : [
+        {
+          "description" : "A medium tip to support earwyrm",
+          "displayName" : "Medium Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "earwyrm_tip_medium",
+      "referenceName" : "Medium Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "earwyrm_tip_large_001",
+      "localizations" : [
+        {
+          "description" : "A large tip to support earwyrm",
+          "displayName" : "Large Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "earwyrm_tip_large",
+      "referenceName" : "Large Tip",
+      "type" : "Consumable"
+    }
   ],
   "settings" : {
     "_applicationInternalID" : "",

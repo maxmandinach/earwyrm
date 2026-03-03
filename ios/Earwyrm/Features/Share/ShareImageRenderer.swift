@@ -13,6 +13,12 @@ final class ShareImageRenderer {
     private var cachedCoverArt: UIImage?
     private var cachedCoverArtUrl: String?
 
+    // AI art
+    var aiArtImage: UIImage?
+    var aiArtURL: URL?
+    private(set) var isGeneratingArt = false
+    var aiArtError: String?
+
     func render(lyric: Lyric, note: String?, username: String?) {
         isRendering = true
 
@@ -22,6 +28,7 @@ final class ShareImageRenderer {
             songTitle: lyric.songTitle,
             artistName: lyric.artistName,
             coverArtImage: cachedCoverArt,
+            aiArtImage: aiArtImage,
             username: username,
             format: format,
             theme: theme,
@@ -45,6 +52,25 @@ final class ShareImageRenderer {
         render(lyric: lyric, note: note, username: username)
     }
 
+    func generateAIArt(lyric: Lyric, note: String?, username: String?) async {
+        isGeneratingArt = true
+        aiArtError = nil
+
+        do {
+            let url = try await CardArtService.generateArt(lyric: lyric, note: note)
+            aiArtURL = url
+            aiArtImage = await CardArtService.downloadImage(from: url)
+            style = .aiArt
+            render(lyric: lyric, note: note, username: username)
+            Analytics.track(.aiArtGenerated)
+        } catch {
+            aiArtError = error.localizedDescription
+            print("AI art generation failed: \(error)")
+        }
+
+        isGeneratingArt = false
+    }
+
     func toggleFormat() {
         format = format == .square ? .story : .square
     }
@@ -59,6 +85,10 @@ final class ShareImageRenderer {
 
     func hasCoverArt(lyric: Lyric) -> Bool {
         lyric.coverArtUrl != nil
+    }
+
+    var hasAIArt: Bool {
+        aiArtImage != nil
     }
 
     private func downloadImage(from urlString: String) async -> UIImage? {

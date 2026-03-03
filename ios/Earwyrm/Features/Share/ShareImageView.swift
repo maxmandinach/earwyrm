@@ -24,11 +24,13 @@ enum ShareFormat: String, CaseIterable {
 enum ShareStyle: String, CaseIterable {
     case minimal
     case coverArt
+    case aiArt
 
     var label: String {
         switch self {
         case .minimal: "Minimal"
         case .coverArt: "Cover Art"
+        case .aiArt: "AI Art"
         }
     }
 
@@ -36,6 +38,7 @@ enum ShareStyle: String, CaseIterable {
         switch self {
         case .minimal: "text.quote"
         case .coverArt: "photo"
+        case .aiArt: "wand.and.stars"
         }
     }
 }
@@ -123,6 +126,7 @@ struct ShareImageView: View {
     let songTitle: String?
     let artistName: String?
     let coverArtImage: UIImage?
+    let aiArtImage: UIImage?
     let username: String?
     let format: ShareFormat
     let theme: ShareTheme
@@ -182,7 +186,9 @@ struct ShareImageView: View {
 
     var body: some View {
         ZStack {
-            if style == .coverArt, let image = coverArtImage {
+            if style == .aiArt, let image = aiArtImage {
+                aiArtLayout(image: image)
+            } else if style == .coverArt, let image = coverArtImage {
                 coverArtLayout(image: image)
             } else {
                 minimalLayout
@@ -219,6 +225,32 @@ struct ShareImageView: View {
 
             RoundedRectangle(cornerRadius: 0)
                 .strokeBorder(theme.border, lineWidth: borderWidth)
+
+            cardContent()
+        }
+    }
+
+    // MARK: - AI Art Layout
+
+    private func aiArtLayout(image: UIImage) -> some View {
+        ZStack {
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size.width, height: size.height)
+                .clipped()
+                .opacity(0.8)
+
+            // Gradient overlay for text legibility
+            LinearGradient(
+                colors: [
+                    theme.background.opacity(0.3),
+                    theme.background.opacity(0.6),
+                    theme.background.opacity(0.85)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
 
             cardContent()
         }

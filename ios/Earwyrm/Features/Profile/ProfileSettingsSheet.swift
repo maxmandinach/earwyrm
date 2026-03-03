@@ -11,6 +11,7 @@ struct ProfileSettingsSheet: View {
     @State private var isSigningOut = false
     @State private var hasLoaded = false
     @State private var showPaywall = false
+    @State private var showTipJar = false
     @AppStorage("preferredMusicService") private var preferredMusicService = "spotify"
 
     var body: some View {
@@ -22,6 +23,7 @@ struct ProfileSettingsSheet: View {
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         subscriptionSection
+                        tipJarSection
                         appearanceSection
                         musicServiceSection
                         editProfileSection
@@ -73,6 +75,11 @@ struct ProfileSettingsSheet: View {
         }
         .sheet(isPresented: $showPaywall) {
             EarwyrmPlusPaywall()
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showTipJar) {
+            TipJarSheet()
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -173,7 +180,7 @@ struct ProfileSettingsSheet: View {
                         Text("free tier")
                             .font(Theme.dmSans(15, weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("unlimited collections & full memory lane")
+                        Text("AI lyric art, unlimited collections & more")
                             .font(Theme.dmSans(13))
                             .foregroundStyle(Theme.textMuted)
                     }
@@ -198,6 +205,31 @@ struct ProfileSettingsSheet: View {
         UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first!
+    }
+
+    // MARK: - Tip Jar
+
+    private var tipJarSection: some View {
+        settingsSection("support earwyrm") {
+            Button {
+                showTipJar = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("tip jar")
+                            .font(Theme.dmSans(15, weight: .medium))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("earwyrm is indie-built — tips help keep it alive")
+                            .font(Theme.dmSans(13))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                    Spacer()
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+        }
     }
 
     // MARK: - Edit Profile

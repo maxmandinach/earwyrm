@@ -6,15 +6,47 @@ import { useBlock } from '../contexts/BlockContext'
 import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
 import { setColorSchemePreference } from '../lib/paperTexture'
-import { useNavigate, Link } from 'react-router-dom'
+import { createCheckoutSession } from '../lib/card-art'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 
 export default function Settings() {
-  const { user, profile, signOut, updateProfile } = useAuth()
+  const { user, profile, signOut, updateProfile, refreshProfile } = useAuth()
   const { currentLyric, setVisibility } = useLyric()
   const { follows } = useFollow()
   const { blockedUserIds, unblockUser } = useBlock()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [blockedProfiles, setBlockedProfiles] = useState([])
+  const [subscribeLoading, setSubscribeLoading] = useState(null)
+  const [subscribeError, setSubscribeError] = useState('')
+  const [justSubscribed, setJustSubscribed] = useState(false)
+
+  const isPlus = profile?.subscription_tier === 'plus'
+  const isWebSubscriber = profile?.subscription_platform === 'web'
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    if (searchParams.get('subscribed') === 'true') {
+      setJustSubscribed(true)
+      refreshProfile?.()
+      setTimeout(() => setJustSubscribed(false), 5000)
+    }
+  }, [searchParams])
+
+  const handleSubscribe = async (plan) => {
+    setSubscribeLoading(plan)
+    setSubscribeError('')
+    try {
+      const session = await supabase.auth.getSession()
+      const accessToken = session?.data?.session?.access_token
+      if (!accessToken) throw new Error('Not signed in')
+      const url = await createCheckoutSession(plan, accessToken)
+      window.location.href = url
+    } catch (err) {
+      setSubscribeError(err.message || 'Something went wrong')
+      setSubscribeLoading(null)
+    }
+  }
 
   const [username, setUsername] = useState(profile?.username || '')
   const [isPublic, setIsPublic] = useState(profile?.is_public || false)
@@ -189,6 +221,85 @@ export default function Settings() {
         <h1 className="text-xl font-light text-charcoal/60 tracking-wide lowercase mb-8">settings</h1>
 
         <div className="space-y-8">
+          {/* Subscription */}
+          <section className="border-b border-charcoal/10 pb-8">
+            <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">earwyrm+</h2>
+
+            {justSubscribed && (
+              <div className="mb-4 p-3 text-sm text-center" style={{
+                backgroundColor: 'var(--accent, #B8A99A)',
+                color: 'white',
+                borderRadius: '8px',
+              }}>
+                Welcome to earwyrm+! You're all set.
+              </div>
+            )}
+
+            {isPlus ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary, #2C2825)' }}>
+                      earwyrm+ active
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted, #9E9589)' }}>
+                      thank you for your support
+                    </p>
+                  </div>
+                  <span style={{ color: 'var(--accent, #B8A99A)', fontSize: '1.25rem' }}>✓</span>
+                </div>
+                {isWebSubscriber && (
+                  <p className="text-xs" style={{ color: 'var(--text-muted, #9E9589)' }}>
+                    Subscribed via web. Manage your subscription through Stripe.
+                  </p>
+                )}
+                {!isWebSubscriber && profile?.subscription_platform === 'ios' && (
+                  <p className="text-xs" style={{ color: 'var(--text-muted, #9E9589)' }}>
+                    Subscribed via iOS. Manage in the App Store.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm" style={{ color: 'var(--text-secondary, #6B635A)' }}>
+                  Unlock AI lyric art, unlimited collections, and your complete memory lane.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSubscribe('monthly')}
+                    disabled={!!subscribeLoading}
+                    className="flex-1 px-4 py-3 text-sm font-medium border transition-colors"
+                    style={{
+                      borderColor: 'var(--border-medium, rgba(0,0,0,0.1))',
+                      color: 'var(--text-primary, #2C2825)',
+                      opacity: subscribeLoading === 'yearly' ? 0.5 : 1,
+                      cursor: subscribeLoading ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {subscribeLoading === 'monthly' ? '...' : '$2.99/mo'}
+                  </button>
+                  <button
+                    onClick={() => handleSubscribe('yearly')}
+                    disabled={!!subscribeLoading}
+                    className="flex-1 px-4 py-3 text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: 'var(--accent, #B8A99A)',
+                      color: 'white',
+                      border: 'none',
+                      opacity: subscribeLoading === 'monthly' ? 0.5 : 1,
+                      cursor: subscribeLoading ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {subscribeLoading === 'yearly' ? '...' : '$24.99/yr (save 30%)'}
+                  </button>
+                </div>
+                {subscribeError && (
+                  <p className="text-xs text-red-600">{subscribeError}</p>
+                )}
+              </div>
+            )}
+          </section>
+
           {/* Username */}
           <section className="border-b border-charcoal/10 pb-8">
             <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">username</h2>
