@@ -480,6 +480,17 @@ html.dark .divide-charcoal\/10 > * + * {
   border-color: var(--border-medium) !important;
 }
 
+/* Plus badge */
+.plus-badge {
+  color: var(--color-accent, #B8A99A);
+  background-color: var(--color-charcoal, #2C2825);
+}
+
+html.dark .plus-badge {
+  color: #2C2825;
+  background-color: var(--color-accent, #C8B8A8);
+}
+
 /* Specific component overrides */
 
 /* Header/footer borders */

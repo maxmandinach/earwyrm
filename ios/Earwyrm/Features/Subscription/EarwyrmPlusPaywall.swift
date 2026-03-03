@@ -158,7 +158,7 @@ struct EarwyrmPlusPaywall: View {
     private func featureRow(icon: String? = nil, badgeIcon: Bool = false, title: String, subtitle: String) -> some View {
         HStack(spacing: 14) {
             if badgeIcon {
-                CaveatText(text: "e", size: 26, weight: .semibold, color: Theme.textSecondary)
+                PlusBadge(size: 18)
                     .frame(width: 36)
             } else if let icon {
                 Image(systemName: icon)
