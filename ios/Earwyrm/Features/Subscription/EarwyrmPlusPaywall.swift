@@ -116,9 +116,15 @@ struct EarwyrmPlusPaywall: View {
                     }
 
                     if subscriptionManager.products.isEmpty {
-                        Text("Products loading...")
-                            .font(Theme.dmSans(14))
-                            .foregroundStyle(Theme.textMuted)
+                        if let error = subscriptionManager.error {
+                            Text(error)
+                                .font(Theme.dmSans(13))
+                                .foregroundStyle(Theme.textMuted)
+                                .multilineTextAlignment(.center)
+                        } else {
+                            ProgressView()
+                                .tint(Theme.accent)
+                        }
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.lg)

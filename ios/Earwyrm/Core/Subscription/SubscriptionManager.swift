@@ -57,7 +57,9 @@ final class SubscriptionManager {
     func loadProducts() async {
         do {
             let allIds = Self.productIds.union(Self.tipIds)
+            print("StoreKit: requesting products for IDs: \(allIds)")
             let allProducts = try await Product.products(for: allIds)
+            print("StoreKit: received \(allProducts.count) products: \(allProducts.map(\.id))")
 
             products = allProducts
                 .filter { Self.productIds.contains($0.id) }
@@ -66,8 +68,13 @@ final class SubscriptionManager {
             tipProducts = allProducts
                 .filter { Self.tipIds.contains($0.id) }
                 .sorted { $0.price < $1.price }
+
+            if allProducts.isEmpty {
+                error = "No products available yet — Apple may still be processing"
+            }
         } catch {
-            print("Failed to load products: \(error)")
+            print("StoreKit: failed to load products: \(error)")
+            self.error = "Could not load products"
         }
     }
 
