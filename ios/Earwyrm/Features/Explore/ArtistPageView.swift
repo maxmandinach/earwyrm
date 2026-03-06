@@ -79,7 +79,7 @@ struct ArtistPageView: View {
         id, user_id, content, song_title, artist_name, cover_art_url, \
         album_name, is_current, is_public, tags, share_token, \
         canonical_lyric_id, musicbrainz_recording_id, musicbrainz_release_id, \
-        reaction_count, comment_count, created_at, replaced_at
+        reaction_count, comment_count, card_art_url, created_at, replaced_at
         """
 
     var body: some View {
@@ -293,19 +293,21 @@ struct ArtistPageView: View {
 
             searchSortBar
 
-            ForEach(filteredClusters) { cluster in
-                let lyric = cluster.representative
-                ClusteredLyricCard(
-                    cluster: cluster,
-                    hasReacted: reactionStates[lyric.id] ?? false,
-                    reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
-                    isResonateAnimating: animatingReactions.contains(lyric.id),
-                    onResonate: { toggleReaction(for: lyric) },
-                    onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
-                    onShare: { shareLyric = lyric },
-                    isSaved: collectionManager.isLyricSaved(lyric.id)
-                )
-                .padding(.horizontal, Theme.Spacing.md)
+            LazyVStack(spacing: Theme.Spacing.sm) {
+                ForEach(filteredClusters) { cluster in
+                    let lyric = cluster.representative
+                    ClusteredLyricCard(
+                        cluster: cluster,
+                        hasReacted: reactionStates[lyric.id] ?? false,
+                        reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
+                        isResonateAnimating: animatingReactions.contains(lyric.id),
+                        onResonate: { toggleReaction(for: lyric) },
+                        onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                        onShare: { shareLyric = lyric },
+                        isSaved: collectionManager.isLyricSaved(lyric.id)
+                    )
+                    .padding(.horizontal, Theme.Spacing.md)
+                }
             }
 
             if filteredClusters.isEmpty && !isLoading {

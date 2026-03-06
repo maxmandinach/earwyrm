@@ -96,7 +96,19 @@ struct SocialLyricCard: View {
         }
         .padding(Theme.Spacing.md)
         .frame(width: 260, height: 170)
-        .background(Theme.card)
+        .background(
+            ZStack {
+                Theme.card
+                if let artUrl = lyric.cardArtUrl {
+                    CardArtBackground(
+                        url: artUrl,
+                        opacity: 0.2,
+                        gradientStart: 0.2,
+                        gradientEnd: 0.85
+                    )
+                }
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
         .contextMenu {

@@ -18,16 +18,10 @@ struct EditLyricView: View {
     @State private var error: String?
     @State private var showLyricBrowser = false
     @State private var fullLyrics: String?
+    @State private var lyricIsPublic: Bool
 
-    // Artwork
-    @Environment(SubscriptionManager.self) private var subscriptionManager
-    @State private var artImage: UIImage?
-    @State private var isGeneratingArt = false
-    @State private var artRemaining: Int?
-    @State private var artError: String?
-    @State private var showArtPaywall = false
-    @State private var showFreeGenConfirm = false
-    @State private var showRegenConfirm = false
+    // Artwork — shared view model
+    @State private var artVM = ArtGalleryViewModel()
 
     init(lyric: Lyric, onSaved: @escaping () -> Void) {
         self.lyric = lyric
@@ -35,6 +29,7 @@ struct EditLyricView: View {
         _content = State(initialValue: lyric.content)
         _songTitle = State(initialValue: lyric.songTitle ?? "")
         _artistName = State(initialValue: lyric.artistName ?? "")
+        _lyricIsPublic = State(initialValue: lyric.isPublic ?? false)
     }
 
     private var canSave: Bool {
@@ -45,7 +40,7 @@ struct EditLyricView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                    // Content
+                    // Content — shows AI art background as live preview
                     TextEditor(text: $content)
                         .font(Theme.caveat(30))
                         .foregroundStyle(Theme.textPrimary)
@@ -53,10 +48,28 @@ struct EditLyricView: View {
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 150)
                         .padding(Theme.Spacing.md)
-                        .background(Theme.card)
+                        .background(
+                            ZStack {
+                                Theme.card
+                                if let image = artVM.aiArtImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .opacity(0.2)
+                                        .overlay(
+                                            LinearGradient(
+                                                colors: [Theme.card.opacity(0.2), Theme.card.opacity(0.9)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                }
+                            }
+                        )
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                         .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
+                        .animation(.easeInOut(duration: 0.2), value: artVM.activeVariantIndex)
                         .onChange(of: content) { _, newValue in
                             if newValue.count > 500 {
                                 content = String(newValue.prefix(500))
@@ -71,6 +84,20 @@ struct EditLyricView: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .padding(.trailing, 4)
                             .animation(.easeInOut(duration: 0.2), value: content.count)
+                    }
+
+                    // Lyric visibility
+                    Button {
+                        Haptics.light()
+                        lyricIsPublic.toggle()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: lyricIsPublic ? "globe" : "lock")
+                                .font(.system(size: 11))
+                            Text(lyricIsPublic ? "lyric is public" : "lyric is private")
+                                .font(Theme.dmSans(12))
+                        }
+                        .foregroundStyle(Theme.textMuted)
                     }
 
                     // Song + Artist
@@ -97,8 +124,12 @@ struct EditLyricView: View {
                     // Note
                     noteSection
 
-                    // Artwork
-                    artworkSection
+                    // Artwork — unified component
+                    ArtworkSectionView(
+                        lyric: lyric,
+                        noteContent: noteContent,
+                        viewModel: artVM
+                    )
 
                     if let error {
                         Text(error)
@@ -144,7 +175,13 @@ struct EditLyricView: View {
             .task {
                 await loadNote()
                 await fetchLyrics()
-                await loadArtwork()
+                await artVM.loadVariants(for: lyric)
+            }
+            .onDisappear {
+                // Persist art selection if changed
+                Task {
+                    await artVM.persistActiveVariant(lyricId: lyric.id)
+                }
             }
             .sheet(isPresented: $showLyricBrowser) {
                 if let lyrics = fullLyrics {
@@ -157,151 +194,6 @@ struct EditLyricView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Artwork Section
-
-    private var artworkSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            if let artImage {
-                // Show existing artwork thumbnail
-                HStack(spacing: Theme.Spacing.md) {
-                    Image(uiImage: artImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("lyric artwork")
-                            .font(Theme.dmSans(13, weight: .medium))
-                            .foregroundStyle(Theme.textSecondary)
-
-                        HStack(spacing: Theme.Spacing.sm) {
-                            Button {
-                                showRegenConfirm = true
-                            } label: {
-                                Text(artRemainingLabel("Regenerate"))
-                                    .font(Theme.dmSans(12))
-                                    .foregroundStyle(Theme.accent)
-                            }
-                            .disabled(isGeneratingArt)
-
-                            Button {
-                                deleteArt()
-                            } label: {
-                                Text("Delete")
-                                    .font(Theme.dmSans(12))
-                                    .foregroundStyle(.red.opacity(0.7))
-                            }
-                        }
-                    }
-                }
-            } else {
-                // No artwork — show generate button, server enforces limits
-                Button {
-                    if subscriptionManager.isPlus {
-                        generateArt()
-                    } else {
-                        showFreeGenConfirm = true
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        if isGeneratingArt {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                                .tint(Theme.accent)
-                        } else {
-                            Image(systemName: "wand.and.stars")
-                                .font(.system(size: 13))
-                        }
-                        Text(isGeneratingArt ? "Generating..." : artRemainingLabel("Generate artwork"))
-                            .font(Theme.dmSans(13))
-                    }
-                    .foregroundStyle(Theme.accent)
-                }
-                .disabled(isGeneratingArt)
-            }
-
-            if let artError {
-                Text(artError)
-                    .font(Theme.dmSans(12))
-                    .foregroundStyle(.red.opacity(0.7))
-            }
-        }
-        .sheet(isPresented: $showArtPaywall) {
-            EarwyrmPlusPaywall(context: "ai_art")
-                .presentationDragIndicator(.visible)
-        }
-        .alert("Create Your Artwork", isPresented: $showFreeGenConfirm) {
-            Button("Generate") { generateArt() }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Your lyric and note will shape a unique artwork. This is your one free generation.")
-        }
-        .alert("Generate new artwork?", isPresented: $showRegenConfirm) {
-            Button("Regenerate") { generateArt() }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("This will replace your current art.")
-        }
-    }
-
-    private func artRemainingLabel(_ prefix: String) -> String {
-        if let remaining = artRemaining {
-            if remaining > 0 {
-                return "\(prefix) (\(remaining) remaining)"
-            }
-            return subscriptionManager.isPlus ? "Daily limit reached" : "Upgrade to regenerate"
-        }
-        return prefix
-    }
-
-    private func generateArt() {
-        isGeneratingArt = true
-        artError = nil
-
-        Task {
-            do {
-                let result = try await CardArtService.generateArt(lyric: lyric, note: noteContent.isEmpty ? nil : noteContent)
-                artRemaining = result.remaining
-                artImage = await CardArtService.downloadImage(from: result.url)
-                Analytics.track(.aiArtGenerated)
-            } catch CardArtService.CardArtError.upgradeRequired {
-                showArtPaywall = true
-            } catch {
-                artError = error.localizedDescription
-            }
-            isGeneratingArt = false
-        }
-    }
-
-    private func deleteArt() {
-        Task {
-            do {
-                // Delete from storage
-                let path = "\(lyric.id.uuidString).png"
-                try await supabase.storage.from("card-art").remove(paths: [path])
-
-                // Clear URL from lyric
-                try await supabase
-                    .from("lyrics")
-                    .update(["card_art_url": nil] as [String: String?])
-                    .eq("id", value: lyric.id.uuidString)
-                    .execute()
-
-                artImage = nil
-                Haptics.light()
-            } catch {
-                artError = "Failed to delete artwork"
-                print("Delete art error: \(error)")
-            }
-        }
-    }
-
-    private func loadArtwork() async {
-        guard let urlString = lyric.cardArtUrl else { return }
-        artImage = await CardArtService.downloadImage(from: URL(string: urlString)!)
     }
 
     // MARK: - Note Section
@@ -347,7 +239,7 @@ struct EditLyricView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: noteIsPublic ? "eye" : "eye.slash")
                                     .font(.system(size: 11))
-                                Text(noteIsPublic ? "visible on explore" : "private note")
+                                Text(noteIsPublic ? "note visible to others" : "note is private")
                                     .font(Theme.dmSans(12))
                             }
                             .foregroundStyle(Theme.textMuted)
@@ -439,7 +331,8 @@ struct EditLyricView: View {
                 let update = LyricEditUpdate(
                     content: trimmedContent,
                     songTitle: trimmedSong.isEmpty ? nil : trimmedSong,
-                    artistName: trimmedArtist.isEmpty ? nil : trimmedArtist
+                    artistName: trimmedArtist.isEmpty ? nil : trimmedArtist,
+                    isPublic: lyricIsPublic
                 )
                 try await supabase
                     .from("lyrics")
@@ -496,10 +389,12 @@ struct LyricEditUpdate: Encodable {
     let content: String
     let songTitle: String?
     let artistName: String?
+    let isPublic: Bool
 
     enum CodingKeys: String, CodingKey {
         case content
         case songTitle = "song_title"
         case artistName = "artist_name"
+        case isPublic = "is_public"
     }
 }

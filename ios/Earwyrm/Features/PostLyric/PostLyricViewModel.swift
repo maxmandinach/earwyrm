@@ -17,6 +17,10 @@ final class PostLyricViewModel {
     var musicbrainzReleaseId: String?
     var isContentLocked = false
 
+    // MARK: - Visibility State
+
+    var lyricIsPublic: Bool?  // nil until initialized from profile setting
+
     // MARK: - Note State
 
     var noteContent = ""
@@ -399,7 +403,7 @@ final class PostLyricViewModel {
                 coverArtUrl: coverArtUrl,
                 albumName: albumName,
                 tags: tags.isEmpty ? nil : tags,
-                isPublic: isPublicProfile,
+                isPublic: lyricIsPublic ?? isPublicProfile,
                 isCurrent: true,
                 canonicalLyricId: canonicalLyricId,
                 musicbrainzRecordingId: musicbrainzRecordingId,

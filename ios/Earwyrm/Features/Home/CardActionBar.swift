@@ -64,10 +64,14 @@ struct CardActionBar: View {
                             Haptics.light()
                             onVisibilityChange(!isPublic)
                         } label: {
-                            Image(systemName: isPublic ? "eye" : "eye.slash")
-                                .font(.system(size: 14))
-                                .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
-                                .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                            HStack(spacing: 4) {
+                                Image(systemName: isPublic ? "globe" : "lock")
+                                    .font(.system(size: 12))
+                                Text(isPublic ? "public" : "private")
+                                    .font(Theme.dmSans(11))
+                            }
+                            .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
+                            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
                     }
                 }

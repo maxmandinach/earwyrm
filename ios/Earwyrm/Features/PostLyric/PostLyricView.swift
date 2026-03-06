@@ -83,6 +83,30 @@ struct PostLyricView: View {
                     // Note field
                     noteField
 
+                    // Lyric visibility
+                    Button {
+                        Haptics.light()
+                        let current = viewModel.lyricIsPublic ?? (auth.profile?.isPublic ?? false)
+                        viewModel.lyricIsPublic = !current
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: (viewModel.lyricIsPublic ?? (auth.profile?.isPublic ?? false)) ? "globe" : "lock")
+                                .font(.system(size: 11))
+                            Text((viewModel.lyricIsPublic ?? (auth.profile?.isPublic ?? false)) ? "lyric is public" : "lyric is private")
+                                .font(Theme.dmSans(12))
+                        }
+                        .foregroundStyle(Theme.textMuted)
+                    }
+
+                    // Artwork CTA (disabled until saved)
+                    HStack(spacing: 6) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 13))
+                        Text("save your lyric to generate artwork")
+                            .font(Theme.dmSans(13))
+                    }
+                    .foregroundStyle(Theme.textMuted.opacity(0.5))
+
                     // Tags
                     TagInputView(tags: $viewModel.tags)
 
@@ -409,7 +433,7 @@ struct PostLyricView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: viewModel.noteIsPublic ? "eye" : "eye.slash")
                                     .font(.system(size: 11))
-                                Text(viewModel.noteIsPublic ? "visible on explore" : "private note")
+                                Text(viewModel.noteIsPublic ? "note visible to others" : "note is private")
                                     .font(Theme.dmSans(12))
                             }
                             .foregroundStyle(Theme.textMuted)

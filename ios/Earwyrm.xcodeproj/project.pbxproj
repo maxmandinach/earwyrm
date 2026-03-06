@@ -141,6 +141,12 @@
 		9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */; };
 		CA3DA3CA3DA3CA3DA3CA3DA2 /* CardArtService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3DA3CA3DA3CA3DA3CA3DA1 /* CardArtService.swift */; };
 		71F3A371F3A371F3A371F3A2 /* TipJarSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F3A371F3A371F3A371F3A1 /* TipJarSheet.swift */; };
+		AG01AG01AG01AG01AG01AG02 /* ArtGalleryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG01AG01AG01AG01AG01AG01 /* ArtGalleryViewModel.swift */; };
+		AG02AG02AG02AG02AG02AG03 /* ArtGalleryStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG02AG02AG02AG02AG02AG02 /* ArtGalleryStrip.swift */; };
+		AG03AG03AG03AG03AG03AG04 /* ArtGenerationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG03AG03AG03AG03AG03AG03 /* ArtGenerationSheet.swift */; };
+		AG04AG04AG04AG04AG04AG05 /* ArtworkSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG04AG04AG04AG04AG04AG04 /* ArtworkSectionView.swift */; };
+		AG05AG05AG05AG05AG05AG06 /* CardArtBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG05AG05AG05AG05AG05AG05 /* CardArtBackground.swift */; };
+		AG06AG06AG06AG06AG06AG07 /* ArtGeneratingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AG06AG06AG06AG06AG06AG06 /* ArtGeneratingOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -280,6 +286,12 @@
 		9E5F6A7B8C9D0E1F2A3B4C5D /* LyricBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricBrowserView.swift; sourceTree = "<group>"; };
 		CA3DA3CA3DA3CA3DA3CA3DA1 /* CardArtService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardArtService.swift; sourceTree = "<group>"; };
 		71F3A371F3A371F3A371F3A1 /* TipJarSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarSheet.swift; sourceTree = "<group>"; };
+		AG01AG01AG01AG01AG01AG01 /* ArtGalleryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtGalleryViewModel.swift; sourceTree = "<group>"; };
+		AG02AG02AG02AG02AG02AG02 /* ArtGalleryStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtGalleryStrip.swift; sourceTree = "<group>"; };
+		AG03AG03AG03AG03AG03AG03 /* ArtGenerationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtGenerationSheet.swift; sourceTree = "<group>"; };
+		AG04AG04AG04AG04AG04AG04 /* ArtworkSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkSectionView.swift; sourceTree = "<group>"; };
+		AG05AG05AG05AG05AG05AG05 /* CardArtBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardArtBackground.swift; sourceTree = "<group>"; };
+		AG06AG06AG06AG06AG06AG06 /* ArtGeneratingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtGeneratingOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -298,6 +310,7 @@
 			isa = PBXGroup;
 			children = (
 				B7F28FF874B698D620DC89AA /* Activity */,
+				AG00AG00AG00AG00AG00AG00 /* ArtGallery */,
 				DA9D3DDAF2D69C1191B6BD8E /* Auth */,
 				EA10EA10EA10EA10EA10EA10 /* Collections */,
 				2F1577A94BC90F8F1298D549 /* Explore */,
@@ -504,6 +517,19 @@
 				CF06CF06CF06CF06CF06CF06 /* CreateCollectionSheet.swift */,
 			);
 			path = Collections;
+			sourceTree = "<group>";
+		};
+		AG00AG00AG00AG00AG00AG00 /* ArtGallery */ = {
+			isa = PBXGroup;
+			children = (
+				AG03AG03AG03AG03AG03AG03 /* ArtGenerationSheet.swift */,
+				AG02AG02AG02AG02AG02AG02 /* ArtGalleryStrip.swift */,
+				AG01AG01AG01AG01AG01AG01 /* ArtGalleryViewModel.swift */,
+				AG04AG04AG04AG04AG04AG04 /* ArtworkSectionView.swift */,
+				AG05AG05AG05AG05AG05AG05 /* CardArtBackground.swift */,
+				AG06AG06AG06AG06AG06AG06 /* ArtGeneratingOverlay.swift */,
+			);
+			path = ArtGallery;
 			sourceTree = "<group>";
 		};
 		B7F28FF874B698D620DC89AA /* Activity */ = {
@@ -846,6 +872,12 @@
 				9E5F6A7B8C9D0E1F2A3B4C6D /* LyricBrowserView.swift in Sources */,
 				CA3DA3CA3DA3CA3DA3CA3DA2 /* CardArtService.swift in Sources */,
 				71F3A371F3A371F3A371F3A2 /* TipJarSheet.swift in Sources */,
+				AG01AG01AG01AG01AG01AG02 /* ArtGalleryViewModel.swift in Sources */,
+				AG02AG02AG02AG02AG02AG03 /* ArtGalleryStrip.swift in Sources */,
+				AG03AG03AG03AG03AG03AG04 /* ArtGenerationSheet.swift in Sources */,
+				AG04AG04AG04AG04AG04AG05 /* ArtworkSectionView.swift in Sources */,
+				AG05AG05AG05AG05AG05AG06 /* CardArtBackground.swift in Sources */,
+				AG06AG06AG06AG06AG06AG07 /* ArtGeneratingOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

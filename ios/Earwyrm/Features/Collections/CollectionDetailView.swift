@@ -206,7 +206,19 @@ private struct CollectionLyricRow: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.card)
+        .background(
+            ZStack {
+                Theme.card
+                if let artUrl = lyric.cardArtUrl {
+                    CardArtBackground(
+                        url: artUrl,
+                        opacity: 0.2,
+                        gradientStart: 0.2,
+                        gradientEnd: 0.85
+                    )
+                }
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
     }

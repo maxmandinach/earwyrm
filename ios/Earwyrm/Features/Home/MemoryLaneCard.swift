@@ -44,7 +44,14 @@ struct MemoryLaneCard: View {
         .background(
             ZStack {
                 Theme.card
-                if let url = lyric.coverArtUrl, let imageUrl = URL(string: url) {
+                if let artUrl = lyric.cardArtUrl {
+                    CardArtBackground(
+                        url: artUrl,
+                        opacity: 0.2,
+                        gradientStart: 0.2,
+                        gradientEnd: 0.85
+                    )
+                } else if let url = lyric.coverArtUrl, let imageUrl = URL(string: url) {
                     AsyncImage(url: imageUrl) { image in
                         image
                             .resizable()

@@ -105,11 +105,23 @@ struct LyricCardView: View {
                             .fill(Theme.accent.opacity(0.4))
                             .frame(width: 2)
 
-                        Text(note.content)
-                            .font(Theme.noteFont(15))
-                            .foregroundStyle(Theme.textSecondary)
-                            .lineSpacing(4)
-                            .multilineTextAlignment(.leading)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(note.content)
+                                .font(Theme.noteFont(15))
+                                .foregroundStyle(Theme.textSecondary)
+                                .lineSpacing(4)
+                                .multilineTextAlignment(.leading)
+
+                            if isOwn && note.isPublic != true {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "lock")
+                                        .font(.system(size: 9))
+                                    Text("private note")
+                                        .font(Theme.dmSans(10))
+                                }
+                                .foregroundStyle(Theme.textMuted)
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, Theme.Spacing.md)
@@ -139,7 +151,19 @@ struct LyricCardView: View {
             }
             .padding(hero ? Theme.Spacing.xl + Theme.Spacing.sm : Theme.Spacing.lg)
             .frame(maxWidth: .infinity)
-            .background(Theme.card)
+            .background(
+                ZStack {
+                    Theme.card
+                    if let artUrl = lyric.cardArtUrl {
+                        CardArtBackground(
+                            url: artUrl,
+                            opacity: 0.2,
+                            gradientStart: 0.2,
+                            gradientEnd: 0.9
+                        )
+                    }
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: 16))
             // Hero: deeper shadow with more presence
             .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
