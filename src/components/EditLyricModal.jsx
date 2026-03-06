@@ -57,7 +57,8 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
 
   function artRemainingLabel(prefix) {
     if (artRemaining !== null) {
-      return artRemaining > 0 ? `${prefix} (${artRemaining} remaining)` : 'Daily limit reached'
+      if (artRemaining > 0) return `${prefix} (${artRemaining} remaining)`
+      return isPlus ? 'Daily limit reached' : 'Upgrade to regenerate'
     }
     return prefix
   }
@@ -247,7 +248,7 @@ export default function EditLyricModal({ lyric, onSave, onClose, allUserTags = [
             )}
           </div>
 
-          {showPaywall && <PlusPaywall onClose={() => setShowPaywall(false)} />}
+          {showPaywall && <PlusPaywall context="ai_art" onClose={() => setShowPaywall(false)} />}
 
           {/* Save Button - ceremonial */}
           <div className="mt-8 pt-8 flex justify-center">

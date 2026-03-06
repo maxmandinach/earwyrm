@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { createCheckoutSession } from '../lib/card-art'
 import { supabase } from '../lib/supabase-wrapper'
 
-export default function PlusPaywall({ onClose }) {
+export default function PlusPaywall({ context, onClose }) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(null) // 'monthly' | 'yearly' | null
   const [error, setError] = useState('')
@@ -38,9 +38,9 @@ export default function PlusPaywall({ onClose }) {
   }
 
   const features = [
-    { icon: '✦', title: 'AI-generated lyric art', desc: '5 unique artworks per day' },
+    { icon: '✦', title: 'AI-generated lyric art', desc: 'Personalized artwork for every lyric' },
     { icon: '◫', title: 'Custom collections', desc: 'Free tier includes favorites only' },
-    { icon: 'e', isBadge: true, title: 'Plus badge on your profile', desc: 'Show your support everywhere' },
+    { icon: 'e+', isBadge: true, title: 'Plus badge on your profile', desc: 'Show your support everywhere' },
   ]
 
   return createPortal(
@@ -86,6 +86,11 @@ export default function PlusPaywall({ onClose }) {
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #6B635A)' }}>
               support earwyrm & unlock everything
             </p>
+            {context === 'ai_art' && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted, #9E9589)', marginTop: '0.25rem' }}>
+                You've used your free artwork
+              </p>
+            )}
           </div>
 
           {/* Features */}

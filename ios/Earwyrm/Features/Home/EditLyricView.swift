@@ -26,6 +26,8 @@ struct EditLyricView: View {
     @State private var artRemaining: Int?
     @State private var artError: String?
     @State private var showArtPaywall = false
+    @State private var showFreeGenConfirm = false
+    @State private var showRegenConfirm = false
 
     init(lyric: Lyric, onSaved: @escaping () -> Void) {
         self.lyric = lyric
@@ -177,7 +179,7 @@ struct EditLyricView: View {
 
                         HStack(spacing: Theme.Spacing.sm) {
                             Button {
-                                generateArt()
+                                showRegenConfirm = true
                             } label: {
                                 Text(artRemainingLabel("Regenerate"))
                                     .font(Theme.dmSans(12))
@@ -198,7 +200,11 @@ struct EditLyricView: View {
             } else {
                 // No artwork — show generate button, server enforces limits
                 Button {
-                    generateArt()
+                    if subscriptionManager.isPlus {
+                        generateArt()
+                    } else {
+                        showFreeGenConfirm = true
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         if isGeneratingArt {
@@ -224,14 +230,29 @@ struct EditLyricView: View {
             }
         }
         .sheet(isPresented: $showArtPaywall) {
-            EarwyrmPlusPaywall()
+            EarwyrmPlusPaywall(context: "ai_art")
                 .presentationDragIndicator(.visible)
+        }
+        .alert("Create Your Artwork", isPresented: $showFreeGenConfirm) {
+            Button("Generate") { generateArt() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Your lyric and note will shape a unique artwork. This is your one free generation.")
+        }
+        .alert("Generate new artwork?", isPresented: $showRegenConfirm) {
+            Button("Regenerate") { generateArt() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This will replace your current art.")
         }
     }
 
     private func artRemainingLabel(_ prefix: String) -> String {
         if let remaining = artRemaining {
-            return remaining > 0 ? "\(prefix) (\(remaining) remaining)" : "Daily limit reached"
+            if remaining > 0 {
+                return "\(prefix) (\(remaining) remaining)"
+            }
+            return subscriptionManager.isPlus ? "Daily limit reached" : "Upgrade to regenerate"
         }
         return prefix
     }

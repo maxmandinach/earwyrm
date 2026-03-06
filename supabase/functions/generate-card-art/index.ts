@@ -22,13 +22,17 @@ interface CardArtRequest {
   artist_name?: string
   tags?: string[]
   lyric_id: string
+  refinement?: string
 }
 
-interface ThemeExtraction {
-  mood: string
-  visual_imagery: string[]
-  color_palette: string[]
-  artistic_style: string[]
+interface PromptContext {
+  lyric_content: string
+  note_content?: string
+  song_title?: string
+  artist_name?: string
+  genres: string[]
+  tags: string[]
+  refinement?: string
 }
 
 serve(async (req) => {
@@ -47,12 +51,10 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    const supabaseUser = createClient(SUPABASE_URL, authHeader.replace("Bearer ", ""), {
-      global: { headers: { Authorization: authHeader } },
-    })
+    const token = authHeader.replace("Bearer ", "")
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -70,7 +72,7 @@ serve(async (req) => {
     const isPlus = profile?.subscription_tier === "plus"
 
     const body: CardArtRequest = await req.json()
-    const { lyric_content, note_content, song_title, artist_name, tags, lyric_id } = body
+    const { lyric_content, note_content, song_title, artist_name, tags, lyric_id, refinement } = body
 
     if (!lyric_content || !lyric_id) {
       return new Response(JSON.stringify({ error: "lyric_content and lyric_id are required" }), {
@@ -83,23 +85,24 @@ serve(async (req) => {
     let isFreeTier = false
 
     if (isPlus) {
-      // Plus: 5 generations per day
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: recentGens, error: rateError } = await supabaseAdmin
+      // Plus: 100 generations per calendar month
+      const now = new Date()
+      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+      const { data: monthGens, error: rateError } = await supabaseAdmin
         .from("card_art_generations")
         .select("id")
         .eq("user_id", user.id)
-        .gte("created_at", twentyFourHoursAgo)
+        .gte("created_at", monthStart)
 
       if (rateError) {
         console.error("Rate limit check error:", rateError)
       }
 
-      const genCount = recentGens?.length || 0
-      remaining = Math.max(0, 5 - genCount)
+      const genCount = monthGens?.length || 0
+      remaining = Math.max(0, 100 - genCount)
 
-      if (genCount >= 5) {
-        return new Response(JSON.stringify({ error: "Daily limit reached (5/day)", remaining: 0 }), {
+      if (genCount >= 100) {
+        return new Response(JSON.stringify({ error: "Monthly limit reached (100/month)", remaining: 0 }), {
           status: 429,
           headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
         })
@@ -132,33 +135,49 @@ serve(async (req) => {
       genreTags = await getArtistGenres(supabaseAdmin, artist_name)
     }
 
-    // Step 2: Claude Haiku theme extraction
-    const themes = await extractThemes({
+    // Step 2: Insert generation record first to get its ID (for storage path)
+    const { data: genRecord, error: insertError } = await supabaseAdmin
+      .from("card_art_generations")
+      .insert({ user_id: user.id, lyric_id: lyric_id })
+      .select("id")
+      .single()
+
+    if (insertError || !genRecord) {
+      throw new Error(`Failed to create generation record: ${insertError?.message}`)
+    }
+
+    const genId = genRecord.id
+
+    // Step 3: Claude crafts the image prompt directly
+    const prompt = await craftImagePrompt({
       lyric_content,
       note_content,
+      song_title,
+      artist_name,
       genres: genreTags,
       tags: tags || [],
+      refinement,
     })
 
-    // Step 3: Construct DALL-E prompt
-    const prompt = buildDallePrompt(themes)
+    console.log("Image prompt:", prompt)
 
-    // Step 4: Generate image with DALL-E 3
+    // Step 4: Generate image
     const imageData = await generateImage(prompt)
 
-    // Step 5: Upload to Supabase Storage
-    const imageUrl = await uploadToStorage(supabaseAdmin, lyric_id, imageData)
+    // Step 5: Upload to Supabase Storage (per-variant path)
+    const imageUrl = await uploadToStorage(supabaseAdmin, lyric_id, genId, imageData)
 
-    // Step 6: Save URL to lyric record
+    // Step 6: Update generation record with image URL
+    await supabaseAdmin
+      .from("card_art_generations")
+      .update({ image_url: imageUrl })
+      .eq("id", genId)
+
+    // Step 7: Set as active card art on the lyric
     await supabaseAdmin
       .from("lyrics")
       .update({ card_art_url: imageUrl })
       .eq("id", lyric_id)
-
-    // Step 7: Record generation for rate limiting
-    await supabaseAdmin
-      .from("card_art_generations")
-      .insert({ user_id: user.id, lyric_id: lyric_id })
 
     return new Response(JSON.stringify({ image_url: imageUrl, remaining: isPlus ? remaining - 1 : 0, is_free_gen: isFreeTier }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
@@ -238,22 +257,52 @@ async function getArtistGenres(supabase: any, artistName: string): Promise<strin
   }
 }
 
-// --- Claude Haiku Theme Extraction ---
+// --- Claude Haiku → Direct Image Prompt ---
+//
+// Instead of extracting JSON themes (fragile, lossy), Haiku writes the
+// image prompt directly as prose. This eliminates JSON parse failures
+// (which previously caused every failed extraction to produce the same
+// generic dark image) and lets Haiku weave the note's emotion into
+// concrete visual language naturally.
 
-async function extractThemes(input: {
-  lyric_content: string
-  note_content?: string
-  genres: string[]
-  tags: string[]
-}): Promise<ThemeExtraction> {
+async function craftImagePrompt(ctx: PromptContext): Promise<string> {
+  // Truncate lyric for copyright safety
+  const truncatedLyric = ctx.lyric_content.length > 150
+    ? ctx.lyric_content.slice(0, 150).replace(/\s+\S*$/, "…")
+    : ctx.lyric_content
+
+  const truncatedNote = ctx.note_content && ctx.note_content.length > 250
+    ? ctx.note_content.slice(0, 250).replace(/\s+\S*$/, "…")
+    : ctx.note_content
+
   const userMessage = [
-    `Lyric: "${input.lyric_content}"`,
-    input.note_content ? `Note: "${input.note_content}"` : null,
-    input.genres.length > 0 ? `Genre: ${input.genres.join(", ")}` : null,
-    input.tags.length > 0 ? `Tags: ${input.tags.join(", ")}` : null,
+    `Lyric: "${truncatedLyric}"`,
+    truncatedNote ? `Personal note (why this lyric matters to me): "${truncatedNote}"` : null,
+    ctx.song_title ? `Song: "${ctx.song_title}"` : null,
+    ctx.artist_name ? `Artist: "${ctx.artist_name}"` : null,
+    ctx.genres.length > 0 ? `Genre: ${ctx.genres.join(", ")}` : null,
+    ctx.tags.length > 0 ? `Tags: ${ctx.tags.join(", ")}` : null,
+    ctx.refinement ? `Art direction for this variation: "${ctx.refinement}"` : null,
   ]
     .filter(Boolean)
     .join("\n")
+
+  const systemPrompt = `You write image generation prompts for artwork inspired by song lyrics.
+
+OUTPUT: A single paragraph (60-120 words) that is the complete image prompt. Nothing else — no preamble, no quotes, no labels.
+
+YOUR PROCESS:
+1. Identify the EMOTIONAL CORE. If a personal note is present, it IS the emotional core — it tells you what this lyric means to this specific person. The note should strongly influence the mood, palette, and subject matter.
+2. Build a SCENE that captures that emotion. Use vivid, specific imagery — people, places, objects, nature, whatever fits. If the emotion is about human connection, show people connecting. If it's about solitude, show solitude. Let the content match the feeling.
+3. Pull 1-2 specific images or phrases from the LYRIC TEXT as visual anchors.
+4. Choose a COLOR PALETTE that matches the emotional tone.
+5. Let the artist's genre influence the artistic style (e.g. impressionist, collage, oil painting, watercolor, digital illustration) but not the subject matter.
+
+STYLE GUIDELINES:
+- Aim for painterly, textured, warm artwork — not photorealistic, not sterile digital renders.
+- When depicting people, favor impressionistic or slightly abstracted figures (seen from behind, soft focus, watercolor-style) over detailed faces.
+- Two different lyrics by the same artist should produce completely different imagery.
+- End the prompt with: "No text, letters, or words anywhere in the image."`
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -264,49 +313,39 @@ async function extractThemes(input: {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 300,
-      system:
-        "You extract visual themes from song lyrics for abstract artwork generation. Given a lyric, personal note, genre, and tags, output ONLY valid JSON with these keys: mood (2-3 words), visual_imagery (3-5 abstract visual concepts as array), color_palette (3-4 colors as descriptive words, not hex, as array), artistic_style (2-3 style descriptors as array). No markdown, no explanation, just JSON.",
+      max_tokens: 250,
+      system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     }),
   })
 
   if (!res.ok) {
     const errText = await res.text()
-    throw new Error(`Claude API error: ${res.status} ${errText}`)
+    console.error("Claude API error:", res.status, errText)
+    // Fall back to a direct prompt built from the inputs rather than generic imagery
+    return buildFallbackPrompt(truncatedLyric, truncatedNote)
   }
 
   const data = await res.json()
-  const text = data.content?.[0]?.text || "{}"
+  const text = (data.content?.[0]?.text || "").trim()
 
-  try {
-    return JSON.parse(text) as ThemeExtraction
-  } catch {
-    // Fallback if parsing fails
-    return {
-      mood: "contemplative, atmospheric",
-      visual_imagery: ["flowing water", "soft light", "distant horizon"],
-      color_palette: ["warm amber", "soft grey", "muted blue"],
-      artistic_style: ["abstract", "impressionist"],
-    }
+  if (!text || text.length < 20) {
+    console.error("Claude returned empty/short response:", text)
+    return buildFallbackPrompt(truncatedLyric, truncatedNote)
   }
+
+  return text
 }
 
-// --- DALL-E Prompt Construction ---
-
-function buildDallePrompt(themes: ThemeExtraction): string {
-  const parts = [
-    "Abstract atmospheric artwork.",
-    `Mood: ${themes.mood}.`,
-    `Visual themes: ${themes.visual_imagery.join(", ")}.`,
-    `Color palette: ${themes.color_palette.join(", ")}, with undertones of warm taupe.`,
-    `Style: ${themes.artistic_style.join(", ")}, warm, softly textured, minimal, slightly analog, like a faded watercolor on aged paper.`,
-    "No text, words, letters, numbers, or human figures.",
-  ]
-  return parts.join(" ")
+// Fallback that still uses the actual inputs instead of hardcoded generic imagery
+function buildFallbackPrompt(lyric: string, note?: string | null): string {
+  if (note) {
+    return `Textured abstract artwork. The feeling: ${note}. Inspired by: "${lyric}". Warm, layered, tactile. Mixed media collage style. No text, letters, or words. No human figures.`
+  }
+  return `Textured abstract artwork inspired by: "${lyric}". Rich color, layered textures, tactile surfaces. Mixed media collage style. No text, letters, or words. No human figures.`
 }
 
-// --- DALL-E 3 Image Generation ---
+// --- GPT Image Generation ---
 
 async function generateImage(prompt: string): Promise<Uint8Array> {
   const res = await fetch("https://api.openai.com/v1/images/generations", {
@@ -316,23 +355,22 @@ async function generateImage(prompt: string): Promise<Uint8Array> {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "dall-e-3",
+      model: "gpt-image-1.5",
       prompt,
       n: 1,
       size: "1024x1024",
-      quality: "standard",
-      response_format: "b64_json",
+      quality: "medium",
     }),
   })
 
   if (!res.ok) {
     const errText = await res.text()
-    throw new Error(`DALL-E API error: ${res.status} ${errText}`)
+    throw new Error(`Image generation error: ${res.status} ${errText}`)
   }
 
   const data = await res.json()
   const b64 = data.data?.[0]?.b64_json
-  if (!b64) throw new Error("No image data returned from DALL-E")
+  if (!b64) throw new Error("No image data returned")
 
   // Decode base64 to Uint8Array
   const binary = atob(b64)
@@ -348,15 +386,16 @@ async function generateImage(prompt: string): Promise<Uint8Array> {
 async function uploadToStorage(
   supabase: any,
   lyricId: string,
+  genId: string,
   imageData: Uint8Array
 ): Promise<string> {
-  const path = `${lyricId}.png`
+  const path = `${lyricId}/${genId}.png`
 
   const { error } = await supabase.storage
     .from("card-art")
     .upload(path, imageData, {
       contentType: "image/png",
-      upsert: true,
+      upsert: false,
     })
 
   if (error) throw new Error(`Storage upload error: ${error.message}`)

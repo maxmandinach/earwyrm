@@ -50,16 +50,12 @@ enum ShareTextFitter {
     private static let secondaryRatio: CGFloat = 0.45
     private static let interBlockSpacing: CGFloat = 70 // rule + gaps + label
 
-    // Note hero renders at heroFontSize * 0.7 in DM Sans italic
-    private static let noteHeroScale: CGFloat = 0.7
-
     // MARK: - Public API
 
     static func fit(
         heroContent: String,
         secondaryContent: String?,
-        format: ShareFormat,
-        emphasis: ShareEmphasis = .lyricOnly
+        format: ShareFormat
     ) -> FitResult {
         let availableHeight = format.size.height - chromeHeight(for: format)
         let minSize = minFont(for: format)
@@ -67,8 +63,9 @@ enum ShareTextFitter {
         let secondary = secondaryContent?.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasSecondary = secondary != nil && !(secondary?.isEmpty ?? true)
 
-        let heroKind: TextKind = emphasis == .noteAndLyric ? .note : .lyric
-        let secKind: TextKind = emphasis == .noteAndLyric ? .lyric : .note
+        // Hero is always lyric (Caveat), secondary is always note (Cochin)
+        let heroKind: TextKind = .lyric
+        let secKind: TextKind = .note
 
         // Binary search for largest hero font where everything fits
         var lo = minSize
@@ -77,10 +74,9 @@ enum ShareTextFitter {
 
         while lo <= hi {
             let mid = ((lo + hi) / 2).rounded(.down)
-            let heroRenderSize = heroKind == .note ? mid * noteHeroScale : mid
             let secRenderSize = max(mid * secondaryRatio, 18)
 
-            let heroHeight = measureText(heroContent, fontSize: heroRenderSize, kind: heroKind)
+            let heroHeight = measureText(heroContent, fontSize: mid, kind: heroKind)
             var totalHeight = heroHeight
 
             if hasSecondary {
@@ -97,10 +93,9 @@ enum ShareTextFitter {
         }
 
         let secondarySize = max(bestSize * secondaryRatio, 18)
-        let heroRenderSize = heroKind == .note ? bestSize * noteHeroScale : bestSize
 
         // Check if content fits at bestSize — if not, truncate
-        let heroHeight = measureText(heroContent, fontSize: heroRenderSize, kind: heroKind)
+        let heroHeight = measureText(heroContent, fontSize: bestSize, kind: heroKind)
         var totalUsed = heroHeight
 
         if hasSecondary {
@@ -119,7 +114,7 @@ enum ShareTextFitter {
 
         // Truncation cascade: secondary first, then hero
         if hasSecondary {
-            let heroH = measureText(heroContent, fontSize: heroRenderSize, kind: heroKind)
+            let heroH = measureText(heroContent, fontSize: bestSize, kind: heroKind)
             let availableForSecondary = availableHeight - heroH - interBlockSpacing
 
             if availableForSecondary > 0 {
@@ -134,7 +129,7 @@ enum ShareTextFitter {
                 )
             } else {
                 let truncatedHero = truncateToFit(
-                    heroContent, fontSize: heroRenderSize, kind: heroKind, maxHeight: availableHeight
+                    heroContent, fontSize: bestSize, kind: heroKind, maxHeight: availableHeight
                 )
                 return FitResult(
                     heroText: truncatedHero,
@@ -145,7 +140,7 @@ enum ShareTextFitter {
             }
         } else {
             let truncatedHero = truncateToFit(
-                heroContent, fontSize: heroRenderSize, kind: heroKind, maxHeight: availableHeight
+                heroContent, fontSize: bestSize, kind: heroKind, maxHeight: availableHeight
             )
             return FitResult(
                 heroText: truncatedHero,

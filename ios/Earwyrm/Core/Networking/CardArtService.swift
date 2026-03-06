@@ -4,9 +4,6 @@ import Supabase
 
 /// Generates AI artwork for share cards via the generate-card-art Edge Function.
 enum CardArtService {
-    private static let supabaseUrl = "https://btrwdmeguitbbvcreokk.supabase.co"
-    private static let endpoint = "\(supabaseUrl)/functions/v1/generate-card-art"
-
     struct CardArtRequest: Encodable {
         let lyricContent: String
         let noteContent: String?
@@ -14,6 +11,7 @@ enum CardArtService {
         let artistName: String?
         let tags: [String]?
         let lyricId: String
+        let refinement: String?
 
         enum CodingKeys: String, CodingKey {
             case lyricContent = "lyric_content"
@@ -22,6 +20,25 @@ enum CardArtService {
             case artistName = "artist_name"
             case tags
             case lyricId = "lyric_id"
+            case refinement
+        }
+    }
+
+    struct Variant: Identifiable {
+        let id: UUID
+        let imageUrl: String
+        let createdAt: Date
+    }
+
+    private struct VariantRow: Decodable {
+        let id: UUID
+        let imageUrl: String
+        let createdAt: Date
+
+        enum CodingKeys: String, CodingKey {
+            case id
+            case imageUrl = "image_url"
+            case createdAt = "created_at"
         }
     }
 
@@ -60,50 +77,78 @@ enum CardArtService {
     }
 
     /// Generate AI artwork for a lyric's share card.
-    static func generateArt(lyric: Lyric, note: String?) async throws -> GenerateResult {
-        let session = try await supabase.auth.session
-        let accessToken = session.accessToken
-
+    static func generateArt(lyric: Lyric, note: String?, refinement: String? = nil) async throws -> GenerateResult {
         let body = CardArtRequest(
             lyricContent: lyric.content,
             noteContent: note,
             songTitle: lyric.songTitle,
             artistName: lyric.artistName,
             tags: lyric.tags,
-            lyricId: lyric.id.uuidString
+            lyricId: lyric.id.uuidString,
+            refinement: refinement
         )
 
-        guard let url = URL(string: endpoint) else {
-            throw HTTPError.invalidURL
-        }
+        do {
+            let response: CardArtResponse = try await supabase.functions.invoke(
+                "generate-card-art",
+                options: .init(method: .post, body: body)
+            )
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode(body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            if let errorBody = try? JSONDecoder().decode(ErrorResponse.self, from: data),
-               errorBody.upgrade == true {
-                throw CardArtError.upgradeRequired
+            guard let imageUrl = URL(string: response.imageUrl) else {
+                throw HTTPError.invalidURL
             }
-            throw HTTPError.badStatus(http.statusCode)
+
+            return GenerateResult(
+                url: imageUrl,
+                remaining: response.remaining ?? 0,
+                isFreeTier: response.isFreeTier ?? false
+            )
+        } catch let error as FunctionsError {
+            switch error {
+            case .httpError(let code, let data):
+                let errorBody = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+                if errorBody?.upgrade == true {
+                    throw CardArtError.upgradeRequired
+                }
+                let bodyStr = String(data: data, encoding: .utf8) ?? "nil"
+                NSLog("CardArtService: HTTP %d, body: %@", code, bodyStr)
+                throw NSError(domain: "CardArtService", code: code, userInfo: [NSLocalizedDescriptionKey: errorBody?.error ?? "Generation failed (HTTP \(code))"])
+            case .relayError:
+                throw NSError(domain: "CardArtService", code: 502, userInfo: [NSLocalizedDescriptionKey: "Relay error invoking edge function"])
+            }
         }
+    }
 
-        let artResponse = try JSONDecoder().decode(CardArtResponse.self, from: data)
+    /// Fetch all art variants for a lyric, most recent first.
+    static func fetchVariants(lyricId: UUID) async -> [Variant] {
+        do {
+            let rows: [VariantRow] = try await supabase
+                .from("card_art_generations")
+                .select("id, image_url, created_at")
+                .eq("lyric_id", value: lyricId.uuidString)
+                .not("image_url", operator: .is, value: "null")
+                .order("created_at", ascending: false)
+                .execute()
+                .value
 
-        guard let imageUrl = URL(string: artResponse.imageUrl) else {
-            throw HTTPError.invalidURL
+            return rows.map { Variant(id: $0.id, imageUrl: $0.imageUrl, createdAt: $0.createdAt) }
+        } catch {
+            print("Failed to fetch art variants: \(error)")
+            return []
         }
+    }
 
-        return GenerateResult(
-            url: imageUrl,
-            remaining: artResponse.remaining ?? 0,
-            isFreeTier: artResponse.isFreeTier ?? false
-        )
+    /// Set a specific variant as the active card art for a lyric.
+    static func setActiveVariant(lyricId: UUID, imageUrl: String) async {
+        do {
+            try await supabase
+                .from("lyrics")
+                .update(["card_art_url": imageUrl])
+                .eq("id", value: lyricId.uuidString)
+                .execute()
+        } catch {
+            print("Failed to set active variant: \(error)")
+        }
     }
 
     /// Download an image from a URL, returning a UIImage.

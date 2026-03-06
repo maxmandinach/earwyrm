@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 
 struct EarwyrmPlusPaywall: View {
+    var context: String? = nil
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
     @State private var purchaseError: String?
@@ -71,8 +72,8 @@ struct EarwyrmPlusPaywall: View {
 
     private var purchaseView: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.lg) {
-                Spacer().frame(height: Theme.Spacing.xl)
+            VStack(spacing: Theme.Spacing.md) {
+                Spacer().frame(height: Theme.Spacing.md)
 
                 // Header
                 CaveatText(text: "earwyrm+", size: 42, weight: .bold, color: Theme.accent)
@@ -82,14 +83,18 @@ struct EarwyrmPlusPaywall: View {
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
 
-                Spacer().frame(height: Theme.Spacing.sm)
+                if context == "ai_art" {
+                    Text("You've used your free artwork")
+                        .font(Theme.dmSans(14))
+                        .foregroundStyle(Theme.textMuted)
+                }
 
                 // Feature rows
-                VStack(spacing: Theme.Spacing.md) {
+                VStack(spacing: 10) {
                     featureRow(
                         icon: "wand.and.stars",
                         title: "AI-generated lyric art",
-                        subtitle: "5 unique artworks per day"
+                        subtitle: "100 generations per month"
                     )
                     featureRow(
                         icon: "square.stack.3d.up",
@@ -103,8 +108,6 @@ struct EarwyrmPlusPaywall: View {
                     )
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
-
-                Spacer().frame(height: Theme.Spacing.md)
 
                 // Purchase buttons
                 VStack(spacing: Theme.Spacing.sm) {
@@ -146,9 +149,17 @@ struct EarwyrmPlusPaywall: View {
                         .font(Theme.dmSans(14))
                         .foregroundStyle(Theme.accent)
                 }
-                .padding(.top, Theme.Spacing.xs)
 
-                Spacer().frame(height: Theme.Spacing.xl)
+                // Legal
+                HStack(spacing: 12) {
+                    Link("Terms of Use", destination: URL(string: "https://earwyrm.app/terms")!)
+                    Text("·").foregroundStyle(Theme.textMuted)
+                    Link("Privacy Policy", destination: URL(string: "https://earwyrm.app/privacy")!)
+                }
+                .font(Theme.dmSans(12))
+                .foregroundStyle(Theme.textMuted)
+                .padding(.top, Theme.Spacing.xs)
+                .padding(.bottom, Theme.Spacing.md)
             }
         }
     }

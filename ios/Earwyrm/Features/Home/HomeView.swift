@@ -225,10 +225,25 @@ struct HomeView: View {
                 ShareModalView(
                     lyric: lyric,
                     note: viewModel.currentNote,
-                    username: auth.profile?.username
+                    username: auth.profile?.username,
+                    onNoteSaved: { content in
+                        Task {
+                            if let userId = auth.userId {
+                                await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
+                            }
+                        }
+                    },
+                    onArtGenerated: {
+                        Task {
+                            if let userId = auth.userId {
+                                await viewModel.refreshCurrentLyric(userId: userId)
+                            }
+                        }
+                    }
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.background)
             }
         }
         .sheet(item: $shareCarouselLyric) { lyric in
@@ -252,6 +267,7 @@ struct HomeView: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .presentationBackground(Theme.background)
         }
         .sheet(item: $bookmarkLyricId) { item in
             CollectionPickerSheet(lyricId: item.value)
@@ -612,6 +628,7 @@ private struct LyricDetailDestination: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .presentationBackground(Theme.background)
         }
         .sheet(item: $bookmarkLyricId) { item in
             CollectionPickerSheet(lyricId: item.value)

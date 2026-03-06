@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLyric } from '../contexts/LyricContext'
 import { signatureStyle, darkVariant } from '../lib/themes'
 import { generateShareToken, getShareableUrl, getPublicProfileUrl } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
@@ -171,8 +172,9 @@ function getInitialDarkMode() {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
-export default function ShareModal({ lyric, onClose }) {
+export default function ShareModal({ lyric, note: noteProp, onClose, onNoteCreated }) {
   const { user, profile: authProfile } = useAuth()
+  const { saveNote } = useLyric()
   const isOwn = user?.id === lyric.user_id
   const [tab, setTab] = useState('lyric') // 'lyric' | 'page'
   const [copied, setCopied] = useState(false)
@@ -190,9 +192,16 @@ export default function ShareModal({ lyric, onClose }) {
   const [aiArtError, setAiArtError] = useState('')
   const [artRemaining, setArtRemaining] = useState(null)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [showFreeGenConfirm, setShowFreeGenConfirm] = useState(false)
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false)
+  const [inlineNote, setInlineNote] = useState('')
+  const [savedNoteContent, setSavedNoteContent] = useState(null)
   const canvasRef = useRef(null)
 
   const isPlus = authProfile?.subscription_tier === 'plus'
+
+  // Effective note content — saved inline note takes priority, then prop
+  const noteContent = savedNoteContent || noteProp?.content || null
 
   const profileUrl = authProfile?.username ? getPublicProfileUrl(authProfile.username) : ''
 
@@ -244,6 +253,10 @@ export default function ShareModal({ lyric, onClose }) {
   }
 
   const [wasFreeTierGen, setWasFreeTierGen] = useState(false)
+  const [freeGenExhausted, setFreeGenExhausted] = useState(false)
+  const [paywallContext, setPaywallContext] = useState(null)
+
+  const aiArtLocked = !isPlus && !aiArtImg && freeGenExhausted
 
   const handleGenerateArt = async () => {
     setAiArtLoading(true)
@@ -251,13 +264,26 @@ export default function ShareModal({ lyric, onClose }) {
     setWasFreeTierGen(false)
 
     try {
+      // Save inline note to DB if provided and no existing note
+      let effectiveNote = noteContent
+      if (!noteContent && inlineNote.trim()) {
+        try {
+          const saved = await saveNote(lyric.id, inlineNote.trim(), false)
+          setSavedNoteContent(inlineNote.trim())
+          effectiveNote = inlineNote.trim()
+          if (onNoteCreated && saved) onNoteCreated(saved)
+        } catch (err) {
+          console.error('Error saving inline note:', err)
+        }
+      }
+
       const session = await supabase.auth.getSession()
       const accessToken = session?.data?.session?.access_token
       if (!accessToken) throw new Error('Not signed in')
 
       const result = await generateCardArt({
         lyricContent: lyric.content,
-        noteContent: lyric.note_content || null,
+        noteContent: effectiveNote || null,
         songTitle: lyric.song_title,
         artistName: lyric.artist_name,
         tags: lyric.tags,
@@ -280,6 +306,8 @@ export default function ShareModal({ lyric, onClose }) {
       setShareStyle('aiArt')
     } catch (err) {
       if (err.upgrade) {
+        setFreeGenExhausted(true)
+        setPaywallContext('ai_art')
         setShowPaywall(true)
       } else {
         console.error('AI art generation failed:', err)
@@ -287,6 +315,22 @@ export default function ShareModal({ lyric, onClose }) {
       }
     } finally {
       setAiArtLoading(false)
+    }
+  }
+
+  const handleArtAction = () => {
+    // Free user who already used their gen → paywall immediately
+    if (!isPlus && (freeGenExhausted || wasFreeTierGen)) {
+      setPaywallContext('ai_art')
+      setShowPaywall(true)
+      return
+    }
+    if (aiArtImg) {
+      setShowRegenConfirm(true)
+    } else if (!isPlus) {
+      setShowFreeGenConfirm(true)
+    } else {
+      handleGenerateArt()
     }
   }
 
@@ -869,63 +913,98 @@ export default function ShareModal({ lyric, onClose }) {
                 </button>
               </div>
 
-              {/* Style toggle — when cover art or AI art is available */}
-              {(lyric.cover_art_url && coverArtImg) || aiArtImg ? (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+              {/* Style toggle — always show AI Art, with inline generate/regen button */}
+              <div style={{ marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))', borderRadius: '4px', overflow: 'hidden' }}>
+                  <button
+                    onClick={() => setShareStyle('minimal')}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      fontSize: '0.8rem',
+                      backgroundColor: shareStyle === 'minimal' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                      color: shareStyle === 'minimal' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Minimal
+                  </button>
+                  {lyric.cover_art_url && coverArtImg && (
                     <button
-                      onClick={() => setShareStyle('minimal')}
+                      onClick={() => setShareStyle('coverArt')}
                       style={{
                         flex: 1,
                         padding: '0.5rem',
                         fontSize: '0.8rem',
-                        backgroundColor: shareStyle === 'minimal' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                        color: shareStyle === 'minimal' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                        backgroundColor: shareStyle === 'coverArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                        color: shareStyle === 'coverArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
                         border: 'none',
                         cursor: 'pointer',
                       }}
                     >
-                      Minimal
+                      Cover Art
                     </button>
-                    {lyric.cover_art_url && coverArtImg && (
-                      <button
-                        onClick={() => setShareStyle('coverArt')}
-                        style={{
-                          flex: 1,
-                          padding: '0.5rem',
-                          fontSize: '0.8rem',
-                          backgroundColor: shareStyle === 'coverArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                          color: shareStyle === 'coverArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Cover Art
-                      </button>
-                    )}
-                    {aiArtImg && (
-                      <button
-                        onClick={() => setShareStyle('aiArt')}
-                        style={{
-                          flex: 1,
-                          padding: '0.5rem',
-                          fontSize: '0.8rem',
-                          backgroundColor: shareStyle === 'aiArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
-                          color: shareStyle === 'aiArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        AI Art
-                      </button>
-                    )}
-                  </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (aiArtLocked) {
+                        setPaywallContext('ai_art')
+                        setShowPaywall(true)
+                        return
+                      }
+                      setShareStyle('aiArt')
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      fontSize: '0.8rem',
+                      backgroundColor: shareStyle === 'aiArt' ? 'var(--text-primary, #2C2825)' : 'transparent',
+                      color: shareStyle === 'aiArt' ? 'var(--surface-bg, #F5F2ED)' : 'var(--text-secondary, #6B635A)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.7rem' }}>{aiArtLocked ? '🔒' : '✦'}</span>
+                    <span>AI Art</span>
+                  </button>
+                  {/* Inline generate/regenerate icon */}
+                  {shareStyle === 'aiArt' && !aiArtLoading && (
+                    <button
+                      onClick={() => {
+                        if (!isPlus && freeGenExhausted) {
+                          setPaywallContext('ai_art')
+                          setShowPaywall(true)
+                        } else {
+                          handleArtAction()
+                        }
+                      }}
+                      style={{
+                        padding: '0.5rem 0.625rem',
+                        fontSize: '0.8rem',
+                        color: 'var(--accent, #B8A99A)',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        borderLeft: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={aiArtImg ? 'Regenerate artwork' : 'Generate artwork'}
+                    >
+                      {aiArtImg ? '↻' : '✦'}
+                    </button>
+                  )}
                 </div>
-              ) : null}
+              </div>
 
-              {/* AI Art generate / regenerate button */}
-              <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
-                {aiArtLoading ? (
+              {/* AI Art loading/error indicators */}
+              {shareStyle === 'aiArt' && aiArtLoading && (
+                <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -948,63 +1027,11 @@ export default function ShareModal({ lyric, onClose }) {
                     </span>
                     <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
                   </div>
-                ) : aiArtImg ? (
-                  <>
-                    <button
-                      onClick={handleGenerateArt}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.375rem',
-                        fontSize: '0.8rem',
-                        color: 'var(--accent, #B8A99A)',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <span>↻ {artRemaining !== null ? (artRemaining > 0 ? `Regenerate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Regenerate artwork'}</span>
-                      {!isPlus && (
-                        <span style={{
-                          fontSize: '0.625rem',
-                          fontWeight: 600,
-                          padding: '0.125rem 0.375rem',
-                          backgroundColor: 'var(--accent, #B8A99A)',
-                          color: 'white',
-                          borderRadius: '999px',
-                        }}>
-                          plus
-                        </span>
-                      )}
-                    </button>
-                    {wasFreeTierGen && !isPlus && (
-                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted, #9E9589)', marginTop: '0.25rem' }}>
-                        Upgrade for unlimited artwork
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <button
-                    onClick={handleGenerateArt}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.375rem',
-                      fontSize: '0.8rem',
-                      color: 'var(--accent, #B8A99A)',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>✦</span>
-                    <span>{artRemaining !== null ? (artRemaining > 0 ? `Generate artwork (${artRemaining} remaining)` : 'Daily limit reached') : 'Generate artwork'}</span>
-                  </button>
-                )}
-                {aiArtError && (
-                  <p style={{ fontSize: '0.7rem', color: '#c44', marginTop: '0.25rem' }}>{aiArtError}</p>
-                )}
-              </div>
+                </div>
+              )}
+              {aiArtError && (
+                <p style={{ fontSize: '0.7rem', color: '#c44', marginTop: '0.25rem', textAlign: 'center' }}>{aiArtError}</p>
+              )}
 
               {/* Actions */}
               <div style={{ marginTop: '1rem' }}>
@@ -1052,7 +1079,138 @@ export default function ShareModal({ lyric, onClose }) {
   return (
     <>
       {createPortal(modalContent, document.body)}
-      {showPaywall && <PlusPaywall onClose={() => setShowPaywall(false)} />}
+      {showPaywall && <PlusPaywall context={paywallContext} onClose={() => { setShowPaywall(false); setPaywallContext(null) }} />}
+      {showFreeGenConfirm && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setShowFreeGenConfirm(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              maxWidth: '20rem',
+              width: '90%',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary, #2C2825)', marginBottom: '0.5rem' }}>
+              Create Your Artwork
+            </p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #6B635A)', marginBottom: '0.75rem', lineHeight: 1.4 }}>
+              This is your one free generation — make it count.
+            </p>
+            {!noteContent ? (
+              <div style={{ marginBottom: '0.75rem', textAlign: 'left' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-primary, #2C2825)', display: 'block', marginBottom: '0.2rem' }}>
+                  add a personal note
+                </label>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted, #9E9589)', marginBottom: '0.375rem' }}>
+                  saves to your share card · private by default · shapes your artwork
+                </p>
+                <textarea
+                  value={inlineNote}
+                  onChange={e => setInlineNote(e.target.value)}
+                  placeholder="what does this lyric mean to you?"
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    fontSize: '0.8rem',
+                    fontFamily: "'Caveat', cursive",
+                    color: 'var(--text-secondary, #6B635A)',
+                    backgroundColor: 'var(--surface-bg, #FAF8F5)',
+                    border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                    borderRadius: '6px',
+                    resize: 'none',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            ) : (
+              <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent, #B8A99A)' }}>✓</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #6B635A)' }}>Your note will shape the artwork</span>
+              </div>
+            )}
+            <button
+              onClick={() => { setShowFreeGenConfirm(false); handleGenerateArt() }}
+              style={{
+                width: '100%', padding: '0.75rem', fontSize: '0.85rem', fontWeight: 500,
+                backgroundColor: 'var(--text-primary, #2C2825)', color: 'var(--surface-bg, #F5F2ED)',
+                border: 'none', borderRadius: '8px', cursor: 'pointer', marginBottom: '0.5rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+              }}
+            >
+              <span style={{ fontSize: '0.75rem' }}>✦</span>
+              <span>Generate</span>
+            </button>
+            <button
+              onClick={() => { setShowFreeGenConfirm(false); setPaywallContext('ai_art'); setShowPaywall(true) }}
+              style={{
+                width: '100%', padding: '0.5rem', fontSize: '0.8rem',
+                backgroundColor: 'transparent', border: 'none',
+                cursor: 'pointer', color: 'var(--accent, #B8A99A)',
+              }}
+            >
+              Want more? Try earwyrm+
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+      {showRegenConfirm && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setShowRegenConfirm(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              maxWidth: '20rem',
+              width: '90%',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary, #2C2825)', marginBottom: '0.5rem' }}>
+              Generate new artwork?
+            </p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #6B635A)', marginBottom: '1rem', lineHeight: 1.4 }}>
+              This will replace your current art.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setShowRegenConfirm(false)}
+                style={{
+                  flex: 1, padding: '0.625rem', fontSize: '0.85rem',
+                  backgroundColor: 'transparent', border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
+                  borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary, #6B635A)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowRegenConfirm(false); handleGenerateArt() }}
+                style={{
+                  flex: 1, padding: '0.625rem', fontSize: '0.85rem', fontWeight: 500,
+                  backgroundColor: 'var(--text-primary, #2C2825)', color: 'var(--surface-bg, #F5F2ED)',
+                  border: 'none', borderRadius: '8px', cursor: 'pointer',
+                }}
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   )
 }

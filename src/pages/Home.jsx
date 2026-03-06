@@ -223,7 +223,9 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed, p
       {showShareModal && (
         <ShareModal
           lyric={lyric}
+          note={currentNote}
           onClose={() => setShowShareModal(false)}
+          onNoteCreated={setCurrentNote}
         />
       )}
     </>

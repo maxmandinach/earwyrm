@@ -107,13 +107,11 @@ enum ShareTheme: String, CaseIterable {
 enum ShareEmphasis: String, CaseIterable {
     case lyricOnly
     case lyricAndNote
-    case noteAndLyric
 
     var label: String {
         switch self {
         case .lyricOnly: "Lyric"
         case .lyricAndNote: "Lyric + Note"
-        case .noteAndLyric: "Note + Lyric"
         }
     }
 }
@@ -171,16 +169,12 @@ struct ShareImageView: View {
         case .lyricAndNote:
             heroText = content
             secondaryText = noteContent
-        case .noteAndLyric:
-            heroText = noteContent ?? content
-            secondaryText = noteContent != nil ? content : nil
         }
 
         return ShareTextFitter.fit(
             heroContent: heroText,
             secondaryContent: secondaryText,
-            format: format,
-            emphasis: emphasis
+            format: format
         )
     }
 
@@ -273,8 +267,6 @@ struct ShareImageView: View {
                     lyricOnlyContent(fit: fit)
                 case .lyricAndNote:
                     lyricAndNoteContent(fit: fit)
-                case .noteAndLyric:
-                    noteAndLyricContent(fit: fit)
                 }
 
                 Spacer()
@@ -370,70 +362,6 @@ struct ShareImageView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-
-    // MARK: - Note + Lyric (note hero, lyric compact)
-
-    @ViewBuilder
-    private func noteAndLyricContent(fit: ShareTextFitter.FitResult) -> some View {
-        // Compact lyric + attribution as one muted block
-        if let secondaryText = fit.secondaryText, !secondaryText.isEmpty {
-            Text(secondaryText)
-                .font(.custom("Caveat", size: fit.secondaryFontSize).weight(.medium))
-                .foregroundStyle(theme.secondary.opacity(0.6))
-                .lineSpacing(fit.secondaryFontSize * 0.25)
-                .multilineTextAlignment(.leading)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Compact attribution with cover art
-            if songTitle != nil || artistName != nil {
-                HStack(spacing: attributionSize * 0.4) {
-                    if let image = coverArtImage {
-                        let thumbSize = attributionSize * 1.8
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: thumbSize, height: thumbSize)
-                            .clipShape(RoundedRectangle(cornerRadius: thumbSize * 0.1))
-                    }
-
-                    let parts = [songTitle, artistName].compactMap { $0 }
-                    Text(parts.joined(separator: " — "))
-                        .font(.custom("DM Sans", size: attributionSize * 0.8).italic())
-                        .foregroundStyle(theme.secondary.opacity(0.5))
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 6)
-            }
-
-            Spacer()
-                .frame(height: 20)
-        }
-
-        rule()
-
-        Spacer()
-            .frame(height: 16)
-
-        // "my note" label
-        Text("my note")
-            .font(.custom("Cochin", size: labelSize))
-            .foregroundStyle(theme.accent)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-        Spacer()
-            .frame(height: 10)
-
-        // Hero: Note in DM Sans italic
-        Text(fit.heroText)
-            .font(.custom("Cochin", size: fit.heroFontSize * 0.7))
-            .foregroundStyle(theme.text)
-            .lineSpacing(fit.heroFontSize * 0.25)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Shared Components

@@ -482,13 +482,15 @@ html.dark .divide-charcoal\/10 > * + * {
 
 /* Plus badge */
 .plus-badge {
-  color: var(--color-accent, #B8A99A);
-  background-color: var(--color-charcoal, #2C2825);
+  color: white;
+  background: linear-gradient(to right, #C8B8A8, #A08878);
+  box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.15);
 }
 
 html.dark .plus-badge {
-  color: #2C2825;
-  background-color: var(--color-accent, #C8B8A8);
+  color: white;
+  background: linear-gradient(to right, #C8B8A8, #A08878);
+  box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Specific component overrides */
