@@ -1,22 +1,106 @@
 import SwiftUI
 
 struct ProfileLyricsView: View {
-    let lyrics: [Lyric]
+    let currentLyrics: [Lyric]
+    let pastLyrics: [Lyric]
+    var onLyricUpdated: (() -> Void)?
+
+    @Environment(AuthManager.self) private var auth
+    @Environment(AuthGate.self) private var authGate
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(ToastManager.self) private var toastManager
+
+    @State private var reactionStates: [UUID: Bool] = [:]
+    @State private var reactionCounts: [UUID: Int] = [:]
+    @State private var animatingReactions: Set<UUID> = []
+    @State private var bookmarkLyricId: IdentifiableUUID?
+    @State private var shareLyric: Lyric?
+    @State private var showCommentIds: Set<UUID> = []
+
+    private var allLyrics: [Lyric] { currentLyrics + pastLyrics }
 
     var body: some View {
-        if lyrics.isEmpty {
+        if currentLyrics.isEmpty && pastLyrics.isEmpty {
             emptyState
         } else {
-            LazyVStack(spacing: Theme.Spacing.sm) {
-                ForEach(lyrics) { lyric in
-                    NavigationLink(value: LyricWithProfile(lyric: lyric, username: nil)) {
-                        ProfileLyricRow(lyric: lyric)
+            VStack(spacing: Theme.Spacing.lg) {
+                // Current lyrics
+                if !currentLyrics.isEmpty {
+                    LazyVStack(spacing: Theme.Spacing.sm) {
+                        ForEach(currentLyrics) { lyric in
+                            ProfileLyricRow(
+                                lyric: lyric,
+                                hasReacted: reactionStates[lyric.id] ?? false,
+                                reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
+                                isResonateAnimating: animatingReactions.contains(lyric.id),
+                                onResonate: { toggleReaction(for: lyric) },
+                                commentCount: lyric.commentCount ?? 0,
+                                showComments: showCommentIds.contains(lyric.id),
+                                onToggleComments: { toggleComments(lyric.id) },
+                                isPublic: lyric.isPublic ?? false,
+                                onVisibilityChange: { newValue in toggleVisibility(lyric: lyric, isPublic: newValue) },
+                                onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                                isSaved: collectionManager.isLyricSaved(lyric.id),
+                                onShare: { shareLyric = lyric },
+                                isOwn: lyric.userId == auth.userId,
+                                currentUserId: auth.userId
+                            )
+                        }
                     }
-                    .buttonStyle(.plain)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.top, Theme.Spacing.sm)
+                }
+
+                // Memory lane for past lyrics
+                MemoryLaneSection(lyrics: pastLyrics)
+
+                // Past lyrics list (for those with < 3 past lyrics, since MemoryLaneSection requires >= 3)
+                if !pastLyrics.isEmpty && pastLyrics.count < 3 {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        CaveatText(text: "past earwyrms", size: 24, color: Theme.textSecondary)
+                            .padding(.horizontal, Theme.Spacing.md)
+
+                        LazyVStack(spacing: Theme.Spacing.sm) {
+                            ForEach(pastLyrics) { lyric in
+                                ProfileLyricRow(
+                                    lyric: lyric,
+                                    hasReacted: reactionStates[lyric.id] ?? false,
+                                    reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
+                                    isResonateAnimating: animatingReactions.contains(lyric.id),
+                                    onResonate: { toggleReaction(for: lyric) },
+                                    commentCount: lyric.commentCount ?? 0,
+                                    showComments: showCommentIds.contains(lyric.id),
+                                    onToggleComments: { toggleComments(lyric.id) },
+                                    isPublic: lyric.isPublic ?? false,
+                                    onVisibilityChange: { newValue in toggleVisibility(lyric: lyric, isPublic: newValue) },
+                                    onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                                    isSaved: collectionManager.isLyricSaved(lyric.id),
+                                    onShare: { shareLyric = lyric },
+                                    isOwn: lyric.userId == auth.userId,
+                                    currentUserId: auth.userId
+                                )
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.md)
+                    }
                 }
             }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.top, Theme.Spacing.sm)
+            .task { await fetchReactionStates() }
+            .sheet(item: $bookmarkLyricId) { item in
+                CollectionPickerSheet(lyricId: item.value)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $shareLyric) { lyric in
+                ShareModalView(
+                    lyric: lyric,
+                    note: nil,
+                    username: auth.profile?.username
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.background)
+            }
         }
     }
 
@@ -33,6 +117,107 @@ struct ProfileLyricsView: View {
         }
         .padding(.horizontal, Theme.Spacing.lg)
     }
+
+    // MARK: - Reactions
+
+    private func fetchReactionStates() async {
+        guard let userId = auth.userId else { return }
+        let lyricIds = allLyrics.map { $0.id.uuidString }
+        guard !lyricIds.isEmpty else { return }
+
+        // Initialize counts from lyric data
+        for lyric in allLyrics {
+            if reactionCounts[lyric.id] == nil {
+                reactionCounts[lyric.id] = lyric.reactionCount ?? 0
+            }
+        }
+
+        do {
+            let reactions: [Reaction] = try await supabase
+                .from("reactions")
+                .select("id, lyric_id, user_id, created_at")
+                .eq("user_id", value: userId.uuidString)
+                .in("lyric_id", values: lyricIds)
+                .execute()
+                .value
+            for reaction in reactions {
+                reactionStates[reaction.lyricId] = true
+            }
+        } catch {
+            print("Fetch profile reaction states error: \(error)")
+        }
+    }
+
+    private func toggleReaction(for lyric: Lyric) {
+        guard let userId = auth.userId else {
+            authGate.showAuthSheet = true
+            return
+        }
+
+        let wasReacted = reactionStates[lyric.id] ?? false
+        let currentCount = reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
+
+        reactionStates[lyric.id] = !wasReacted
+        reactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
+
+        if !wasReacted {
+            animatingReactions.insert(lyric.id)
+            Haptics.medium()
+            Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                animatingReactions.remove(lyric.id)
+            }
+        } else {
+            Haptics.light()
+        }
+
+        Task {
+            do {
+                if wasReacted {
+                    try await supabase
+                        .from("reactions")
+                        .delete()
+                        .eq("lyric_id", value: lyric.id.uuidString)
+                        .eq("user_id", value: userId.uuidString)
+                        .execute()
+                } else {
+                    let insert = ReactionInsert(lyricId: lyric.id, userId: userId)
+                    try await supabase
+                        .from("reactions")
+                        .insert(insert)
+                        .execute()
+                }
+            } catch {
+                reactionStates[lyric.id] = wasReacted
+                reactionCounts[lyric.id] = currentCount
+                toastManager.show("couldn't resonate, try again")
+            }
+        }
+    }
+
+    private func toggleVisibility(lyric: Lyric, isPublic: Bool) {
+        Task {
+            do {
+                try await supabase
+                    .from("lyrics")
+                    .update(LyricVisibilityUpdate(isPublic: isPublic))
+                    .eq("id", value: lyric.id.uuidString)
+                    .execute()
+                Haptics.light()
+                onLyricUpdated?()
+            } catch {
+                toastManager.show("couldn't update visibility")
+            }
+        }
+    }
+
+    private func toggleComments(_ lyricId: UUID) {
+        if showCommentIds.contains(lyricId) {
+            showCommentIds.remove(lyricId)
+        } else {
+            showCommentIds.insert(lyricId)
+        }
+    }
 }
 
 // MARK: - Row
@@ -40,75 +225,103 @@ struct ProfileLyricsView: View {
 private struct ProfileLyricRow: View {
     let lyric: Lyric
 
+    // Action state
+    let hasReacted: Bool
+    let reactionCount: Int
+    let isResonateAnimating: Bool
+    let onResonate: () -> Void
+    let commentCount: Int
+    let showComments: Bool
+    let onToggleComments: () -> Void
+    let isPublic: Bool
+    let onVisibilityChange: (Bool) -> Void
+    let onSave: () -> Void
+    let isSaved: Bool
+    let onShare: () -> Void
+    let isOwn: Bool
+    let currentUserId: UUID?
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Current badge
-            if lyric.isCurrent == true {
-                Text("CURRENT")
-                    .font(Theme.dmSans(10, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Theme.accent)
-                    .clipShape(Capsule())
-            }
+        VStack(spacing: 0) {
+            // Tappable content area → navigates to detail
+            NavigationLink(value: LyricWithProfile(lyric: lyric, username: nil)) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    HStack {
+                        // Current badge
+                        if lyric.isCurrent == true {
+                            Text("CURRENT")
+                                .font(Theme.dmSans(10, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Theme.accent)
+                                .clipShape(Capsule())
+                        }
 
-            // Content
-            Text(lyric.content)
-                .font(Theme.caveat(24, weight: .medium))
-                .foregroundStyle(Theme.textPrimary)
-                .lineSpacing(6)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                        Spacer()
 
-            // Song — Artist
-            if lyric.songTitle != nil || lyric.artistName != nil {
-                HStack(spacing: 4) {
-                    if let song = lyric.songTitle {
-                        Text(song)
-                            .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.accent)
-                    }
-                    if lyric.songTitle != nil && lyric.artistName != nil {
-                        Text("—")
-                            .font(Theme.dmSans(13))
+                        Text(relativeDate(lyric.createdAt))
+                            .font(Theme.dmSans(11))
                             .foregroundStyle(Theme.textMuted)
+                            .opacity(0.7)
                     }
-                    if let artist = lyric.artistName {
-                        Text(artist)
-                            .font(Theme.dmSansItalic(13))
-                            .foregroundStyle(Theme.accent)
+
+                    // Content
+                    Text(lyric.content)
+                        .font(Theme.caveat(24, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineSpacing(6)
+                        .lineLimit(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // Song — Artist
+                    if lyric.songTitle != nil || lyric.artistName != nil {
+                        HStack(spacing: 4) {
+                            if let song = lyric.songTitle {
+                                Text(song)
+                                    .font(Theme.dmSansItalic(13))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            if lyric.songTitle != nil && lyric.artistName != nil {
+                                Text("—")
+                                    .font(Theme.dmSans(13))
+                                    .foregroundStyle(Theme.textMuted)
+                            }
+                            if let artist = lyric.artistName {
+                                Text(artist)
+                                    .font(Theme.dmSansItalic(13))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                        }
                     }
                 }
             }
+            .buttonStyle(.plain)
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.top, Theme.Spacing.md)
+            .padding(.bottom, Theme.Spacing.xs)
 
-            // Meta row
-            HStack(spacing: Theme.Spacing.md) {
-                // Visibility
-                HStack(spacing: 3) {
-                    Image(systemName: lyric.isPublic == true ? "globe" : "lock")
-                        .font(.system(size: 10))
-                    Text(lyric.isPublic == true ? "public" : "private")
-                        .font(Theme.dmSans(11))
-                }
-                .foregroundStyle(Theme.textMuted)
-
-                HStack(spacing: 4) {
-                    ResonateIcon(isActive: false, isAnimating: false, size: 14)
-                    Text("\(lyric.reactionCount ?? 0)")
-                        .font(Theme.dmSans(12))
-                }
-                .foregroundStyle(Theme.textMuted)
-
-                Spacer()
-
-                Text(relativeDate(lyric.createdAt))
-                    .font(Theme.dmSans(11))
-                    .foregroundStyle(Theme.textMuted)
-                    .opacity(0.7)
-            }
+            // Action bar — outside NavigationLink to avoid button-in-button
+            CardActionBar(
+                lyric: lyric,
+                isPublic: isPublic,
+                isOwn: isOwn,
+                onShare: onShare,
+                onReplace: {},
+                onEdit: {},
+                onVisibilityChange: onVisibilityChange,
+                onToggleComments: onToggleComments,
+                onSave: onSave,
+                isSaved: isSaved,
+                hasReacted: hasReacted,
+                reactionCount: reactionCount,
+                isResonateAnimating: isResonateAnimating,
+                onResonate: onResonate,
+                commentCount: commentCount
+            )
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.bottom, Theme.Spacing.sm)
         }
-        .padding(Theme.Spacing.md)
         .background(
             ZStack {
                 Theme.card

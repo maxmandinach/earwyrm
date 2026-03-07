@@ -22,6 +22,7 @@ struct ArtistPageView: View {
     @State private var animatingReactions: Set<UUID> = []
     @State private var bookmarkLyricId: IdentifiableUUID?
     @State private var shareLyric: Lyric?
+    @State private var showPostSheet = false
 
     private var isFollowing: Bool {
         followManager.isFollowing(type: "artist", value: artistName)
@@ -138,6 +139,13 @@ struct ArtistPageView: View {
             CollectionPickerSheet(lyricId: item.value)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showPostSheet) {
+            PostLyricView(
+                currentLyricId: nil,
+                onSaved: { Task { await fetchArtistLyrics() } },
+                prefillArtistName: artistName
+            )
         }
         .task {
             await fetchArtistLyrics()
@@ -311,11 +319,15 @@ struct ArtistPageView: View {
             }
 
             if filteredClusters.isEmpty && !isLoading {
-                Text("No lyrics found")
-                    .font(Theme.dmSans(14))
-                    .foregroundStyle(Theme.textMuted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.Spacing.lg)
+                if lyrics.isEmpty {
+                    beTheFirstCTA
+                } else {
+                    Text("No lyrics found")
+                        .font(Theme.dmSans(14))
+                        .foregroundStyle(Theme.textMuted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Theme.Spacing.lg)
+                }
             }
         }
     }
@@ -358,6 +370,38 @@ struct ArtistPageView: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - Be The First CTA
+
+    private var beTheFirstCTA: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            CaveatText(text: "no earwyrms yet", size: 22, color: Theme.textSecondary)
+
+            Text("be the first to share a lyric from \(artistName)")
+                .font(Theme.dmSans(14))
+                .foregroundStyle(Theme.textMuted)
+                .multilineTextAlignment(.center)
+
+            Button {
+                Haptics.light()
+                if auth.isAuthenticated {
+                    showPostSheet = true
+                } else {
+                    authGate.showAuthSheet = true
+                }
+            } label: {
+                Text("post a lyric")
+                    .font(Theme.dmSans(14, weight: .medium))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Theme.accent.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Theme.Spacing.xl)
     }
 
     // MARK: - Data

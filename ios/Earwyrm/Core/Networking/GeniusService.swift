@@ -37,4 +37,35 @@ enum GeniusService {
             return []
         }
     }
+
+    /// Search Genius by song title / artist name (for Explore search).
+    static func searchSongs(_ query: String) async -> [GeniusSuggestion] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return [] }
+
+        do {
+            let response: GeniusSearchResponse = try await HTTPClient.post(
+                endpoint,
+                body: GeniusSearchRequest(lyrics: trimmed),
+                headers: [
+                    "Authorization": "Bearer \(anonKey)"
+                ]
+            )
+
+            var seen = Set<String>()
+            var unique: [GeniusSuggestion] = []
+            for result in response.results ?? [] {
+                let key = "\(result.title)::\(result.artist ?? "")".lowercased()
+                if !seen.contains(key) {
+                    seen.insert(key)
+                    unique.append(result)
+                }
+            }
+
+            return Array(unique.prefix(5))
+        } catch {
+            print("Genius song search error: \(error)")
+            return []
+        }
+    }
 }

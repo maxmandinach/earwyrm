@@ -328,20 +328,20 @@ struct HomeView: View {
         .padding(.top, Theme.Spacing.md)
         .cascadeReveal(delay: 0.2)
 
-        // Collections carousel
-        CollectionsCarouselSection(collections: collectionManager.collections)
-            .cascadeReveal(delay: 0.3)
-
-        // Followed artists carousel
-        FollowedArtistsSection(follows: followManager.follows)
-            .cascadeReveal(delay: 0.35)
-
-        // Memory Lane
+        // Memory Lane — personal history first
         MemoryLaneSection(
             lyrics: viewModel.pastLyrics,
             showUpsell: !subscriptionManager.isPlus
         )
-        .cascadeReveal(delay: 0.45)
+        .cascadeReveal(delay: 0.3)
+
+        // Collections carousel
+        CollectionsCarouselSection(collections: collectionManager.collections)
+            .cascadeReveal(delay: 0.35)
+
+        // Followed artists carousel
+        FollowedArtistsSection(follows: followManager.follows)
+            .cascadeReveal(delay: 0.4)
     }
 
     @ViewBuilder

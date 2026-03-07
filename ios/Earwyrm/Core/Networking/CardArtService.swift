@@ -151,6 +151,26 @@ enum CardArtService {
         }
     }
 
+    private struct ClearCardArt: Encodable {
+        let cardArtUrl: String? = nil
+        enum CodingKeys: String, CodingKey {
+            case cardArtUrl = "card_art_url"
+        }
+    }
+
+    /// Clear the active card art for a lyric (set to NULL).
+    static func clearActiveVariant(lyricId: UUID) async {
+        do {
+            try await supabase
+                .from("lyrics")
+                .update(ClearCardArt())
+                .eq("id", value: lyricId.uuidString)
+                .execute()
+        } catch {
+            print("Failed to clear active variant: \(error)")
+        }
+    }
+
     /// Download an image from a URL, returning a UIImage.
     static func downloadImage(from url: URL) async -> UIImage? {
         do {

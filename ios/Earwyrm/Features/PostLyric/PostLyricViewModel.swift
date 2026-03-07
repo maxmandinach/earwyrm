@@ -96,6 +96,18 @@ final class PostLyricViewModel {
         && songTitle.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    // MARK: - Prefill
+
+    func prefill(songTitle: String, artistName: String, coverArtUrl: String?) {
+        self.songTitle = songTitle
+        self.artistName = artistName
+        self.coverArtUrl = coverArtUrl
+        self.isMetadataConfirmed = true
+        self.showManualMetadata = true
+        self.geniusDismissed = true
+        fetchLyricsIfNeeded()
+    }
+
     // MARK: - Content Changed
 
     func contentDidChange() {
@@ -370,8 +382,8 @@ final class PostLyricViewModel {
 
     // MARK: - Save
 
-    func saveLyric(userId: UUID, currentLyricId: UUID?, isPublicProfile: Bool) async -> Bool {
-        guard canSave else { return false }
+    func saveLyric(userId: UUID, currentLyricId: UUID?, isPublicProfile: Bool) async -> Lyric? {
+        guard canSave else { return nil }
 
         isSaving = true
         saveError = nil
@@ -401,6 +413,7 @@ final class PostLyricViewModel {
                 songTitle: trimmedSong.isEmpty ? nil : trimmedSong,
                 artistName: trimmedArtist.isEmpty ? nil : trimmedArtist,
                 coverArtUrl: coverArtUrl,
+                cardArtUrl: coverArtUrl,
                 albumName: albumName,
                 tags: tags.isEmpty ? nil : tags,
                 isPublic: lyricIsPublic ?? isPublicProfile,
@@ -433,12 +446,12 @@ final class PostLyricViewModel {
             }
 
             isSaving = false
-            return true
+            return insertedLyrics.first
         } catch {
             saveError = error.localizedDescription
             toast?.show("couldn't post lyric, try again")
             isSaving = false
-            return false
+            return nil
         }
     }
 

@@ -8,6 +8,7 @@ struct ActivityView: View {
     @State private var selectedFilter = 0
     @State private var navigationPath = NavigationPath()
     @State private var actorPlusMap: [UUID: Bool] = [:]
+    @State private var insightsVM = ActivityInsightsViewModel()
 
     private let filters = ["All", "Resonances", "Comments", "Follows"]
 
@@ -36,6 +37,14 @@ struct ActivityView: View {
                     ScrollViewReader { proxy in
                     ScrollView {
                         Color.clear.frame(height: 0).id("activity-top")
+
+                        // Personal insights — scrolls with feed
+                        ActivityInsightsCard(viewModel: insightsVM) { lyric in
+                            if let token = lyric.shareToken {
+                                navigationPath.append(ActivityDestination.lyric(shareToken: token))
+                            }
+                        }
+                        .padding(.bottom, Theme.Spacing.sm)
                         if notificationManager.isLoading && notificationManager.notifications.isEmpty {
                             ProgressView()
                                 .tint(Theme.accent)
@@ -87,6 +96,7 @@ struct ActivityView: View {
                     .refreshable {
                         if let userId = auth.userId {
                             await notificationManager.fetchNotifications(userId: userId)
+                            await insightsVM.fetchInsights(userId: userId)
                             await fetchActorPlusStatus()
                         }
                     }
@@ -113,7 +123,9 @@ struct ActivityView: View {
         .task {
             if let userId = auth.userId {
                 await notificationManager.fetchNotifications(userId: userId)
-                await fetchActorPlusStatus()
+                async let insights: () = insightsVM.fetchInsights(userId: userId)
+                async let plusStatus: () = fetchActorPlusStatus()
+                _ = await (insights, plusStatus)
             }
         }
         .onChange(of: notificationManager.notifications.count) { _, _ in

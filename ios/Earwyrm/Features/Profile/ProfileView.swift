@@ -38,7 +38,11 @@ struct ProfileView: View {
                         Color.clear.frame(height: 0).id("profile-top")
                         switch selectedTab {
                         case 0:
-                            ProfileLyricsView(lyrics: viewModel.allLyrics)
+                            ProfileLyricsView(
+                                currentLyrics: viewModel.currentLyrics,
+                                pastLyrics: viewModel.pastLyrics,
+                                onLyricUpdated: { Task { if let userId = auth.userId { await viewModel.loadAll(userId: userId) } } }
+                            )
                         case 1:
                             ProfileResonatedView(resonatedLyrics: viewModel.resonatedLyrics)
                         case 2:
@@ -71,7 +75,10 @@ struct ProfileView: View {
                 }
             }
             .navigationDestination(for: LyricWithProfile.self) { item in
-                ProfileLyricDetail(item: item)
+                ProfileLyricDetail(
+                    item: item,
+                    onLyricUpdated: { Task { if let userId = auth.userId { await viewModel.loadAll(userId: userId) } } }
+                )
             }
             .navigationDestination(for: Collection.self) { collection in
                 CollectionDetailView(collection: collection)
@@ -221,35 +228,201 @@ struct ProfileView: View {
 
 private struct ProfileLyricDetail: View {
     let item: LyricWithProfile
+    var onLyricUpdated: (() -> Void)?
+
     @Environment(AuthManager.self) private var auth
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(ToastManager.self) private var toastManager
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var resonateVM: ResonateViewModel?
+    @State private var showComments = false
+    @State private var showShareModal = false
+    @State private var bookmarkLyricId: IdentifiableUUID?
+    @State private var showPostSheet = false
+    @State private var showEditSheet = false
+    @State private var isMakingCurrent = false
+
+    private var lyric: Lyric { item.lyric }
+    private var isOwn: Bool { lyric.userId == auth.userId }
+    private var isCurrent: Bool { lyric.isCurrent == true }
 
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 LyricCardView(
-                    lyric: item.lyric,
+                    lyric: lyric,
                     hero: true,
-                    showActions: false,
-                    isPublic: item.lyric.isPublic ?? false,
-                    isOwn: false,
-                    hasReacted: false,
-                    reactionCount: item.lyric.reactionCount ?? 0,
-                    isResonateAnimating: false,
-                    commentCount: item.lyric.commentCount ?? 0,
-                    showComments: false,
+                    showActions: true,
+                    isPublic: lyric.isPublic ?? false,
+                    isOwn: isOwn,
+                    onShare: { showShareModal = true },
+                    onReplace: isCurrent ? { showPostSheet = true } : {},
+                    onEdit: isCurrent ? { showEditSheet = true } : {},
+                    onVisibilityChange: { newValue in toggleVisibility(isPublic: newValue) },
+                    hasReacted: resonateVM?.hasReacted ?? false,
+                    reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
+                    isResonateAnimating: resonateVM?.isAnimating ?? false,
+                    onResonate: { resonateVM?.toggle() },
+                    commentCount: lyric.commentCount ?? 0,
+                    showComments: showComments,
+                    onToggleComments: { showComments.toggle() },
+                    onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                    isSaved: collectionManager.isLyricSaved(lyric.id),
                     currentUserId: auth.userId
                 )
                 .padding(.horizontal, Theme.Spacing.md)
 
                 if let username = item.username {
-                    Text("posted by @\(username)")
-                        .font(Theme.dmSans(14))
-                        .foregroundStyle(Theme.textSecondary)
+                    NavigationLink(value: ProfileDestination(userId: lyric.userId, username: username)) {
+                        Text("posted by @\(username)")
+                            .font(Theme.dmSans(14))
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
+
+                // "Make current" button for past lyrics owned by user
+                if !isCurrent && isOwn {
+                    Button {
+                        Task { await makeCurrent() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if isMakingCurrent {
+                                ProgressView()
+                                    .tint(.white)
+                                    .scaleEffect(0.8)
+                            }
+                            Text("make current")
+                                .font(Theme.dmSans(14, weight: .medium))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Theme.accent)
+                        .clipShape(Capsule())
+                    }
+                    .disabled(isMakingCurrent)
                 }
             }
             .padding(.top, Theme.Spacing.md)
         }
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard let userId = auth.userId else { return }
+            resonateVM = ResonateViewModel(
+                lyricId: lyric.id,
+                userId: userId,
+                initialCount: lyric.reactionCount ?? 0,
+                toast: toastManager
+            )
+            await resonateVM?.checkInitialState()
+        }
+        .sheet(isPresented: $showShareModal) {
+            ShareModalView(
+                lyric: lyric,
+                note: nil,
+                username: auth.profile?.username
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Theme.background)
+        }
+        .sheet(item: $bookmarkLyricId) { item in
+            CollectionPickerSheet(lyricId: item.value)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showPostSheet) {
+            PostLyricView(
+                currentLyricId: lyric.id,
+                onSaved: {
+                    onLyricUpdated?()
+                    dismiss()
+                }
+            )
+            .environment(auth)
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditLyricView(lyric: lyric) {
+                onLyricUpdated?()
+            }
+            .interactiveDismissDisabled()
+            .presentationDragIndicator(.visible)
+        }
+        .navigationDestination(for: ProfileDestination.self) { dest in
+            PublicProfileView(userId: dest.userId, username: dest.username)
+        }
+        .navigationDestination(for: ArtistDestination.self) { dest in
+            ArtistPageView(artistName: dest.name)
+        }
+        .navigationDestination(for: SongDestination.self) { dest in
+            SongPageView(songTitle: dest.title, artistName: dest.artistName, coverArtUrl: dest.coverArtUrl)
+        }
+    }
+
+    // MARK: - Actions
+
+    private func toggleVisibility(isPublic: Bool) {
+        Task {
+            do {
+                try await supabase
+                    .from("lyrics")
+                    .update(LyricVisibilityUpdate(isPublic: isPublic))
+                    .eq("id", value: lyric.id.uuidString)
+                    .execute()
+                Haptics.light()
+                onLyricUpdated?()
+            } catch {
+                toastManager.show("couldn't update visibility")
+            }
+        }
+    }
+
+    private func makeCurrent() async {
+        guard let userId = auth.userId else { return }
+        isMakingCurrent = true
+        do {
+            // 1. Archive any existing current lyric
+            try await supabase
+                .from("lyrics")
+                .update(LyricArchiveUpdate(
+                    isCurrent: false,
+                    replacedAt: ISO8601DateFormatter().string(from: Date())
+                ))
+                .eq("user_id", value: userId.uuidString)
+                .eq("is_current", value: true)
+                .execute()
+
+            // 2. Insert new lyric as current with same content
+            let insert = LyricInsert(
+                userId: userId,
+                content: lyric.content,
+                songTitle: lyric.songTitle,
+                artistName: lyric.artistName,
+                coverArtUrl: lyric.coverArtUrl,
+                cardArtUrl: lyric.cardArtUrl,
+                albumName: lyric.albumName,
+                tags: lyric.tags,
+                isPublic: lyric.isPublic ?? false,
+                isCurrent: true,
+                canonicalLyricId: lyric.canonicalLyricId,
+                musicbrainzRecordingId: lyric.musicbrainzRecordingId,
+                musicbrainzReleaseId: lyric.musicbrainzReleaseId
+            )
+            try await supabase
+                .from("lyrics")
+                .insert(insert)
+                .execute()
+
+            Haptics.medium()
+            toastManager.show("lyric is now current")
+            onLyricUpdated?()
+            dismiss()
+        } catch {
+            toastManager.show("couldn't make current, try again")
+            print("Make current error: \(error)")
+        }
+        isMakingCurrent = false
     }
 }

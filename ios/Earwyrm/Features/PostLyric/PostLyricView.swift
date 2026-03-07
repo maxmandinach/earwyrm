@@ -4,12 +4,22 @@ import UIKit
 struct PostLyricView: View {
     @Environment(AuthManager.self) private var auth
     @Environment(ToastManager.self) private var toastManager
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PostLyricViewModel()
+    @State private var artVM = ArtGalleryViewModel()
+    @State private var savedLyric: Lyric?
+    @State private var freeGenExhausted = false
+    @State private var showPaywall = false
+    @State private var showFreeGenSheet = false
+    @State private var showRegenSheet = false
     @State private var showLyricBrowser = false
 
     let currentLyricId: UUID?
     let onSaved: () -> Void
+    var prefillSongTitle: String? = nil
+    var prefillArtistName: String? = nil
+    var prefillCoverArtUrl: String? = nil
 
     var body: some View {
         NavigationStack {
@@ -98,14 +108,32 @@ struct PostLyricView: View {
                         .foregroundStyle(Theme.textMuted)
                     }
 
-                    // Artwork CTA (disabled until saved)
-                    HStack(spacing: 6) {
-                        Image(systemName: "wand.and.stars")
-                            .font(.system(size: 13))
-                        Text("save your lyric to generate artwork")
-                            .font(Theme.dmSans(13))
+                    // Art gallery
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        ArtGalleryStrip(
+                            viewModel: artVM,
+                            onGenerate: { handleArtAction() },
+                            isGenerating: artVM.isGeneratingArt,
+                            isLocked: !subscriptionManager.isPlus && !artVM.hasAIArt && freeGenExhausted
+                        )
+
+                        if artVM.isGeneratingArt {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                    .tint(Theme.accent)
+                                Text("generating artwork...")
+                                    .font(Theme.dmSans(12))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                        }
+
+                        if let error = artVM.aiArtError {
+                            Text(error)
+                                .font(Theme.dmSans(12))
+                                .foregroundStyle(.red.opacity(0.7))
+                        }
                     }
-                    .foregroundStyle(Theme.textMuted.opacity(0.5))
 
                     // Tags
                     TagInputView(tags: $viewModel.tags)
@@ -165,6 +193,9 @@ struct PostLyricView: View {
             .toolbarBackground(Theme.card, for: .navigationBar)
             .onAppear {
                 viewModel.toast = toastManager
+                if let song = prefillSongTitle, let artist = prefillArtistName {
+                    viewModel.prefill(songTitle: song, artistName: artist, coverArtUrl: prefillCoverArtUrl)
+                }
                 Analytics.track(.postLyricStarted)
             }
             .onDisappear {
@@ -184,6 +215,59 @@ struct PostLyricView: View {
                     .presentationDragIndicator(.visible)
                 }
             }
+            .onChange(of: viewModel.coverArtUrl) { _, newUrl in
+                Task {
+                    if let urlStr = newUrl, let url = URL(string: urlStr) {
+                        artVM.coverArtUrl = urlStr
+                        artVM.coverArtImage = await CardArtService.downloadImage(from: url)
+                        artVM.selectedStyle = .coverArt
+                    } else {
+                        artVM.coverArtUrl = nil
+                        artVM.coverArtImage = nil
+                        if artVM.selectedStyle == .coverArt { artVM.selectedStyle = .none }
+                    }
+                }
+            }
+            .onChange(of: artVM.needsUpgrade) { _, needsUpgrade in
+                if needsUpgrade {
+                    freeGenExhausted = true
+                    Analytics.track(.aiArtPaywallHit)
+                    showPaywall = true
+                    artVM.needsUpgrade = false
+                }
+            }
+            .sheet(isPresented: $showPaywall) {
+                EarwyrmPlusPaywall(context: "ai_art")
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showFreeGenSheet) {
+                ArtGenerationSheet(
+                    mode: .firstGen,
+                    existingNote: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent,
+                    artRemaining: artVM.artRemaining,
+                    onGenerate: { note, refinement in
+                        performGenerate(note: note, refinement: refinement)
+                    },
+                    onShowPaywall: { showPaywall = true }
+                )
+                .presentationDetents([.height(viewModel.noteContent.isEmpty ? 370 : 220)])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.background)
+            }
+            .sheet(isPresented: $showRegenSheet) {
+                ArtGenerationSheet(
+                    mode: .regen,
+                    existingNote: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent,
+                    artRemaining: artVM.artRemaining,
+                    onGenerate: { note, refinement in
+                        performGenerate(note: note, refinement: refinement)
+                    },
+                    onShowPaywall: { showPaywall = true }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.background)
+            }
         }
     }
 
@@ -202,7 +286,8 @@ struct PostLyricView: View {
                 .foregroundStyle(Theme.textPrimary)
                 .lineSpacing(10)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: 150)
+                .frame(minHeight: 150, maxHeight: 400)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(Theme.Spacing.md)
                 .background(Theme.card)
                 .overlay(alignment: .topLeading) {
@@ -493,18 +578,80 @@ struct PostLyricView: View {
         let isPublic = auth.profile?.isPublic ?? false
 
         Task {
-            let success = await viewModel.saveLyric(
-                userId: userId,
-                currentLyricId: currentLyricId,
-                isPublicProfile: isPublic
-            )
-            if success {
+            if savedLyric != nil {
+                // Already silently saved (via art generation) — persist art choice and dismiss
+                if let lyric = savedLyric {
+                    await artVM.persistActiveVariant(lyricId: lyric.id)
+                }
                 Analytics.track(.postLyricCompleted)
                 Haptics.success()
                 onSaved()
                 dismiss()
             } else {
-                Haptics.error()
+                let lyric = await viewModel.saveLyric(
+                    userId: userId,
+                    currentLyricId: currentLyricId,
+                    isPublicProfile: isPublic
+                )
+                if let lyric {
+                    savedLyric = lyric
+                    await artVM.persistActiveVariant(lyricId: lyric.id)
+                    Analytics.track(.postLyricCompleted)
+                    Haptics.success()
+                    onSaved()
+                    dismiss()
+                } else {
+                    Haptics.error()
+                }
+            }
+        }
+    }
+
+    // MARK: - Art Generation
+
+    private func handleArtAction() {
+        guard let userId = auth.userId else { return }
+
+        Task {
+            // Silent save if not yet saved
+            if savedLyric == nil {
+                let isPublic = auth.profile?.isPublic ?? false
+                let lyric = await viewModel.saveLyric(
+                    userId: userId,
+                    currentLyricId: currentLyricId,
+                    isPublicProfile: isPublic
+                )
+                guard let lyric else {
+                    Haptics.error()
+                    return
+                }
+                savedLyric = lyric
+            }
+
+            let action = artVM.resolveAction(isPlus: subscriptionManager.isPlus, freeGenExhausted: freeGenExhausted)
+            switch action {
+            case .generate:
+                performGenerate(note: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent, refinement: nil)
+            case .showFreeGenSheet:
+                showFreeGenSheet = true
+            case .showRegenSheet:
+                showRegenSheet = true
+            case .showPaywall:
+                Analytics.track(.aiArtPaywallHit)
+                showPaywall = true
+            }
+        }
+    }
+
+    private func performGenerate(note: String?, refinement: String?) {
+        guard let lyric = savedLyric else { return }
+        if artVM.hasAIArt {
+            Analytics.track(.aiArtRegenerated)
+        }
+        Task {
+            await artVM.generate(lyric: lyric, note: note, refinement: refinement)
+            if artVM.wasFreeTierGen {
+                freeGenExhausted = true
             }
         }
     }

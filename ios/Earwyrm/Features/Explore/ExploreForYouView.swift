@@ -12,6 +12,7 @@ struct ExploreForYouView: View {
     @Environment(ToastManager.self) private var toastManager
 
     @State private var search = ""
+    @State private var searchVM = ExploreSearchViewModel()
     @State private var reportLyric: Lyric?
     @State private var blockTarget: (userId: UUID, username: String)?
     @State private var showBlockAlert = false
@@ -42,10 +43,14 @@ struct ExploreForYouView: View {
         feed.count >= visibleCount
     }
 
+    private var isSearching: Bool {
+        !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         LazyVStack(spacing: Theme.Spacing.md) {
-            // Trending tags
-            if !viewModel.trendingTags.isEmpty {
+            // Trending tags (hidden during search)
+            if !isSearching && !viewModel.trendingTags.isEmpty {
                 TrendingTagsView(tags: viewModel.trendingTags, selectedTags: $selectedTags)
                     .padding(.horizontal, Theme.Spacing.md)
             }
@@ -54,8 +59,11 @@ struct ExploreForYouView: View {
             FeedFilterBar(search: $search, timeRange: $timeRange, sort: $sort)
                 .padding(.horizontal, Theme.Spacing.md)
 
-            // Feed content
-            if viewModel.isLoading {
+            if isSearching {
+                // Search results mode
+                ExploreSearchResultsView(searchVM: searchVM, query: search)
+            } else if viewModel.isLoading {
+                // Feed loading
                 ForEach(0..<5, id: \.self) { _ in
                     shimmerCard
                         .padding(.horizontal, Theme.Spacing.md)
@@ -107,6 +115,12 @@ struct ExploreForYouView: View {
         }
         .onChange(of: search) { _, newValue in
             visibleCount = 20
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                searchVM.clear()
+            } else {
+                searchVM.search(query: newValue)
+            }
             if newValue.count >= 3 {
                 Analytics.track(.searchPerformed, ["query": String(newValue.prefix(50))])
             }

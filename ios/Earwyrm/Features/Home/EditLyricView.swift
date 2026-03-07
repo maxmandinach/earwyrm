@@ -46,12 +46,13 @@ struct EditLyricView: View {
                         .foregroundStyle(Theme.textPrimary)
                         .lineSpacing(10)
                         .scrollContentBackground(.hidden)
-                        .frame(minHeight: 150)
+                        .frame(minHeight: 150, maxHeight: 400)
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(Theme.Spacing.md)
                         .background(
                             ZStack {
                                 Theme.card
-                                if let image = artVM.aiArtImage {
+                                if let image = artVM.activeImage {
                                     Image(uiImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
@@ -69,7 +70,7 @@ struct EditLyricView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
                         .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
-                        .animation(.easeInOut(duration: 0.2), value: artVM.activeVariantIndex)
+                        .animation(.easeInOut(duration: 0.2), value: artVM.selectedStyle)
                         .onChange(of: content) { _, newValue in
                             if newValue.count > 500 {
                                 content = String(newValue.prefix(500))

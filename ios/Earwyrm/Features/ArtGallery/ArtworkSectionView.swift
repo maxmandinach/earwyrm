@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Drop-in artwork section for EditLyricView.
-/// Shows large preview, gallery carousel, generate/regen buttons, and manages sheet presentations.
+/// Shows gallery carousel with generate pill, and manages sheet presentations.
 struct ArtworkSectionView: View {
     let lyric: Lyric
     let noteContent: String
@@ -14,66 +14,23 @@ struct ArtworkSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            if viewModel.hasAIArt {
-                // Gallery carousel + regen button
-                HStack(spacing: Theme.Spacing.sm) {
-                    // Carousel strip
-                    if viewModel.variants.count > 1 {
-                        ArtGalleryStrip(viewModel: viewModel)
-                    }
+            ArtGalleryStrip(
+                viewModel: viewModel,
+                onGenerate: { handleArtAction() },
+                isGenerating: viewModel.isGeneratingArt,
+                isLocked: !subscriptionManager.isPlus && !viewModel.hasAIArt && freeGenExhausted
+            )
 
-                    Spacer()
-
-                    // Regen wand button
-                    Button {
-                        handleArtAction()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "wand.and.stars")
-                                .font(.system(size: 13, weight: .medium))
-                            Text(artRemainingLabel("New"))
-                                .font(Theme.dmSans(12, weight: .medium))
-                        }
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Theme.accent.opacity(0.1))
-                        .clipShape(Capsule())
-                    }
-                    .disabled(viewModel.isGeneratingArt)
+            // Generating indicator
+            if viewModel.isGeneratingArt {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .tint(Theme.accent)
+                    Text("generating artwork...")
+                        .font(Theme.dmSans(12))
+                        .foregroundStyle(Theme.textSecondary)
                 }
-
-                // Generating indicator
-                if viewModel.isGeneratingArt {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .tint(Theme.accent)
-                        Text("generating artwork...")
-                            .font(Theme.dmSans(12))
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-            } else {
-                // No artwork — generate button
-                Button {
-                    handleArtAction()
-                } label: {
-                    HStack(spacing: 6) {
-                        if viewModel.isGeneratingArt {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                                .tint(Theme.accent)
-                        } else {
-                            Image(systemName: "wand.and.stars")
-                                .font(.system(size: 13))
-                        }
-                        Text(viewModel.isGeneratingArt ? "Generating..." : artRemainingLabel("Generate artwork"))
-                            .font(Theme.dmSans(13))
-                    }
-                    .foregroundStyle(Theme.accent)
-                }
-                .disabled(viewModel.isGeneratingArt)
             }
 
             if let error = viewModel.aiArtError {
@@ -149,15 +106,5 @@ struct ArtworkSectionView: View {
                 freeGenExhausted = true
             }
         }
-    }
-
-    private func artRemainingLabel(_ prefix: String) -> String {
-        if let remaining = viewModel.artRemaining {
-            if remaining > 0 {
-                return "\(prefix) (\(remaining))"
-            }
-            return subscriptionManager.isPlus ? "Monthly limit reached" : "Upgrade to regenerate"
-        }
-        return prefix
     }
 }

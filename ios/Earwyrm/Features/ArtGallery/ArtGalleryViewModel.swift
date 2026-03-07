@@ -5,62 +5,131 @@ import SwiftUI
 @Observable
 @MainActor
 final class ArtGalleryViewModel {
+    enum CardStyle: Equatable {
+        case none
+        case coverArt
+        case aiVariant(Int)
+    }
+
     var variants: [(variant: CardArtService.Variant, image: UIImage)] = []
-    var activeVariantIndex: Int = 0
+    var selectedStyle: CardStyle = .none
     private(set) var isGeneratingArt = false
     var aiArtError: String?
     var artRemaining: Int?
     var needsUpgrade = false
     var wasFreeTierGen = false
 
-    /// The currently selected AI art image (if any).
-    var aiArtImage: UIImage? {
-        guard !variants.isEmpty, activeVariantIndex < variants.count else { return nil }
-        return variants[activeVariantIndex].image
+    // Cover art state
+    var coverArtImage: UIImage?
+    var coverArtUrl: String?
+
+    /// The currently active image based on selectedStyle.
+    var activeImage: UIImage? {
+        switch selectedStyle {
+        case .none:
+            return nil
+        case .coverArt:
+            return coverArtImage
+        case .aiVariant(let index):
+            guard index < variants.count else { return nil }
+            return variants[index].image
+        }
     }
 
-    /// The URL of the currently selected variant.
-    var activeVariantUrl: String? {
-        guard !variants.isEmpty, activeVariantIndex < variants.count else { return nil }
-        return variants[activeVariantIndex].variant.imageUrl
+    /// The URL of the currently active art.
+    var activeUrl: String? {
+        switch selectedStyle {
+        case .none:
+            return nil
+        case .coverArt:
+            return coverArtUrl
+        case .aiVariant(let index):
+            guard index < variants.count else { return nil }
+            return variants[index].variant.imageUrl
+        }
+    }
+
+    /// Backward-compatible: delegates to activeImage.
+    var aiArtImage: UIImage? { activeImage }
+
+    /// The URL of the currently selected AI variant (backward compat).
+    var activeVariantUrl: String? { activeUrl }
+
+    /// Index into AI variants array (backward compat for ArtGalleryStrip).
+    var activeVariantIndex: Int {
+        get {
+            if case .aiVariant(let i) = selectedStyle { return i }
+            return -1
+        }
+        set {
+            selectedStyle = .aiVariant(newValue)
+        }
     }
 
     var hasAIArt: Bool {
         !variants.isEmpty
     }
 
+    var hasAnyArt: Bool {
+        hasAIArt || coverArtImage != nil
+    }
+
     /// Fetch all variants for a lyric and download images concurrently.
     func loadVariants(for lyric: Lyric) async {
-        let fetchedVariants = await CardArtService.fetchVariants(lyricId: lyric.id)
-        guard !fetchedVariants.isEmpty else { return }
+        coverArtUrl = lyric.coverArtUrl
 
-        var loaded: [(variant: CardArtService.Variant, image: UIImage)] = []
-        await withTaskGroup(of: (Int, CardArtService.Variant, UIImage?).self) { group in
-            for (index, variant) in fetchedVariants.enumerated() {
-                group.addTask {
-                    guard let url = URL(string: variant.imageUrl) else { return (index, variant, nil) }
-                    let image = await CardArtService.downloadImage(from: url)
-                    return (index, variant, image)
+        // Download cover art and AI variants concurrently
+        async let coverArtTask: UIImage? = {
+            guard let urlStr = lyric.coverArtUrl, let url = URL(string: urlStr) else { return nil }
+            return await CardArtService.downloadImage(from: url)
+        }()
+
+        async let variantsTask: [(variant: CardArtService.Variant, image: UIImage)] = {
+            let fetchedVariants = await CardArtService.fetchVariants(lyricId: lyric.id)
+            guard !fetchedVariants.isEmpty else { return [] }
+
+            var loaded: [(variant: CardArtService.Variant, image: UIImage)] = []
+            await withTaskGroup(of: (Int, CardArtService.Variant, UIImage?).self) { group in
+                for (index, variant) in fetchedVariants.enumerated() {
+                    group.addTask {
+                        guard let url = URL(string: variant.imageUrl) else { return (index, variant, nil) }
+                        let image = await CardArtService.downloadImage(from: url)
+                        return (index, variant, image)
+                    }
+                }
+                var results: [(Int, CardArtService.Variant, UIImage?)] = []
+                for await result in group {
+                    results.append(result)
+                }
+                results.sort { $0.0 < $1.0 }
+                loaded = results.compactMap { (_, variant, image) in
+                    guard let image else { return nil }
+                    return (variant: variant, image: image)
                 }
             }
-            var results: [(Int, CardArtService.Variant, UIImage?)] = []
-            for await result in group {
-                results.append(result)
-            }
-            results.sort { $0.0 < $1.0 }
-            loaded = results.compactMap { (_, variant, image) in
-                guard let image else { return nil }
-                return (variant: variant, image: image)
-            }
-        }
+            return loaded
+        }()
 
-        variants = loaded
+        let (downloadedCoverArt, loadedVariants) = await (coverArtTask, variantsTask)
 
-        // Set active index to the variant matching card_art_url
+        coverArtImage = downloadedCoverArt
+        variants = loadedVariants
+
+        // Determine initial selectedStyle from lyric.cardArtUrl
         if let cardArtUrl = lyric.cardArtUrl {
-            activeVariantIndex = variants.firstIndex(where: { $0.variant.imageUrl == cardArtUrl }) ?? 0
+            if cardArtUrl == lyric.coverArtUrl {
+                selectedStyle = .coverArt
+            } else if let aiIndex = variants.firstIndex(where: { $0.variant.imageUrl == cardArtUrl }) {
+                selectedStyle = .aiVariant(aiIndex)
+            } else if !variants.isEmpty {
+                selectedStyle = .aiVariant(0)
+            } else if coverArtImage != nil {
+                selectedStyle = .coverArt
+            } else {
+                selectedStyle = .none
+            }
         } else {
-            activeVariantIndex = 0
+            selectedStyle = .none
         }
     }
 
@@ -84,7 +153,7 @@ final class ArtGalleryViewModel {
                     createdAt: Date()
                 )
                 variants.insert((variant: newVariant, image: image), at: 0)
-                activeVariantIndex = 0
+                selectedStyle = .aiVariant(0)
             }
 
             Analytics.track(.aiArtGenerated)
@@ -98,10 +167,20 @@ final class ArtGalleryViewModel {
         isGeneratingArt = false
     }
 
-    /// Persist the active variant selection if it changed.
+    /// Persist the active art selection.
     func persistActiveVariant(lyricId: UUID) async {
-        guard let activeUrl = activeVariantUrl else { return }
-        await CardArtService.setActiveVariant(lyricId: lyricId, imageUrl: activeUrl)
+        switch selectedStyle {
+        case .none:
+            await CardArtService.clearActiveVariant(lyricId: lyricId)
+        case .coverArt:
+            if let url = coverArtUrl {
+                await CardArtService.setActiveVariant(lyricId: lyricId, imageUrl: url)
+            }
+        case .aiVariant(let index):
+            guard index < variants.count else { return }
+            let url = variants[index].variant.imageUrl
+            await CardArtService.setActiveVariant(lyricId: lyricId, imageUrl: url)
+        }
     }
 
     /// Determine what action to take based on subscription status and existing art.

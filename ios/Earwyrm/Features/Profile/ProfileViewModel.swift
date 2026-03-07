@@ -24,6 +24,8 @@ struct ResonatedLyric: Identifiable {
 @MainActor
 final class ProfileViewModel {
     var allLyrics: [Lyric] = []
+    var currentLyrics: [Lyric] = []
+    var pastLyrics: [Lyric] = []
     var resonatedLyrics: [ResonatedLyric] = []
     var notes: [NoteWithLyric] = []
     var isLoading = false
@@ -51,6 +53,8 @@ final class ProfileViewModel {
                 .value
 
             self.allLyrics = lyrics
+            self.currentLyrics = lyrics.filter { $0.isCurrent == true }
+            self.pastLyrics = lyrics.filter { $0.isCurrent != true }
         } catch {
             self.error = error.localizedDescription
             print("Fetch all lyrics error: \(error)")

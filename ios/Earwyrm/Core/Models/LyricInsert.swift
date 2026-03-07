@@ -8,6 +8,7 @@ struct LyricInsert: Encodable {
     let songTitle: String?
     let artistName: String?
     let coverArtUrl: String?
+    let cardArtUrl: String?
     let albumName: String?
     let tags: [String]?
     let isPublic: Bool
@@ -22,6 +23,7 @@ struct LyricInsert: Encodable {
         case songTitle = "song_title"
         case artistName = "artist_name"
         case coverArtUrl = "cover_art_url"
+        case cardArtUrl = "card_art_url"
         case albumName = "album_name"
         case tags
         case isPublic = "is_public"

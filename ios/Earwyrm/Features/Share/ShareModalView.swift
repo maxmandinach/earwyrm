@@ -42,20 +42,16 @@ struct ShareModalView: View {
     @State private var showFreeGenConfirm = false
     @State private var showRegenConfirm = false
     @State private var inlineNote = ""
-    /// Track the initial variant index to detect changes on dismiss
-    @State private var initialVariantIndex: Int?
+    /// Track the initial art style to detect changes on dismiss
+    @State private var initialStyle: ArtGalleryViewModel.CardStyle?
 
-    /// The style options always include AI Art now
-    private var availableStyles: [ShareStyle] {
-        var styles: [ShareStyle] = [.minimal]
-        if hasCoverArt { styles.append(.coverArt) }
-        styles.append(.aiArt)
-        return styles
-    }
-
-    /// Whether the AI Art tab should show a lock icon
-    private var aiArtLocked: Bool {
-        !subscriptionManager.isPlus && !artVM.hasAIArt && freeGenExhausted
+    /// Derive renderer style from gallery selection
+    private var rendererStyle: ShareStyle {
+        switch artVM.selectedStyle {
+        case .none: return .minimal
+        case .coverArt: return .coverArt
+        case .aiVariant: return .aiArt
+        }
     }
 
     var body: some View {
@@ -95,18 +91,17 @@ struct ShareModalView: View {
                 }
 
                 // ── Art Gallery Strip ──
-                if renderer.style == .aiArt && artVM.variants.count > 1 {
-                    ArtGalleryStrip(viewModel: artVM) {
-                        rerender()
-                    }
+                ArtGalleryStrip(
+                    viewModel: artVM,
+                    onGenerate: { handleArtAction() },
+                    isGenerating: artVM.isGeneratingArt,
+                    isLocked: !subscriptionManager.isPlus && !artVM.hasAIArt && freeGenExhausted
+                ) {
+                    rerender()
                 }
 
                 // ── Controls ──
                 HStack {
-                    if availableStyles.count > 1 {
-                        stylePicker
-                    }
-
                     Spacer()
 
                     // Icon toggles
@@ -199,21 +194,15 @@ struct ShareModalView: View {
         }
         .task {
             renderer.format = .square
-            if hasCoverArt {
-                renderer.style = .coverArt
-            }
             await renderer.loadCoverArt(for: lyric)
             await artVM.loadVariants(for: lyric)
-            if artVM.hasAIArt {
-                renderer.style = .aiArt
-            }
-            initialVariantIndex = artVM.activeVariantIndex
+            initialStyle = artVM.selectedStyle
             rerender()
         }
         .onDisappear {
             // Persist active variant if user changed selection
-            if let initial = initialVariantIndex,
-               artVM.activeVariantIndex != initial {
+            if let initial = initialStyle,
+               artVM.selectedStyle != initial {
                 Task {
                     await artVM.persistActiveVariant(lyricId: lyric.id)
                     onArtGenerated?()
@@ -286,80 +275,6 @@ struct ShareModalView: View {
         }
     }
 
-    // MARK: - Style Picker
-
-    private var stylePicker: some View {
-        HStack(spacing: 0) {
-            ForEach(availableStyles, id: \.self) { option in
-                Button {
-                    handleStyleTap(option)
-                } label: {
-                    HStack(spacing: 4) {
-                        if option == .aiArt {
-                            if aiArtLocked {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 8, weight: .bold))
-                            } else {
-                                Text("✦")
-                                    .font(.system(size: 10))
-                            }
-                        }
-                        Text(option.label)
-                            .font(Theme.dmSans(14, weight: renderer.style == option ? .semibold : .regular))
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-                    .foregroundStyle(renderer.style == option ? Theme.textPrimary : Theme.textMuted)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(
-                        renderer.style == option
-                            ? Theme.card
-                            : Color.clear
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-            }
-
-            // Regenerate icon — only when AI art exists and we're on AI Art tab
-            if renderer.style == .aiArt && artVM.hasAIArt && !artVM.isGeneratingArt {
-                Button {
-                    handleArtAction()
-                } label: {
-                    Image(systemName: "wand.and.stars")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 10)
-                }
-            }
-        }
-        .background(Theme.background)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Theme.dividerColor, lineWidth: 1)
-        )
-    }
-
-    private func handleStyleTap(_ style: ShareStyle) {
-        if style == .aiArt {
-            if aiArtLocked {
-                Analytics.track(.aiArtPaywallHit)
-                showPaywall = true
-                return
-            }
-            renderer.style = .aiArt
-            rerender()
-            if !artVM.hasAIArt && !artVM.isGeneratingArt {
-                handleArtAction()
-            }
-        } else {
-            renderer.style = style
-            rerender()
-        }
-    }
-
     private func handleArtAction() {
         let action = artVM.resolveAction(isPlus: subscriptionManager.isPlus, freeGenExhausted: freeGenExhausted)
         switch action {
@@ -392,7 +307,6 @@ struct ShareModalView: View {
                 freeGenExhausted = true
             }
             if artVM.hasAIArt {
-                renderer.style = .aiArt
                 rerender()
                 onArtGenerated?()
             }
@@ -435,6 +349,7 @@ struct ShareModalView: View {
     // MARK: - Actions
 
     private func rerender() {
+        renderer.style = rendererStyle
         renderer.render(lyric: lyric, note: noteText, username: username, aiArtImage: artVM.aiArtImage)
     }
 
