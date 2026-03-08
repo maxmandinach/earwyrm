@@ -92,7 +92,7 @@ struct ArtworkSectionView: View {
             // Save note to lyric_notes if one was provided
             if let note, !note.isEmpty, let userId = auth.userId {
                 let insert = NoteInsert(lyricId: lyric.id, userId: userId, content: note, isPublic: false)
-                try? await supabase.from("lyric_notes").upsert(insert).execute()
+                try? await supabase.from("lyric_notes").upsert(insert, onConflict: "lyric_id,user_id").execute()
                 onNoteSaved?(note)
             }
         }

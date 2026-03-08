@@ -643,7 +643,7 @@ struct PostLyricView: View {
             // Lyric is already saved at this point — upsert note directly to DB
             if let note, !note.isEmpty, let userId = auth.userId {
                 let insert = NoteInsert(lyricId: lyric.id, userId: userId, content: note, isPublic: false)
-                try? await supabase.from("lyric_notes").upsert(insert).execute()
+                try? await supabase.from("lyric_notes").upsert(insert, onConflict: "lyric_id,user_id").execute()
             }
         }
     }
