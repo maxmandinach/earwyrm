@@ -184,9 +184,10 @@ struct EditLyricView: View {
             }
             .toolbarBackground(Theme.card, for: .navigationBar)
             .task {
-                await loadNote()
-                await fetchLyrics()
-                await artVM.loadVariants(for: lyric)
+                async let note: () = loadNote()
+                async let lyrics: () = fetchLyrics()
+                async let variants: () = artVM.loadVariants(for: lyric)
+                _ = await (note, lyrics, variants)
             }
             .onDisappear {
                 // Cancel button — still persist art selection

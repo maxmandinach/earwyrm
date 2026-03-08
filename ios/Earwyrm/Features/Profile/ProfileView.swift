@@ -112,10 +112,12 @@ struct ProfileView: View {
         }
         .task {
             if let userId = auth.userId {
-                await viewModel.loadAll(userId: userId)
-                await followManager.fetchFollows(userId: userId)
-                await collectionManager.fetchCollections(userId: userId)
-                let counts = await userFollowManager.fetchCounts(userId: userId)
+                async let load: () = viewModel.loadAll(userId: userId)
+                async let follows: () = followManager.fetchFollows(userId: userId)
+                async let collections: () = collectionManager.fetchCollections(userId: userId)
+                async let countsResult = userFollowManager.fetchCounts(userId: userId)
+                _ = await (load, follows, collections)
+                let counts = await countsResult
                 followerCount = counts.followers
                 followingCount = counts.following
             }

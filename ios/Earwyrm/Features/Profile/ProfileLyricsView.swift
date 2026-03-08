@@ -13,11 +13,23 @@ struct ProfileLyricsView: View {
     @State private var reactionStates: [UUID: Bool] = [:]
     @State private var reactionCounts: [UUID: Int] = [:]
     @State private var animatingReactions: Set<UUID> = []
-    @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var shareLyric: Lyric?
+    @State private var activeSheet: ProfileLyricSheet?
     @State private var showCommentIds: Set<UUID> = []
-    @State private var editingLyric: Lyric?
     @State private var deletingLyric: Lyric?
+
+    private enum ProfileLyricSheet: Identifiable {
+        case bookmark(UUID)
+        case share(Lyric)
+        case edit(Lyric)
+
+        var id: String {
+            switch self {
+            case .bookmark(let uuid): return "bookmark-\(uuid)"
+            case .share(let lyric): return "share-\(lyric.id)"
+            case .edit(let lyric): return "edit-\(lyric.id)"
+            }
+        }
+    }
     @State private var isMakingCurrent = false
 
     private var allLyrics: [Lyric] { currentLyrics + pastLyrics }
@@ -42,12 +54,12 @@ struct ProfileLyricsView: View {
                                 onToggleComments: { toggleComments(lyric.id) },
                                 isPublic: lyric.isPublic ?? false,
                                 onVisibilityChange: { newValue in toggleVisibility(lyric: lyric, isPublic: newValue) },
-                                onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                                onSave: { activeSheet = .bookmark(lyric.id) },
                                 isSaved: collectionManager.isLyricSaved(lyric.id),
-                                onShare: { shareLyric = lyric },
+                                onShare: { activeSheet = .share(lyric) },
                                 isOwn: lyric.userId == auth.userId,
                                 currentUserId: auth.userId,
-                                onEdit: lyric.userId == auth.userId ? { editingLyric = lyric } : nil,
+                                onEdit: lyric.userId == auth.userId ? { activeSheet = .edit(lyric) } : nil,
                                 onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil
                             )
                         }
@@ -78,12 +90,12 @@ struct ProfileLyricsView: View {
                                     onToggleComments: { toggleComments(lyric.id) },
                                     isPublic: lyric.isPublic ?? false,
                                     onVisibilityChange: { newValue in toggleVisibility(lyric: lyric, isPublic: newValue) },
-                                    onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
+                                    onSave: { activeSheet = .bookmark(lyric.id) },
                                     isSaved: collectionManager.isLyricSaved(lyric.id),
-                                    onShare: { shareLyric = lyric },
+                                    onShare: { activeSheet = .share(lyric) },
                                     isOwn: lyric.userId == auth.userId,
                                     currentUserId: auth.userId,
-                                    onEdit: lyric.userId == auth.userId ? { editingLyric = lyric } : nil,
+                                    onEdit: lyric.userId == auth.userId ? { activeSheet = .edit(lyric) } : nil,
                                     onMakeCurrent: lyric.userId == auth.userId ? { Task { await makeCurrent(lyric) } } : nil,
                                     onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil
                                 )
@@ -94,29 +106,30 @@ struct ProfileLyricsView: View {
                 }
             }
             .task { await fetchReactionStates() }
-            .sheet(item: $bookmarkLyricId) { item in
-                CollectionPickerSheet(lyricId: item.value)
-                    .presentationDetents([.medium, .large])
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .bookmark(let lyricId):
+                    CollectionPickerSheet(lyricId: lyricId)
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                case .share(let lyric):
+                    ShareModalView(
+                        lyric: lyric,
+                        note: nil,
+                        username: auth.profile?.username
+                    )
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $shareLyric) { lyric in
-                ShareModalView(
-                    lyric: lyric,
-                    note: nil,
-                    username: auth.profile?.username
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Theme.background)
-            }
-            .sheet(item: $editingLyric) { lyric in
-                EditLyricView(
-                    lyric: lyric,
-                    onSaved: { onLyricUpdated?() },
-                    isPastLyric: lyric.isCurrent != true
-                )
-                .interactiveDismissDisabled()
-                .presentationDragIndicator(.visible)
+                    .presentationBackground(Theme.background)
+                case .edit(let lyric):
+                    EditLyricView(
+                        lyric: lyric,
+                        onSaved: { onLyricUpdated?() },
+                        isPastLyric: lyric.isCurrent != true
+                    )
+                    .interactiveDismissDisabled()
+                    .presentationDragIndicator(.visible)
+                }
             }
             .alert("Delete lyric?", isPresented: Binding(
                 get: { deletingLyric != nil },

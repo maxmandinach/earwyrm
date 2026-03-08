@@ -14,15 +14,27 @@ struct ArtistPageView: View {
     @State private var isLoading = true
     @State private var search = ""
     @State private var sort: SortOption = .newest
-    @State private var showPageShare = false
 
     // Interaction state
     @State private var reactionStates: [UUID: Bool] = [:]
     @State private var reactionCounts: [UUID: Int] = [:]
     @State private var animatingReactions: Set<UUID> = []
-    @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var shareLyric: Lyric?
+    @State private var activeSheet: ArtistSheet?
     @State private var showPostSheet = false
+
+    private enum ArtistSheet: Identifiable {
+        case pageShare
+        case shareLyric(Lyric)
+        case bookmark(UUID)
+
+        var id: String {
+            switch self {
+            case .pageShare: return "pageShare"
+            case .shareLyric(let lyric): return "shareLyric-\(lyric.id)"
+            case .bookmark(let uuid): return "bookmark-\(uuid)"
+            }
+        }
+    }
 
     private var isFollowing: Bool {
         followManager.isFollowing(type: "artist", value: artistName)
@@ -109,7 +121,7 @@ struct ArtistPageView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    showPageShare = true
+                    activeSheet = .pageShare
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 15))
@@ -117,28 +129,29 @@ struct ArtistPageView: View {
                 }
             }
         }
-        .sheet(isPresented: $showPageShare) {
-            PageShareModalView(
-                pageTitle: artistName,
-                pageSubtitle: nil,
-                stats: stats,
-                featuredLyric: topSavedClusters.first?.representative.content,
-                coverArtUrl: lyrics.first(where: { $0.coverArtUrl != nil })?.coverArtUrl,
-                shareURL: artistShareURL,
-                shareText: "lyrics from \(artistName) on earwyrm"
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $shareLyric) { lyric in
-            ShareModalView(lyric: lyric, note: nil, username: nil)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .pageShare:
+                PageShareModalView(
+                    pageTitle: artistName,
+                    pageSubtitle: nil,
+                    stats: stats,
+                    featuredLyric: topSavedClusters.first?.representative.content,
+                    coverArtUrl: lyrics.first(where: { $0.coverArtUrl != nil })?.coverArtUrl,
+                    shareURL: artistShareURL,
+                    shareText: "lyrics from \(artistName) on earwyrm"
+                )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $bookmarkLyricId) { item in
-            CollectionPickerSheet(lyricId: item.value)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            case .shareLyric(let lyric):
+                ShareModalView(lyric: lyric, note: nil, username: nil)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            case .bookmark(let lyricId):
+                CollectionPickerSheet(lyricId: lyricId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
         }
         .fullScreenCover(isPresented: $showPostSheet) {
             PostLyricView(
@@ -148,8 +161,9 @@ struct ArtistPageView: View {
             )
         }
         .task {
-            await fetchArtistLyrics()
-            await fetchReactionStates()
+            async let lyrics: () = fetchArtistLyrics()
+            async let reactions: () = fetchReactionStates()
+            _ = await (lyrics, reactions)
             Analytics.track(.artistPageViewed, ["artist": artistName])
         }
     }
@@ -310,8 +324,8 @@ struct ArtistPageView: View {
                         reactionCount: reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0,
                         isResonateAnimating: animatingReactions.contains(lyric.id),
                         onResonate: { toggleReaction(for: lyric) },
-                        onSave: { bookmarkLyricId = IdentifiableUUID(lyric.id) },
-                        onShare: { shareLyric = lyric },
+                        onSave: { activeSheet = .bookmark(lyric.id) },
+                        onShare: { activeSheet = .shareLyric(lyric) },
                         isSaved: collectionManager.isLyricSaved(lyric.id)
                     )
                     .padding(.horizontal, Theme.Spacing.md)

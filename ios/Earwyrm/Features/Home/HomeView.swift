@@ -568,10 +568,22 @@ private struct LyricDetailDestination: View {
     @Environment(\.dismiss) private var dismiss
     @State private var resonateVM: ResonateViewModel?
     @State private var showComments = false
-    @State private var showShareModal = false
-    @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var showEditSheet = false
+    @State private var activeSheet: DetailSheet?
     @State private var showDeleteConfirm = false
+
+    private enum DetailSheet: Identifiable {
+        case share
+        case bookmark(UUID)
+        case edit
+
+        var id: String {
+            switch self {
+            case .share: return "share"
+            case .bookmark(let uuid): return "bookmark-\(uuid)"
+            case .edit: return "edit"
+            }
+        }
+    }
 
     private var lyric: Lyric { item.lyric }
     private var isOwn: Bool { lyric.userId == auth.userId }
@@ -585,8 +597,8 @@ private struct LyricDetailDestination: View {
                     showActions: true,
                     isPublic: lyric.isPublic ?? false,
                     isOwn: isOwn,
-                    onShare: { showShareModal = true },
-                    onEdit: isOwn ? { showEditSheet = true } : nil,
+                    onShare: { activeSheet = .share },
+                    onEdit: isOwn ? { activeSheet = .edit } : nil,
                     hasReacted: resonateVM?.hasReacted ?? false,
                     reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
                     isResonateAnimating: resonateVM?.isAnimating ?? false,
@@ -595,7 +607,7 @@ private struct LyricDetailDestination: View {
                     showComments: showComments,
                     onToggleComments: { showComments.toggle() },
                     onSave: {
-                        bookmarkLyricId = IdentifiableUUID(lyric.id)
+                        activeSheet = .bookmark(lyric.id)
                     },
                     isSaved: collectionManager.isLyricSaved(lyric.id),
                     currentUserId: auth.userId
@@ -641,41 +653,42 @@ private struct LyricDetailDestination: View {
             // Non-blocking: view renders immediately, reaction state fills in
             Task { await vm.checkInitialState() }
         }
-        .sheet(isPresented: $showShareModal) {
-            ShareModalView(
-                lyric: lyric,
-                note: nil,
-                username: item.username,
-                onShareCompleted: {
-                    Task {
-                        guard let actorId = auth.userId,
-                              let actorUsername = auth.profile?.username else { return }
-                        await notificationManager.sendShareNotification(
-                            lyricOwnerId: lyric.userId,
-                            actorId: actorId,
-                            actorUsername: actorUsername,
-                            lyric: lyric
-                        )
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .share:
+                ShareModalView(
+                    lyric: lyric,
+                    note: nil,
+                    username: item.username,
+                    onShareCompleted: {
+                        Task {
+                            guard let actorId = auth.userId,
+                                  let actorUsername = auth.profile?.username else { return }
+                            await notificationManager.sendShareNotification(
+                                lyricOwnerId: lyric.userId,
+                                actorId: actorId,
+                                actorUsername: actorUsername,
+                                lyric: lyric
+                            )
+                        }
                     }
-                }
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(Theme.background)
-        }
-        .sheet(item: $bookmarkLyricId) { item in
-            CollectionPickerSheet(lyricId: item.value)
-                .presentationDetents([.medium, .large])
+                )
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showEditSheet) {
-            EditLyricView(
-                lyric: lyric,
-                onSaved: {},
-                isPastLyric: lyric.isCurrent != true
-            )
-            .interactiveDismissDisabled()
-            .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.background)
+            case .bookmark(let lyricId):
+                CollectionPickerSheet(lyricId: lyricId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            case .edit:
+                EditLyricView(
+                    lyric: lyric,
+                    onSaved: {},
+                    isPastLyric: lyric.isCurrent != true
+                )
+                .interactiveDismissDisabled()
+                .presentationDragIndicator(.visible)
+            }
         }
         .alert("Delete lyric?", isPresented: $showDeleteConfirm) {
             Button("Cancel", role: .cancel) {}

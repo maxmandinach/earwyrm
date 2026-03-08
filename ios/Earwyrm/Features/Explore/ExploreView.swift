@@ -126,8 +126,9 @@ struct ExploreView: View {
             .presentationDragIndicator(.visible)
         }
         .task {
-            await viewModel.fetchPublicLyrics()
-            await viewModel.fetchTrendingTags()
+            async let lyrics: () = viewModel.fetchPublicLyrics()
+            async let tags: () = viewModel.fetchTrendingTags()
+            _ = await (lyrics, tags)
             if let userId = auth.userId {
                 await followManager.fetchFollows(userId: userId)
             }

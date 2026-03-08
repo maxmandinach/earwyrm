@@ -193,8 +193,9 @@ struct ShareModalView: View {
         }
         .task {
             renderer.format = .square
-            await renderer.loadCoverArt(for: lyric)
-            await artVM.loadVariants(for: lyric)
+            async let coverArt: () = renderer.loadCoverArt(for: lyric)
+            async let variants: () = artVM.loadVariants(for: lyric)
+            _ = await (coverArt, variants)
             initialStyle = artVM.selectedStyle
             rerender()
         }
