@@ -38,11 +38,11 @@ struct ArtGenerationSheet: View {
 
             if existingNote == nil {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("add a personal note (optional)")
+                    Text("your note")
                         .font(Theme.dmSans(14, weight: .medium))
                         .foregroundStyle(Theme.textPrimary)
 
-                    Text("saves to lyric card \u{00B7} private by default \u{00B7} shapes your artwork")
+                    Text("what does this lyric mean to you? saves to your lyric card \u{00B7} private by default \u{00B7} shapes your artwork")
                         .font(Theme.dmSans(12))
                         .foregroundStyle(Theme.textMuted)
                 }

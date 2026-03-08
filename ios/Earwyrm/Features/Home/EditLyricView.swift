@@ -138,7 +138,8 @@ struct EditLyricView: View {
                     ArtworkSectionView(
                         lyric: lyric,
                         noteContent: noteContent,
-                        viewModel: artVM
+                        viewModel: artVM,
+                        onNoteSaved: { saved in noteContent = saved }
                     )
 
                     if let error {

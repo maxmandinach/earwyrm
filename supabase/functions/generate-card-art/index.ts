@@ -138,7 +138,12 @@ serve(async (req) => {
     // Step 2: Insert generation record first to get its ID (for storage path)
     const { data: genRecord, error: insertError } = await supabaseAdmin
       .from("card_art_generations")
-      .insert({ user_id: user.id, lyric_id: lyric_id })
+      .insert({
+        user_id: user.id,
+        lyric_id: lyric_id,
+        note_content: note_content || null,
+        art_direction: refinement || null,
+      })
       .select("id")
       .single()
 

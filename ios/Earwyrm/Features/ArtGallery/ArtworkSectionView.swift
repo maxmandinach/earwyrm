@@ -6,7 +6,9 @@ struct ArtworkSectionView: View {
     let lyric: Lyric
     let noteContent: String
     @Bindable var viewModel: ArtGalleryViewModel
+    var onNoteSaved: ((String) -> Void)?
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(AuthManager.self) private var auth
     @State private var showPaywall = false
     @State private var showFreeGenSheet = false
     @State private var showRegenSheet = false
@@ -104,6 +106,12 @@ struct ArtworkSectionView: View {
             await viewModel.generate(lyric: lyric, note: note, refinement: refinement)
             if viewModel.wasFreeTierGen {
                 freeGenExhausted = true
+            }
+            // Save note to lyric_notes if one was provided
+            if let note, !note.isEmpty, let userId = auth.userId {
+                let insert = NoteInsert(lyricId: lyric.id, userId: userId, content: note, isPublic: false)
+                try? await supabase.from("lyric_notes").upsert(insert).execute()
+                onNoteSaved?(note)
             }
         }
     }
