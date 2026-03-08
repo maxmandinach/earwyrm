@@ -648,6 +648,11 @@ struct PostLyricView: View {
         if artVM.hasAIArt {
             Analytics.track(.aiArtRegenerated)
         }
+        // Sync note from art gen sheet back to viewModel so it saves with the lyric
+        if let note, !note.isEmpty {
+            viewModel.noteContent = note
+            viewModel.showNoteField = true
+        }
         Task {
             await artVM.generate(lyric: lyric, note: note, refinement: refinement)
             if artVM.wasFreeTierGen {
