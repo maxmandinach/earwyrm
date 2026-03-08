@@ -5,7 +5,6 @@ struct CardActionBar: View {
     let isPublic: Bool
     let isOwn: Bool
     let onShare: () -> Void
-    let onReplace: () -> Void
     let onEdit: () -> Void
     let onVisibilityChange: (Bool) -> Void
     let onToggleComments: () -> Void
@@ -97,19 +96,10 @@ struct CardActionBar: View {
                     // Share
                     shareButton
 
-                    // Pencil menu — edit or replace (own lyric only)
+                    // Pencil — edit (own lyric only)
                     if isOwn {
-                        Menu {
-                            Button {
-                                onEdit()
-                            } label: {
-                                Label("Edit lyric", systemImage: "square.and.pencil")
-                            }
-                            Button {
-                                onReplace()
-                            } label: {
-                                Label("Replace lyric", systemImage: "arrow.triangle.swap")
-                            }
+                        Button {
+                            onEdit()
                         } label: {
                             Image(systemName: "pencil")
                                 .font(.system(size: 15))

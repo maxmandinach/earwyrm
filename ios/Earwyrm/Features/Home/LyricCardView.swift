@@ -7,7 +7,6 @@ struct LyricCardView: View {
     var isPublic: Bool = false
     var isOwn: Bool = true
     var onShare: (() -> Void)?
-    var onReplace: (() -> Void)?
     var onEdit: (() -> Void)?
     var onVisibilityChange: ((Bool) -> Void)?
 
@@ -135,7 +134,6 @@ struct LyricCardView: View {
                         isPublic: isPublic,
                         isOwn: isOwn,
                         onShare: onShare,
-                        onReplace: onReplace ?? {},
                         onEdit: onEdit ?? {},
                         onVisibilityChange: onVisibilityChange ?? { _ in },
                         onToggleComments: onToggleComments,
@@ -183,11 +181,6 @@ struct LyricCardView: View {
                     if let onEdit {
                         Button { onEdit() } label: {
                             Label("Edit", systemImage: "pencil")
-                        }
-                    }
-                    if let onReplace {
-                        Button { onReplace() } label: {
-                            Label("Replace Lyric", systemImage: "arrow.triangle.2.circlepath")
                         }
                     }
                 }

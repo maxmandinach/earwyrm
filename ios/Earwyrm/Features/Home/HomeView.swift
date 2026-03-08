@@ -16,6 +16,8 @@ struct HomeView: View {
     @State private var resonateVM: ResonateViewModel?
     @State private var bookmarkLyricId: IdentifiableUUID?
     @State private var sharePastLyric: Lyric?
+    @State private var editingPastLyric: Lyric?
+    @State private var deletingPastLyric: Lyric?
 
     // Past lyrics reaction state
     @State private var reactionStates: [UUID: Bool] = [:]
@@ -212,6 +214,41 @@ struct HomeView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Theme.background)
         }
+        .sheet(item: $editingPastLyric) { lyric in
+            EditLyricView(
+                lyric: lyric,
+                onSaved: {
+                    Task {
+                        if let userId = auth.userId {
+                            await viewModel.fetchPastLyrics(userId: userId)
+                        }
+                    }
+                },
+                isPastLyric: true
+            )
+            .interactiveDismissDisabled()
+            .presentationDragIndicator(.visible)
+        }
+        .alert("Delete lyric?", isPresented: Binding(
+            get: { deletingPastLyric != nil },
+            set: { if !$0 { deletingPastLyric = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { deletingPastLyric = nil }
+            Button("Delete", role: .destructive) {
+                if let lyric = deletingPastLyric {
+                    Task {
+                        do {
+                            try await viewModel.deleteLyric(lyricId: lyric.id)
+                            Haptics.medium()
+                        } catch {
+                            toastManager.show("couldn't delete lyric")
+                        }
+                    }
+                }
+            }
+        } message: {
+            Text("This can't be undone.")
+        }
         .sheet(item: $bookmarkLyricId) { item in
             CollectionPickerSheet(lyricId: item.value)
                 .presentationDetents([.medium, .large])
@@ -229,7 +266,6 @@ struct HomeView: View {
             isPublic: lyric.isPublic ?? false,
             isOwn: lyric.userId == auth.userId,
             onShare: { showShareModal = true },
-            onReplace: { showPostSheet = true },
             onEdit: { showEditSheet = true },
             onVisibilityChange: { newValue in
                 Task { await viewModel.toggleVisibility(lyricId: lyric.id, isPublic: newValue) }
@@ -251,10 +287,6 @@ struct HomeView: View {
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.md)
         .cascadeReveal(delay: 0.2)
-
-        // Collections carousel
-        CollectionsCarouselSection(collections: collectionManager.collections)
-            .cascadeReveal(delay: 0.3)
 
         // Past earwyrms
         if !viewModel.pastLyrics.isEmpty {
@@ -281,14 +313,23 @@ struct HomeView: View {
                             isSaved: collectionManager.isLyricSaved(pastLyric.id),
                             onShare: { sharePastLyric = pastLyric },
                             isOwn: pastLyric.userId == auth.userId,
-                            currentUserId: auth.userId
+                            currentUserId: auth.userId,
+                            onEdit: pastLyric.userId == auth.userId ? { editingPastLyric = pastLyric } : nil,
+                            onMakeCurrent: pastLyric.userId == auth.userId ? {
+                                Task { await makeCurrentFromHome(pastLyric) }
+                            } : nil,
+                            onDelete: pastLyric.userId == auth.userId ? { deletingPastLyric = pastLyric } : nil
                         )
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
-            .cascadeReveal(delay: 0.35)
+            .cascadeReveal(delay: 0.3)
         }
+
+        // Collections carousel
+        CollectionsCarouselSection(collections: collectionManager.collections)
+            .cascadeReveal(delay: 0.35)
     }
 
     // MARK: - Past Lyrics Reactions
@@ -362,6 +403,50 @@ struct HomeView: View {
                 reactionCounts[lyric.id] = currentCount
                 toastManager.show("couldn't resonate, try again")
             }
+        }
+    }
+
+    private func makeCurrentFromHome(_ lyric: Lyric) async {
+        guard let userId = auth.userId else { return }
+        do {
+            // Archive existing current lyric
+            try await supabase
+                .from("lyrics")
+                .update(LyricArchiveUpdate(
+                    isCurrent: false,
+                    replacedAt: ISO8601DateFormatter().string(from: Date())
+                ))
+                .eq("user_id", value: userId.uuidString)
+                .eq("is_current", value: true)
+                .execute()
+
+            // Insert new lyric as current with same content
+            let insert = LyricInsert(
+                userId: userId,
+                content: lyric.content,
+                songTitle: lyric.songTitle,
+                artistName: lyric.artistName,
+                coverArtUrl: lyric.coverArtUrl,
+                cardArtUrl: lyric.cardArtUrl,
+                albumName: lyric.albumName,
+                tags: lyric.tags,
+                isPublic: lyric.isPublic ?? false,
+                isCurrent: true,
+                canonicalLyricId: lyric.canonicalLyricId,
+                musicbrainzRecordingId: lyric.musicbrainzRecordingId,
+                musicbrainzReleaseId: lyric.musicbrainzReleaseId
+            )
+            try await supabase
+                .from("lyrics")
+                .insert(insert)
+                .execute()
+
+            Haptics.medium()
+            toastManager.show("lyric is now current")
+            await viewModel.refreshCurrentLyric(userId: userId)
+            await viewModel.fetchPastLyrics(userId: userId)
+        } catch {
+            toastManager.show("couldn't make current, try again")
         }
     }
 
@@ -448,12 +533,16 @@ private struct LyricDetailDestination: View {
     @Environment(CollectionManager.self) private var collectionManager
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(ToastManager.self) private var toastManager
+    @Environment(\.dismiss) private var dismiss
     @State private var resonateVM: ResonateViewModel?
     @State private var showComments = false
     @State private var showShareModal = false
     @State private var bookmarkLyricId: IdentifiableUUID?
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirm = false
 
     private var lyric: Lyric { item.lyric }
+    private var isOwn: Bool { lyric.userId == auth.userId }
 
     var body: some View {
         ScrollView {
@@ -463,8 +552,9 @@ private struct LyricDetailDestination: View {
                     hero: true,
                     showActions: true,
                     isPublic: lyric.isPublic ?? false,
-                    isOwn: false,
+                    isOwn: isOwn,
                     onShare: { showShareModal = true },
+                    onEdit: isOwn ? { showEditSheet = true } : nil,
                     hasReacted: resonateVM?.hasReacted ?? false,
                     reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
                     isResonateAnimating: resonateVM?.isAnimating ?? false,
@@ -485,6 +575,21 @@ private struct LyricDetailDestination: View {
                         Text("posted by @\(username)")
                             .font(Theme.dmSans(14))
                             .foregroundStyle(Theme.accent)
+                    }
+                }
+
+                // Delete button for own lyrics
+                if isOwn {
+                    Button(role: .destructive) {
+                        showDeleteConfirm = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 13))
+                            Text("delete lyric")
+                                .font(Theme.dmSans(14, weight: .medium))
+                        }
+                        .foregroundStyle(.red.opacity(0.8))
                     }
                 }
             }
@@ -528,6 +633,35 @@ private struct LyricDetailDestination: View {
             CollectionPickerSheet(lyricId: item.value)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditLyricView(
+                lyric: lyric,
+                onSaved: {},
+                isPastLyric: lyric.isCurrent != true
+            )
+            .interactiveDismissDisabled()
+            .presentationDragIndicator(.visible)
+        }
+        .alert("Delete lyric?", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                Task {
+                    do {
+                        try await supabase
+                            .from("lyrics")
+                            .delete()
+                            .eq("id", value: lyric.id.uuidString)
+                            .execute()
+                        Haptics.medium()
+                        dismiss()
+                    } catch {
+                        toastManager.show("couldn't delete lyric")
+                    }
+                }
+            }
+        } message: {
+            Text("This can't be undone.")
         }
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)

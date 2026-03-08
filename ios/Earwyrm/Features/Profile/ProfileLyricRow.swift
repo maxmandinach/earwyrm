@@ -19,6 +19,11 @@ struct ProfileLyricRow: View {
     let isOwn: Bool
     let currentUserId: UUID?
 
+    // Long-press context menu actions
+    var onEdit: (() -> Void)?
+    var onMakeCurrent: (() -> Void)?
+    var onDelete: (() -> Void)?
+
     var body: some View {
         VStack(spacing: 0) {
             // Tappable content area → navigates to detail
@@ -85,8 +90,7 @@ struct ProfileLyricRow: View {
                 isPublic: isPublic,
                 isOwn: isOwn,
                 onShare: onShare,
-                onReplace: {},
-                onEdit: {},
+                onEdit: onEdit ?? {},
                 onVisibilityChange: onVisibilityChange,
                 onToggleComments: onToggleComments,
                 onSave: onSave,
@@ -115,6 +119,25 @@ struct ProfileLyricRow: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+        .contextMenu {
+            if isOwn {
+                if let onEdit {
+                    Button { onEdit() } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
+                if let onMakeCurrent, lyric.isCurrent != true {
+                    Button { onMakeCurrent() } label: {
+                        Label("Make Current", systemImage: "arrow.uturn.up")
+                    }
+                }
+                if let onDelete {
+                    Button(role: .destructive) { onDelete() } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            }
+        }
     }
 
     private func relativeDate(_ date: Date) -> String {

@@ -6,6 +6,7 @@ struct EditLyricView: View {
     @Environment(AuthManager.self) private var auth
     let lyric: Lyric
     let onSaved: () -> Void
+    let isPastLyric: Bool
 
     @State private var content: String
     @State private var songTitle: String
@@ -23,9 +24,10 @@ struct EditLyricView: View {
     // Artwork — shared view model
     @State private var artVM = ArtGalleryViewModel()
 
-    init(lyric: Lyric, onSaved: @escaping () -> Void) {
+    init(lyric: Lyric, onSaved: @escaping () -> Void, isPastLyric: Bool = false) {
         self.lyric = lyric
         self.onSaved = onSaved
+        self.isPastLyric = isPastLyric
         _content = State(initialValue: lyric.content)
         _songTitle = State(initialValue: lyric.songTitle ?? "")
         _artistName = State(initialValue: lyric.artistName ?? "")
@@ -33,58 +35,63 @@ struct EditLyricView: View {
     }
 
     private var canSave: Bool {
-        !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSaving
+        if isPastLyric {
+            return !isSaving
+        }
+        return !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSaving
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                    // Content — shows AI art background as live preview
-                    TextEditor(text: $content)
-                        .font(Theme.caveat(30))
-                        .foregroundStyle(Theme.textPrimary)
-                        .lineSpacing(10)
-                        .scrollContentBackground(.hidden)
-                        .frame(minHeight: 150, maxHeight: 400)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(Theme.Spacing.md)
-                        .background(
-                            ZStack {
-                                Theme.card
-                                if let image = artVM.activeImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .opacity(0.2)
-                                        .overlay(
-                                            LinearGradient(
-                                                colors: [Theme.card.opacity(0.2), Theme.card.opacity(0.9)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
+                    if !isPastLyric {
+                        // Content — shows AI art background as live preview
+                        TextEditor(text: $content)
+                            .font(Theme.caveat(30))
+                            .foregroundStyle(Theme.textPrimary)
+                            .lineSpacing(10)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 150, maxHeight: 400)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(Theme.Spacing.md)
+                            .background(
+                                ZStack {
+                                    Theme.card
+                                    if let image = artVM.activeImage {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .opacity(0.2)
+                                            .overlay(
+                                                LinearGradient(
+                                                    colors: [Theme.card.opacity(0.2), Theme.card.opacity(0.9)],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
                                             )
-                                        )
+                                    }
+                                }
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+                            .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
+                            .animation(.easeInOut(duration: 0.2), value: artVM.selectedStyle)
+                            .onChange(of: content) { _, newValue in
+                                if newValue.count > 500 {
+                                    content = String(newValue.prefix(500))
                                 }
                             }
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-                        .shadow(color: .black.opacity(0.06), radius: 16, y: 4)
-                        .animation(.easeInOut(duration: 0.2), value: artVM.selectedStyle)
-                        .onChange(of: content) { _, newValue in
-                            if newValue.count > 500 {
-                                content = String(newValue.prefix(500))
-                            }
-                        }
 
-                    // Lyric character counter
-                    if content.count >= 400 {
-                        Text("\(content.count)/500")
-                            .font(Theme.dmSans(12))
-                            .foregroundStyle(content.count >= 500 ? .orange : Theme.accent)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.trailing, 4)
-                            .animation(.easeInOut(duration: 0.2), value: content.count)
+                        // Lyric character counter
+                        if content.count >= 400 {
+                            Text("\(content.count)/500")
+                                .font(Theme.dmSans(12))
+                                .foregroundStyle(content.count >= 500 ? .orange : Theme.accent)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.trailing, 4)
+                                .animation(.easeInOut(duration: 0.2), value: content.count)
+                        }
                     }
 
                     // Lyric visibility
@@ -101,24 +108,26 @@ struct EditLyricView: View {
                         .foregroundStyle(Theme.textMuted)
                     }
 
-                    // Song + Artist
-                    VStack(spacing: Theme.Spacing.sm) {
-                        editField("song", text: $songTitle)
-                        editField("artist", text: $artistName)
-                    }
+                    if !isPastLyric {
+                        // Song + Artist
+                        VStack(spacing: Theme.Spacing.sm) {
+                            editField("song", text: $songTitle)
+                            editField("artist", text: $artistName)
+                        }
 
-                    // Browse full lyrics
-                    if fullLyrics != nil {
-                        Button {
-                            showLyricBrowser = true
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "text.page")
-                                    .font(.system(size: 13))
-                                Text("browse full lyrics")
-                                    .font(Theme.dmSans(13))
+                        // Browse full lyrics
+                        if fullLyrics != nil {
+                            Button {
+                                showLyricBrowser = true
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "text.page")
+                                        .font(.system(size: 13))
+                                    Text("browse full lyrics")
+                                        .font(Theme.dmSans(13))
+                                }
+                                .foregroundStyle(Theme.accent)
                             }
-                            .foregroundStyle(Theme.accent)
                         }
                     }
 
@@ -329,17 +338,26 @@ struct EditLyricView: View {
 
         Task {
             do {
-                let update = LyricEditUpdate(
-                    content: trimmedContent,
-                    songTitle: trimmedSong.isEmpty ? nil : trimmedSong,
-                    artistName: trimmedArtist.isEmpty ? nil : trimmedArtist,
-                    isPublic: lyricIsPublic
-                )
-                try await supabase
-                    .from("lyrics")
-                    .update(update)
-                    .eq("id", value: lyric.id.uuidString)
-                    .execute()
+                if isPastLyric {
+                    // Past lyrics: only update visibility
+                    try await supabase
+                        .from("lyrics")
+                        .update(LyricVisibilityUpdate(isPublic: lyricIsPublic))
+                        .eq("id", value: lyric.id.uuidString)
+                        .execute()
+                } else {
+                    let update = LyricEditUpdate(
+                        content: trimmedContent,
+                        songTitle: trimmedSong.isEmpty ? nil : trimmedSong,
+                        artistName: trimmedArtist.isEmpty ? nil : trimmedArtist,
+                        isPublic: lyricIsPublic
+                    )
+                    try await supabase
+                        .from("lyrics")
+                        .update(update)
+                        .eq("id", value: lyric.id.uuidString)
+                        .execute()
+                }
 
                 // Save note if content exists
                 if !trimmedNote.isEmpty, let userId = auth.userId {

@@ -161,6 +161,20 @@ final class ProfileViewModel {
         }
     }
 
+    // MARK: - Delete Lyric
+
+    func deleteLyric(lyricId: UUID) async throws {
+        try await supabase
+            .from("lyrics")
+            .delete()
+            .eq("id", value: lyricId.uuidString)
+            .execute()
+
+        allLyrics.removeAll { $0.id == lyricId }
+        currentLyrics.removeAll { $0.id == lyricId }
+        pastLyrics.removeAll { $0.id == lyricId }
+    }
+
     // MARK: - Load All
 
     func loadAll(userId: UUID) async {

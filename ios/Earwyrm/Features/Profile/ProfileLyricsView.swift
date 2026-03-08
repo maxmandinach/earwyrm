@@ -16,6 +16,9 @@ struct ProfileLyricsView: View {
     @State private var bookmarkLyricId: IdentifiableUUID?
     @State private var shareLyric: Lyric?
     @State private var showCommentIds: Set<UUID> = []
+    @State private var editingLyric: Lyric?
+    @State private var deletingLyric: Lyric?
+    @State private var isMakingCurrent = false
 
     private var allLyrics: [Lyric] { currentLyrics + pastLyrics }
 
@@ -43,7 +46,9 @@ struct ProfileLyricsView: View {
                                 isSaved: collectionManager.isLyricSaved(lyric.id),
                                 onShare: { shareLyric = lyric },
                                 isOwn: lyric.userId == auth.userId,
-                                currentUserId: auth.userId
+                                currentUserId: auth.userId,
+                                onEdit: lyric.userId == auth.userId ? { editingLyric = lyric } : nil,
+                                onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil
                             )
                         }
                     }
@@ -77,7 +82,10 @@ struct ProfileLyricsView: View {
                                     isSaved: collectionManager.isLyricSaved(lyric.id),
                                     onShare: { shareLyric = lyric },
                                     isOwn: lyric.userId == auth.userId,
-                                    currentUserId: auth.userId
+                                    currentUserId: auth.userId,
+                                    onEdit: lyric.userId == auth.userId ? { editingLyric = lyric } : nil,
+                                    onMakeCurrent: lyric.userId == auth.userId ? { Task { await makeCurrent(lyric) } } : nil,
+                                    onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil
                                 )
                             }
                         }
@@ -100,6 +108,40 @@ struct ProfileLyricsView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Theme.background)
+            }
+            .sheet(item: $editingLyric) { lyric in
+                EditLyricView(
+                    lyric: lyric,
+                    onSaved: { onLyricUpdated?() },
+                    isPastLyric: lyric.isCurrent != true
+                )
+                .interactiveDismissDisabled()
+                .presentationDragIndicator(.visible)
+            }
+            .alert("Delete lyric?", isPresented: Binding(
+                get: { deletingLyric != nil },
+                set: { if !$0 { deletingLyric = nil } }
+            )) {
+                Button("Cancel", role: .cancel) { deletingLyric = nil }
+                Button("Delete", role: .destructive) {
+                    if let lyric = deletingLyric {
+                        Task {
+                            do {
+                                try await supabase
+                                    .from("lyrics")
+                                    .delete()
+                                    .eq("id", value: lyric.id.uuidString)
+                                    .execute()
+                                Haptics.medium()
+                                onLyricUpdated?()
+                            } catch {
+                                toastManager.show("couldn't delete lyric")
+                            }
+                        }
+                    }
+                }
+            } message: {
+                Text("This can't be undone.")
             }
         }
     }
@@ -209,6 +251,51 @@ struct ProfileLyricsView: View {
                 toastManager.show("couldn't update visibility")
             }
         }
+    }
+
+    private func makeCurrent(_ lyric: Lyric) async {
+        guard let userId = auth.userId else { return }
+        isMakingCurrent = true
+        do {
+            // Archive any existing current lyric
+            try await supabase
+                .from("lyrics")
+                .update(LyricArchiveUpdate(
+                    isCurrent: false,
+                    replacedAt: ISO8601DateFormatter().string(from: Date())
+                ))
+                .eq("user_id", value: userId.uuidString)
+                .eq("is_current", value: true)
+                .execute()
+
+            // Insert new lyric as current with same content
+            let insert = LyricInsert(
+                userId: userId,
+                content: lyric.content,
+                songTitle: lyric.songTitle,
+                artistName: lyric.artistName,
+                coverArtUrl: lyric.coverArtUrl,
+                cardArtUrl: lyric.cardArtUrl,
+                albumName: lyric.albumName,
+                tags: lyric.tags,
+                isPublic: lyric.isPublic ?? false,
+                isCurrent: true,
+                canonicalLyricId: lyric.canonicalLyricId,
+                musicbrainzRecordingId: lyric.musicbrainzRecordingId,
+                musicbrainzReleaseId: lyric.musicbrainzReleaseId
+            )
+            try await supabase
+                .from("lyrics")
+                .insert(insert)
+                .execute()
+
+            Haptics.medium()
+            toastManager.show("lyric is now current")
+            onLyricUpdated?()
+        } catch {
+            toastManager.show("couldn't make current, try again")
+        }
+        isMakingCurrent = false
     }
 
     private func toggleComments(_ lyricId: UUID) {

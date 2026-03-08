@@ -239,9 +239,9 @@ private struct ProfileLyricDetail: View {
     @State private var showComments = false
     @State private var showShareModal = false
     @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var showPostSheet = false
     @State private var showEditSheet = false
     @State private var isMakingCurrent = false
+    @State private var showDeleteConfirm = false
 
     private var lyric: Lyric { item.lyric }
     private var isOwn: Bool { lyric.userId == auth.userId }
@@ -257,8 +257,7 @@ private struct ProfileLyricDetail: View {
                     isPublic: lyric.isPublic ?? false,
                     isOwn: isOwn,
                     onShare: { showShareModal = true },
-                    onReplace: isCurrent ? { showPostSheet = true } : {},
-                    onEdit: isCurrent ? { showEditSheet = true } : {},
+                    onEdit: isOwn ? { showEditSheet = true } : nil,
                     onVisibilityChange: { newValue in toggleVisibility(isPublic: newValue) },
                     hasReacted: resonateVM?.hasReacted ?? false,
                     reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
@@ -303,6 +302,21 @@ private struct ProfileLyricDetail: View {
                     }
                     .disabled(isMakingCurrent)
                 }
+
+                // Delete button
+                if isOwn {
+                    Button(role: .destructive) {
+                        showDeleteConfirm = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 13))
+                            Text("delete lyric")
+                                .font(Theme.dmSans(14, weight: .medium))
+                        }
+                        .foregroundStyle(.red.opacity(0.8))
+                    }
+                }
             }
             .padding(.top, Theme.Spacing.md)
         }
@@ -333,22 +347,35 @@ private struct ProfileLyricDetail: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .fullScreenCover(isPresented: $showPostSheet) {
-            PostLyricView(
-                currentLyricId: lyric.id,
-                onSaved: {
-                    onLyricUpdated?()
-                    dismiss()
-                }
-            )
-            .environment(auth)
-        }
         .sheet(isPresented: $showEditSheet) {
-            EditLyricView(lyric: lyric) {
-                onLyricUpdated?()
-            }
+            EditLyricView(
+                lyric: lyric,
+                onSaved: { onLyricUpdated?() },
+                isPastLyric: !isCurrent
+            )
             .interactiveDismissDisabled()
             .presentationDragIndicator(.visible)
+        }
+        .alert("Delete lyric?", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                Task {
+                    do {
+                        try await supabase
+                            .from("lyrics")
+                            .delete()
+                            .eq("id", value: lyric.id.uuidString)
+                            .execute()
+                        Haptics.medium()
+                        onLyricUpdated?()
+                        dismiss()
+                    } catch {
+                        toastManager.show("couldn't delete lyric")
+                    }
+                }
+            }
+        } message: {
+            Text("This can't be undone.")
         }
         .navigationDestination(for: ProfileDestination.self) { dest in
             PublicProfileView(userId: dest.userId, username: dest.username)

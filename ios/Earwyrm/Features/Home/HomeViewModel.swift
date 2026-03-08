@@ -230,6 +230,20 @@ final class HomeViewModel {
         }
     }
 
+    // MARK: - Delete Lyric
+
+    func deleteLyric(lyricId: UUID) async throws {
+        try await supabase
+            .from("lyrics")
+            .delete()
+            .eq("id", value: lyricId.uuidString)
+            .execute()
+
+        await MainActor.run {
+            pastLyrics.removeAll { $0.id == lyricId }
+        }
+    }
+
     // MARK: - Load All Sections
 
     func loadAllSections(userId: UUID) async {
