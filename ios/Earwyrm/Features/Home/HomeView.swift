@@ -95,6 +95,23 @@ struct HomeView: View {
                     }
                 }
             } // ScrollViewReader
+            .overlay(alignment: .bottomTrailing) {
+                if viewModel.currentLyric != nil {
+                    Button {
+                        showPostSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 52, height: 52)
+                            .background(Theme.accent)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    }
+                    .padding(.trailing, Theme.Spacing.lg)
+                    .padding(.bottom, Theme.Spacing.lg)
+                }
+            }
             .navigationDestination(for: LyricWithProfile.self) { item in
                 LyricDetailDestination(item: item)
             }
