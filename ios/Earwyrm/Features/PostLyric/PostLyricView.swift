@@ -630,7 +630,7 @@ struct PostLyricView: View {
         if artVM.hasAIArt {
             Analytics.track(.aiArtRegenerated)
         }
-        // Sync note from art gen sheet back to viewModel so it saves with the lyric
+        // Sync note to local state (for display in the note field)
         if let note, !note.isEmpty {
             viewModel.noteContent = note
             viewModel.showNoteField = true
@@ -639,6 +639,11 @@ struct PostLyricView: View {
             await artVM.generate(lyric: lyric, note: note, refinement: refinement)
             if artVM.wasFreeTierGen {
                 freeGenExhausted = true
+            }
+            // Lyric is already saved at this point — upsert note directly to DB
+            if let note, !note.isEmpty, let userId = auth.userId {
+                let insert = NoteInsert(lyricId: lyric.id, userId: userId, content: note, isPublic: false)
+                try? await supabase.from("lyric_notes").upsert(insert).execute()
             }
         }
     }
