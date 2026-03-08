@@ -2,6 +2,26 @@ import Foundation
 import UIKit
 import Supabase
 
+/// In-memory image cache to avoid re-downloading images across views.
+final class ImageCache: @unchecked Sendable {
+    static let shared = ImageCache()
+    private let cache = NSCache<NSString, UIImage>()
+
+    private init() {
+        cache.countLimit = 80
+        cache.totalCostLimit = 60 * 1024 * 1024 // 60 MB
+    }
+
+    func get(_ url: URL) -> UIImage? {
+        cache.object(forKey: url.absoluteString as NSString)
+    }
+
+    func set(_ image: UIImage, for url: URL) {
+        let cost = image.pngData()?.count ?? 0
+        cache.setObject(image, forKey: url.absoluteString as NSString, cost: cost)
+    }
+}
+
 /// Generates AI artwork for share cards via the generate-card-art Edge Function.
 enum CardArtService {
     struct CardArtRequest: Encodable {
@@ -171,11 +191,16 @@ enum CardArtService {
         }
     }
 
-    /// Download an image from a URL, returning a UIImage.
+    /// Download an image from a URL, returning a UIImage. Uses in-memory cache.
     static func downloadImage(from url: URL) async -> UIImage? {
+        if let cached = ImageCache.shared.get(url) {
+            return cached
+        }
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            return UIImage(data: data)
+            guard let image = UIImage(data: data) else { return nil }
+            ImageCache.shared.set(image, for: url)
+            return image
         } catch {
             print("Failed to download AI art: \(error)")
             return nil

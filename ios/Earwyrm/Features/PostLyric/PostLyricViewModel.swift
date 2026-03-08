@@ -74,6 +74,7 @@ final class PostLyricViewModel {
     private var artistDebounceTask: Task<Void, Never>?
     private var songDebounceTask: Task<Void, Never>?
     private var matchDebounceTask: Task<Void, Never>?
+    private var ghostDebounceTask: Task<Void, Never>?
     private var lastGeniusQuery = ""
     private var lastMatchQuery = ""
 
@@ -114,7 +115,16 @@ final class PostLyricViewModel {
         geniusDismissed = false
         triggerGeniusSearch()
         triggerMatchSearch()
-        computeGhostText()
+        triggerGhostTextUpdate()
+    }
+
+    private func triggerGhostTextUpdate() {
+        ghostDebounceTask?.cancel()
+        ghostDebounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            guard !Task.isCancelled else { return }
+            computeGhostText()
+        }
     }
 
     // MARK: - Genius Pipeline
@@ -683,6 +693,7 @@ final class PostLyricViewModel {
         artistDebounceTask?.cancel()
         songDebounceTask?.cancel()
         matchDebounceTask?.cancel()
+        ghostDebounceTask?.cancel()
         lyricsFetchTask?.cancel()
         prefetchTask?.cancel()
     }

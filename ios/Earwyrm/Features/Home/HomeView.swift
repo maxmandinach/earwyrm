@@ -616,13 +616,15 @@ private struct LyricDetailDestination: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             guard let userId = auth.userId else { return }
-            resonateVM = ResonateViewModel(
+            let vm = ResonateViewModel(
                 lyricId: lyric.id,
                 userId: userId,
                 initialCount: lyric.reactionCount ?? 0,
                 toast: toastManager
             )
-            await resonateVM?.checkInitialState()
+            resonateVM = vm
+            // Non-blocking: view renders immediately, reaction state fills in
+            Task { await vm.checkInitialState() }
         }
         .sheet(isPresented: $showShareModal) {
             ShareModalView(
