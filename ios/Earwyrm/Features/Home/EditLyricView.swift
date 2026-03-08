@@ -189,9 +189,9 @@ struct EditLyricView: View {
                 await artVM.loadVariants(for: lyric)
             }
             .onDisappear {
-                // Persist art selection if changed
-                Task {
-                    await artVM.persistActiveVariant(lyricId: lyric.id)
+                // Cancel button — still persist art selection
+                if !isSaving {
+                    Task { await artVM.persistActiveVariant(lyricId: lyric.id) }
                 }
             }
             .sheet(isPresented: $showLyricBrowser) {
@@ -382,6 +382,9 @@ struct EditLyricView: View {
                             .execute()
                     }
                 }
+
+                // Persist art selection before refresh so home feed picks it up
+                await artVM.persistActiveVariant(lyricId: lyric.id)
 
                 Haptics.success()
                 onSaved()
