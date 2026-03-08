@@ -109,7 +109,7 @@ struct HomeView: View {
                             .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
                     }
                     .padding(.trailing, Theme.Spacing.lg)
-                    .padding(.bottom, Theme.Spacing.lg)
+                    .padding(.bottom, 72)
                 }
             }
             .navigationDestination(for: LyricWithProfile.self) { item in
