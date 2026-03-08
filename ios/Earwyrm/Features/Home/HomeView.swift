@@ -10,14 +10,30 @@ struct HomeView: View {
     @Environment(ToastManager.self) private var toastManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
-    @State private var showEditSheet = false
-    @State private var showShareModal = false
     @State private var showComments = false
     @State private var resonateVM: ResonateViewModel?
-    @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var sharePastLyric: Lyric?
-    @State private var editingPastLyric: Lyric?
     @State private var deletingPastLyric: Lyric?
+
+    // Single active sheet to avoid SwiftUI multi-sheet presentation bugs
+    @State private var activeSheet: HomeSheet?
+
+    enum HomeSheet: Identifiable {
+        case editCurrent
+        case shareCurrent
+        case sharePast(Lyric)
+        case editPast(Lyric)
+        case bookmark(UUID)
+
+        var id: String {
+            switch self {
+            case .editCurrent: return "editCurrent"
+            case .shareCurrent: return "shareCurrent"
+            case .sharePast(let l): return "sharePast-\(l.id)"
+            case .editPast(let l): return "editPast-\(l.id)"
+            case .bookmark(let id): return "bookmark-\(id)"
+            }
+        }
+    }
 
     // Past lyrics reaction state
     @State private var reactionStates: [UUID: Bool] = [:]
@@ -179,72 +195,76 @@ struct HomeView: View {
             )
             .environment(auth)
         }
-        .sheet(isPresented: $showEditSheet) {
-            if let lyric = viewModel.currentLyric {
-                EditLyricView(lyric: lyric) {
-                    Task {
-                        if let userId = auth.userId {
-                            await viewModel.refreshCurrentLyric(userId: userId)
-                            if let refreshedLyric = viewModel.currentLyric {
-                                await viewModel.fetchNote(lyricId: refreshedLyric.id, userId: userId)
-                            }
-                        }
-                    }
-                }
-                .interactiveDismissDisabled()
-                .presentationDragIndicator(.visible)
-            }
-        }
-        .sheet(isPresented: $showShareModal) {
-            if let lyric = viewModel.currentLyric {
-                ShareModalView(
-                    lyric: lyric,
-                    note: viewModel.currentNote,
-                    username: auth.profile?.username,
-                    onNoteSaved: { content in
-                        Task {
-                            if let userId = auth.userId {
-                                await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
-                            }
-                        }
-                    },
-                    onArtGenerated: {
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .editCurrent:
+                if let lyric = viewModel.currentLyric {
+                    EditLyricView(lyric: lyric) {
                         Task {
                             if let userId = auth.userId {
                                 await viewModel.refreshCurrentLyric(userId: userId)
+                                if let refreshedLyric = viewModel.currentLyric {
+                                    await viewModel.fetchNote(lyricId: refreshedLyric.id, userId: userId)
+                                }
                             }
                         }
                     }
+                    .interactiveDismissDisabled()
+                    .presentationDragIndicator(.visible)
+                }
+            case .shareCurrent:
+                if let lyric = viewModel.currentLyric {
+                    ShareModalView(
+                        lyric: lyric,
+                        note: viewModel.currentNote,
+                        username: auth.profile?.username,
+                        onNoteSaved: { content in
+                            Task {
+                                if let userId = auth.userId {
+                                    await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
+                                }
+                            }
+                        },
+                        onArtGenerated: {
+                            Task {
+                                if let userId = auth.userId {
+                                    await viewModel.refreshCurrentLyric(userId: userId)
+                                }
+                            }
+                        }
+                    )
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(Theme.background)
+                }
+            case .sharePast(let lyric):
+                ShareModalView(
+                    lyric: lyric,
+                    note: nil,
+                    username: auth.profile?.username
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Theme.background)
-            }
-        }
-        .sheet(item: $sharePastLyric) { lyric in
-            ShareModalView(
-                lyric: lyric,
-                note: nil,
-                username: auth.profile?.username
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(Theme.background)
-        }
-        .sheet(item: $editingPastLyric) { lyric in
-            EditLyricView(
-                lyric: lyric,
-                onSaved: {
-                    Task {
-                        if let userId = auth.userId {
-                            await viewModel.fetchPastLyrics(userId: userId)
+            case .editPast(let lyric):
+                EditLyricView(
+                    lyric: lyric,
+                    onSaved: {
+                        Task {
+                            if let userId = auth.userId {
+                                await viewModel.fetchPastLyrics(userId: userId)
+                            }
                         }
-                    }
-                },
-                isPastLyric: true
-            )
-            .interactiveDismissDisabled()
-            .presentationDragIndicator(.visible)
+                    },
+                    isPastLyric: true
+                )
+                .interactiveDismissDisabled()
+                .presentationDragIndicator(.visible)
+            case .bookmark(let lyricId):
+                CollectionPickerSheet(lyricId: lyricId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
         }
         .alert("Delete lyric?", isPresented: Binding(
             get: { deletingPastLyric != nil },
@@ -266,11 +286,6 @@ struct HomeView: View {
         } message: {
             Text("This can't be undone.")
         }
-        .sheet(item: $bookmarkLyricId) { item in
-            CollectionPickerSheet(lyricId: item.value)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
     }
 
     @ViewBuilder
@@ -282,8 +297,8 @@ struct HomeView: View {
             showActions: true,
             isPublic: lyric.isPublic ?? false,
             isOwn: lyric.userId == auth.userId,
-            onShare: { showShareModal = true },
-            onEdit: { showEditSheet = true },
+            onShare: { activeSheet = .shareCurrent },
+            onEdit: { activeSheet = .editCurrent },
             onVisibilityChange: { newValue in
                 Task { await viewModel.toggleVisibility(lyricId: lyric.id, isPublic: newValue) }
             },
@@ -295,7 +310,7 @@ struct HomeView: View {
             showComments: showComments,
             onToggleComments: { showComments.toggle() },
             onSave: {
-                bookmarkLyricId = IdentifiableUUID(lyric.id)
+                activeSheet = .bookmark(lyric.id)
             },
             isSaved: collectionManager.isLyricSaved(lyric.id),
             note: viewModel.currentNote,
@@ -326,12 +341,12 @@ struct HomeView: View {
                             onVisibilityChange: { newValue in
                                 Task { await viewModel.toggleVisibility(lyricId: pastLyric.id, isPublic: newValue) }
                             },
-                            onSave: { bookmarkLyricId = IdentifiableUUID(pastLyric.id) },
+                            onSave: { activeSheet = .bookmark(pastLyric.id) },
                             isSaved: collectionManager.isLyricSaved(pastLyric.id),
-                            onShare: { sharePastLyric = pastLyric },
+                            onShare: { activeSheet = .sharePast(pastLyric) },
                             isOwn: pastLyric.userId == auth.userId,
                             currentUserId: auth.userId,
-                            onEdit: pastLyric.userId == auth.userId ? { editingPastLyric = pastLyric } : nil,
+                            onEdit: pastLyric.userId == auth.userId ? { activeSheet = .editPast(pastLyric) } : nil,
                             onMakeCurrent: pastLyric.userId == auth.userId ? {
                                 Task { await makeCurrentFromHome(pastLyric) }
                             } : nil,
