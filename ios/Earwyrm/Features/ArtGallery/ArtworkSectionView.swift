@@ -10,8 +10,7 @@ struct ArtworkSectionView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(AuthManager.self) private var auth
     @State private var showPaywall = false
-    @State private var showFreeGenSheet = false
-    @State private var showRegenSheet = false
+    @State private var showGenSheet = false
     @State private var freeGenExhausted = false
 
     var body: some View {
@@ -53,9 +52,10 @@ struct ArtworkSectionView: View {
             EarwyrmPlusPaywall(context: "ai_art")
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showFreeGenSheet) {
+        .sheet(isPresented: $showGenSheet) {
             ArtGenerationSheet(
-                mode: .firstGen,
+                isPlus: subscriptionManager.isPlus,
+                hasExistingArt: viewModel.hasAIArt,
                 existingNote: noteContent.isEmpty ? nil : noteContent,
                 artRemaining: viewModel.artRemaining,
                 onGenerate: { note, refinement in
@@ -63,21 +63,7 @@ struct ArtworkSectionView: View {
                 },
                 onShowPaywall: { showPaywall = true }
             )
-            .presentationDetents([.height(noteContent.isEmpty ? 370 : 220)])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(Theme.background)
-        }
-        .sheet(isPresented: $showRegenSheet) {
-            ArtGenerationSheet(
-                mode: .regen,
-                existingNote: noteContent.isEmpty ? nil : noteContent,
-                artRemaining: viewModel.artRemaining,
-                onGenerate: { note, refinement in
-                    performGenerate(note: note, refinement: refinement)
-                },
-                onShowPaywall: { showPaywall = true }
-            )
-            .presentationDetents([.medium])
+            .presentationDetents([subscriptionManager.isPlus ? .medium : .height(noteContent.isEmpty ? 370 : 220)])
             .presentationDragIndicator(.visible)
             .presentationBackground(Theme.background)
         }
@@ -86,12 +72,8 @@ struct ArtworkSectionView: View {
     private func handleArtAction() {
         let action = viewModel.resolveAction(isPlus: subscriptionManager.isPlus, freeGenExhausted: freeGenExhausted)
         switch action {
-        case .generate:
-            performGenerate(note: noteContent.isEmpty ? nil : noteContent, refinement: nil)
-        case .showFreeGenSheet:
-            showFreeGenSheet = true
-        case .showRegenSheet:
-            showRegenSheet = true
+        case .showGenSheet:
+            showGenSheet = true
         case .showPaywall:
             Analytics.track(.aiArtPaywallHit)
             showPaywall = true

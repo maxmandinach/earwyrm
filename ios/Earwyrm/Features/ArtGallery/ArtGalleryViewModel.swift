@@ -185,9 +185,7 @@ final class ArtGalleryViewModel {
 
     /// Determine what action to take based on subscription status and existing art.
     enum ArtAction {
-        case generate
-        case showFreeGenSheet
-        case showRegenSheet
+        case showGenSheet
         case showPaywall
     }
 
@@ -196,15 +194,7 @@ final class ArtGalleryViewModel {
         if !isPlus && (freeGenExhausted || wasFreeTierGen || hasAIArt) {
             return .showPaywall
         }
-        if hasAIArt {
-            // Plus user with existing art → regen sheet
-            return .showRegenSheet
-        } else if !isPlus {
-            // Free user, no art yet → free gen confirm
-            return .showFreeGenSheet
-        } else {
-            // Plus user, no art yet → generate directly
-            return .generate
-        }
+        // Everyone else gets the generation sheet (note entry + optional art direction)
+        return .showGenSheet
     }
 }

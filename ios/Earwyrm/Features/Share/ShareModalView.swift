@@ -39,8 +39,7 @@ struct ShareModalView: View {
 
     /// Whether the free user has exhausted their free generation
     @State private var freeGenExhausted = false
-    @State private var showFreeGenConfirm = false
-    @State private var showRegenConfirm = false
+    @State private var showGenSheet = false
     @State private var inlineNote = ""
     /// Track the initial art style to detect changes on dismiss
     @State private var initialStyle: ArtGalleryViewModel.CardStyle?
@@ -234,34 +233,17 @@ struct ShareModalView: View {
             EarwyrmPlusPaywall(context: "ai_art")
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showFreeGenConfirm) {
+        .sheet(isPresented: $showGenSheet) {
             ArtGenerationSheet(
-                mode: .firstGen,
+                isPlus: subscriptionManager.isPlus,
+                hasExistingArt: artVM.hasAIArt,
                 existingNote: noteText,
                 artRemaining: artVM.artRemaining,
                 onGenerate: { note, refinement in
-                    // Save inline note if provided via the sheet
-                    if let note, noteText == nil {
-                        saveInlineNote(note)
-                    }
-                    performGenerate(refinement: refinement)
-                },
-                onShowPaywall: { showPaywall = true }
-            )
-            .presentationDetents([.height(noteText == nil ? 370 : 220)])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(Theme.background)
-        }
-        .sheet(isPresented: $showRegenConfirm) {
-            ArtGenerationSheet(
-                mode: .regen,
-                existingNote: noteText,
-                artRemaining: artVM.artRemaining,
-                onGenerate: { note, refinement in
-                    // Save note changes if edited in regen sheet
+                    // Save note if new or changed
                     if let note {
                         let noteChanged = note != (noteText ?? "")
-                        if noteChanged {
+                        if noteText == nil || noteChanged {
                             saveInlineNote(note)
                         }
                     }
@@ -269,7 +251,7 @@ struct ShareModalView: View {
                 },
                 onShowPaywall: { showPaywall = true }
             )
-            .presentationDetents([.medium])
+            .presentationDetents([subscriptionManager.isPlus ? .medium : .height(noteText == nil ? 370 : 220)])
             .presentationDragIndicator(.visible)
             .presentationBackground(Theme.background)
         }
@@ -278,12 +260,8 @@ struct ShareModalView: View {
     private func handleArtAction() {
         let action = artVM.resolveAction(isPlus: subscriptionManager.isPlus, freeGenExhausted: freeGenExhausted)
         switch action {
-        case .generate:
-            performGenerate()
-        case .showFreeGenSheet:
-            showFreeGenConfirm = true
-        case .showRegenSheet:
-            showRegenConfirm = true
+        case .showGenSheet:
+            showGenSheet = true
         case .showPaywall:
             Analytics.track(.aiArtPaywallHit)
             showPaywall = true

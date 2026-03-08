@@ -11,8 +11,7 @@ struct PostLyricView: View {
     @State private var savedLyric: Lyric?
     @State private var freeGenExhausted = false
     @State private var showPaywall = false
-    @State private var showFreeGenSheet = false
-    @State private var showRegenSheet = false
+    @State private var showGenSheet = false
     @State private var showLyricBrowser = false
 
     let currentLyricId: UUID?
@@ -240,9 +239,10 @@ struct PostLyricView: View {
                 EarwyrmPlusPaywall(context: "ai_art")
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showFreeGenSheet) {
+            .sheet(isPresented: $showGenSheet) {
                 ArtGenerationSheet(
-                    mode: .firstGen,
+                    isPlus: subscriptionManager.isPlus,
+                    hasExistingArt: artVM.hasAIArt,
                     existingNote: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent,
                     artRemaining: artVM.artRemaining,
                     onGenerate: { note, refinement in
@@ -250,21 +250,7 @@ struct PostLyricView: View {
                     },
                     onShowPaywall: { showPaywall = true }
                 )
-                .presentationDetents([.height(viewModel.noteContent.isEmpty ? 370 : 220)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Theme.background)
-            }
-            .sheet(isPresented: $showRegenSheet) {
-                ArtGenerationSheet(
-                    mode: .regen,
-                    existingNote: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent,
-                    artRemaining: artVM.artRemaining,
-                    onGenerate: { note, refinement in
-                        performGenerate(note: note, refinement: refinement)
-                    },
-                    onShowPaywall: { showPaywall = true }
-                )
-                .presentationDetents([.medium])
+                .presentationDetents([subscriptionManager.isPlus ? .medium : .height(viewModel.noteContent.isEmpty ? 370 : 220)])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Theme.background)
             }
@@ -630,12 +616,8 @@ struct PostLyricView: View {
 
             let action = artVM.resolveAction(isPlus: subscriptionManager.isPlus, freeGenExhausted: freeGenExhausted)
             switch action {
-            case .generate:
-                performGenerate(note: viewModel.noteContent.isEmpty ? nil : viewModel.noteContent, refinement: nil)
-            case .showFreeGenSheet:
-                showFreeGenSheet = true
-            case .showRegenSheet:
-                showRegenSheet = true
+            case .showGenSheet:
+                showGenSheet = true
             case .showPaywall:
                 Analytics.track(.aiArtPaywallHit)
                 showPaywall = true
