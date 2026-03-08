@@ -10,6 +10,8 @@ struct ArtGalleryStrip: View {
     var isLocked: Bool = false
     var onSelectionChanged: (() -> Void)?
 
+    @State private var previewImage: UIImage?
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
@@ -18,29 +20,39 @@ struct ArtGalleryStrip: View {
 
                 // Album art thumbnail
                 if let coverImage = viewModel.coverArtImage {
+                    let isSelected = viewModel.selectedStyle == .coverArt
                     artThumbnail(
                         image: coverImage,
-                        isSelected: viewModel.selectedStyle == .coverArt
+                        isSelected: isSelected
                     ) {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            viewModel.selectedStyle = .coverArt
+                        if isSelected {
+                            previewImage = coverImage
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                viewModel.selectedStyle = .coverArt
+                            }
+                            Haptics.light()
+                            onSelectionChanged?()
                         }
-                        Haptics.light()
-                        onSelectionChanged?()
                     }
                 }
 
                 // AI variant thumbnails
                 ForEach(Array(viewModel.variants.enumerated()), id: \.offset) { index, entry in
+                    let isSelected = viewModel.selectedStyle == .aiVariant(index)
                     artThumbnail(
                         image: entry.image,
-                        isSelected: viewModel.selectedStyle == .aiVariant(index)
+                        isSelected: isSelected
                     ) {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            viewModel.selectedStyle = .aiVariant(index)
+                        if isSelected {
+                            previewImage = entry.image
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                viewModel.selectedStyle = .aiVariant(index)
+                            }
+                            Haptics.light()
+                            onSelectionChanged?()
                         }
-                        Haptics.light()
-                        onSelectionChanged?()
                     }
                 }
 
@@ -51,6 +63,16 @@ struct ArtGalleryStrip: View {
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 4)
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { previewImage != nil },
+            set: { if !$0 { previewImage = nil } }
+        )) {
+            if let image = previewImage {
+                ArtPreviewOverlay(image: image) {
+                    previewImage = nil
+                }
+            }
         }
     }
 

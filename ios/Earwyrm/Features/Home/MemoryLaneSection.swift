@@ -13,7 +13,10 @@ struct MemoryLaneSection: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Theme.Spacing.md) {
                         ForEach(lyrics) { lyric in
-                            MemoryLaneCard(lyric: lyric)
+                            NavigationLink(value: LyricWithProfile(lyric: lyric, username: nil)) {
+                                MemoryLaneCard(lyric: lyric)
+                            }
+                            .buttonStyle(.plain)
                         }
                         if showUpsell {
                             MemoryLaneUpsellCard()

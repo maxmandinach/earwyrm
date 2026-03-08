@@ -5,11 +5,8 @@ struct HomeView: View {
     @Binding var navigationPath: NavigationPath
     var scrollToTop: Bool = false
     @Environment(AuthManager.self) private var auth
-    @Environment(FollowManager.self) private var followManager
-    @Environment(NotificationManager.self) private var notificationManager
     @Environment(CollectionManager.self) private var collectionManager
     @Environment(SubscriptionManager.self) private var subscriptionManager
-    @Environment(BlockManager.self) private var blockManager
     @Environment(ToastManager.self) private var toastManager
     @State private var viewModel = HomeViewModel()
     @State private var showPostSheet = false
@@ -17,17 +14,14 @@ struct HomeView: View {
     @State private var showShareModal = false
     @State private var showComments = false
     @State private var resonateVM: ResonateViewModel?
-    @State private var shareCarouselLyric: Lyric?
-    @State private var shareCarouselUsername: String?
-    @State private var shareCarouselOwnerId: UUID?
     @State private var bookmarkLyricId: IdentifiableUUID?
-    @State private var reportLyric: Lyric?
-    @State private var blockTarget: (userId: UUID, username: String)?
-    @State private var showBlockAlert = false
+    @State private var sharePastLyric: Lyric?
 
-    // Carousel reaction state
-    @State private var carouselReactionStates: [UUID: Bool] = [:]
-    @State private var carouselReactionCounts: [UUID: Int] = [:]
+    // Past lyrics reaction state
+    @State private var reactionStates: [UUID: Bool] = [:]
+    @State private var reactionCounts: [UUID: Int] = [:]
+    @State private var animatingReactions: Set<UUID> = []
+    @State private var showCommentIds: Set<UUID> = []
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -66,48 +60,16 @@ struct HomeView: View {
                             .padding(.horizontal, Theme.Spacing.lg)
                         } else if let lyric = viewModel.currentLyric {
                             lyricContent(lyric: lyric)
-                            socialFeedSections
 
                             // Bottom padding for FAB
                             Spacer()
                                 .frame(height: 80)
                         } else {
-                            // Empty state — CTA + trending content
+                            // Empty state — CTA + collections
                             emptyState
 
-                            // Show followed artists even without a current lyric
-                            FollowedArtistsSection(follows: followManager.follows)
+                            CollectionsCarouselSection(collections: collectionManager.collections)
                                 .cascadeReveal(delay: 0.35)
-
-                            // Show trending even without a current lyric
-                            TrendingSection(
-                                lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
-                                onShare: { item in
-                                    shareCarouselLyric = item.lyric
-                                    shareCarouselUsername = item.username
-                                    shareCarouselOwnerId = item.lyric.userId
-                                },
-                                onSave: { item in
-                                    bookmarkLyricId = IdentifiableUUID(item.lyric.id)
-                                },
-                                onResonate: { item in
-                                    toggleCarouselReaction(for: item.lyric)
-                                },
-                                onViewProfile: { item in
-                                    navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
-                                },
-                                onReport: { item in
-                                    reportLyric = item.lyric
-                                },
-                                onBlock: { item in
-                                    blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
-                                    showBlockAlert = true
-                                },
-                                isLyricSaved: { id in collectionManager.isLyricSaved(id) },
-                                hasReacted: { id in carouselReactionStates[id] ?? false },
-                                reactionCount: { id in carouselReactionCounts[id] ?? 0 }
-                            )
-                            .cascadeReveal(delay: 0.4)
 
                             Spacer().frame(height: 80)
                         }
@@ -117,7 +79,9 @@ struct HomeView: View {
                 .refreshable {
                     if let userId = auth.userId {
                         await viewModel.refreshCurrentLyric(userId: userId)
+                        await viewModel.fetchPastLyrics(userId: userId)
                         await collectionManager.fetchCollections(userId: userId)
+                        await fetchReactionStates()
                     }
                 }
                 .background(Theme.background)
@@ -161,11 +125,6 @@ struct HomeView: View {
         .task {
             if let userId = auth.userId {
                 await viewModel.fetchCurrentLyric(userId: userId)
-                // If no current lyric, still load trending so the screen isn't empty
-                if viewModel.currentLyric == nil {
-                    await viewModel.fetchTrendingLyrics()
-                    await fetchCarouselReactionStates()
-                }
             }
         }
         .onChange(of: viewModel.currentLyric?.id) { _, newId in
@@ -181,11 +140,8 @@ struct HomeView: View {
                 Task {
                     await resonateVM?.checkInitialState()
                     await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
-                    await viewModel.loadAllSections(
-                        userId: userId,
-                        follows: followManager.follows
-                    )
-                    await fetchCarouselReactionStates()
+                    await viewModel.loadAllSections(userId: userId)
+                    await fetchReactionStates()
                 }
             } else {
                 resonateVM = nil
@@ -246,24 +202,11 @@ struct HomeView: View {
                 .presentationBackground(Theme.background)
             }
         }
-        .sheet(item: $shareCarouselLyric) { lyric in
+        .sheet(item: $sharePastLyric) { lyric in
             ShareModalView(
                 lyric: lyric,
                 note: nil,
-                username: shareCarouselUsername,
-                onShareCompleted: {
-                    Task {
-                        guard let actorId = auth.userId,
-                              let actorUsername = auth.profile?.username,
-                              let ownerId = shareCarouselOwnerId else { return }
-                        await notificationManager.sendShareNotification(
-                            lyricOwnerId: ownerId,
-                            actorId: actorId,
-                            actorUsername: actorUsername,
-                            lyric: lyric
-                        )
-                    }
-                }
+                username: auth.profile?.username
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
@@ -273,25 +216,6 @@ struct HomeView: View {
             CollectionPickerSheet(lyricId: item.value)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $reportLyric) { lyric in
-            ReportSheet(contentType: "lyric", contentId: lyric.id)
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
-        }
-        .alert(
-            "Block @\(blockTarget?.username ?? "user")?",
-            isPresented: $showBlockAlert
-        ) {
-            Button("Block", role: .destructive) {
-                guard let target = blockTarget, let userId = auth.userId else { return }
-                Task {
-                    await blockManager.block(currentUserId: userId, targetUserId: target.userId)
-                }
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Their content will be hidden from your feeds. You can unblock from Settings.")
         }
     }
 
@@ -328,96 +252,57 @@ struct HomeView: View {
         .padding(.top, Theme.Spacing.md)
         .cascadeReveal(delay: 0.2)
 
-        // Memory Lane — personal history first
-        MemoryLaneSection(
-            lyrics: viewModel.pastLyrics,
-            showUpsell: !subscriptionManager.isPlus
-        )
-        .cascadeReveal(delay: 0.3)
-
         // Collections carousel
         CollectionsCarouselSection(collections: collectionManager.collections)
+            .cascadeReveal(delay: 0.3)
+
+        // Past earwyrms
+        if !viewModel.pastLyrics.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                CaveatText(text: "past earwyrms", size: 24, color: Theme.textSecondary)
+                    .padding(.horizontal, Theme.Spacing.lg)
+
+                LazyVStack(spacing: Theme.Spacing.sm) {
+                    ForEach(viewModel.pastLyrics) { pastLyric in
+                        ProfileLyricRow(
+                            lyric: pastLyric,
+                            hasReacted: reactionStates[pastLyric.id] ?? false,
+                            reactionCount: reactionCounts[pastLyric.id] ?? pastLyric.reactionCount ?? 0,
+                            isResonateAnimating: animatingReactions.contains(pastLyric.id),
+                            onResonate: { toggleReaction(for: pastLyric) },
+                            commentCount: pastLyric.commentCount ?? 0,
+                            showComments: showCommentIds.contains(pastLyric.id),
+                            onToggleComments: { toggleCommentVisibility(pastLyric.id) },
+                            isPublic: pastLyric.isPublic ?? false,
+                            onVisibilityChange: { newValue in
+                                Task { await viewModel.toggleVisibility(lyricId: pastLyric.id, isPublic: newValue) }
+                            },
+                            onSave: { bookmarkLyricId = IdentifiableUUID(pastLyric.id) },
+                            isSaved: collectionManager.isLyricSaved(pastLyric.id),
+                            onShare: { sharePastLyric = pastLyric },
+                            isOwn: pastLyric.userId == auth.userId,
+                            currentUserId: auth.userId
+                        )
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
             .cascadeReveal(delay: 0.35)
-
-        // Followed artists carousel
-        FollowedArtistsSection(follows: followManager.follows)
-            .cascadeReveal(delay: 0.4)
+        }
     }
 
-    @ViewBuilder
-    private var socialFeedSections: some View {
-        // Trending
-        TrendingSection(
-            lyrics: viewModel.trendingLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
-            onShare: { item in
-                shareCarouselLyric = item.lyric
-                shareCarouselUsername = item.username
-                shareCarouselOwnerId = item.lyric.userId
-            },
-            onSave: { item in
-                bookmarkLyricId = IdentifiableUUID(item.lyric.id)
-            },
-            onResonate: { item in
-                toggleCarouselReaction(for: item.lyric)
-            },
-            onViewProfile: { item in
-                navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
-            },
-            onReport: { item in
-                reportLyric = item.lyric
-            },
-            onBlock: { item in
-                blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
-                showBlockAlert = true
-            },
-            isLyricSaved: { id in collectionManager.isLyricSaved(id) },
-            hasReacted: { id in carouselReactionStates[id] ?? false },
-            reactionCount: { id in carouselReactionCounts[id] ?? 0 }
-        )
-        .cascadeReveal(delay: 0.65)
+    // MARK: - Past Lyrics Reactions
 
-        // From Your Follows
-        FollowFeedSection(
-            lyrics: viewModel.followFeedLyrics.filter { !blockManager.isBlocked($0.lyric.userId) },
-            onShare: { item in
-                shareCarouselLyric = item.lyric
-                shareCarouselUsername = item.username
-                shareCarouselOwnerId = item.lyric.userId
-            },
-            onSave: { item in
-                bookmarkLyricId = IdentifiableUUID(item.lyric.id)
-            },
-            onResonate: { item in
-                toggleCarouselReaction(for: item.lyric)
-            },
-            onViewProfile: { item in
-                navigationPath.append(ProfileDestination(userId: item.lyric.userId, username: item.username ?? ""))
-            },
-            onReport: { item in
-                reportLyric = item.lyric
-            },
-            onBlock: { item in
-                blockTarget = (userId: item.lyric.userId, username: item.username ?? "user")
-                showBlockAlert = true
-            },
-            isLyricSaved: { id in collectionManager.isLyricSaved(id) },
-            hasReacted: { id in carouselReactionStates[id] ?? false },
-            reactionCount: { id in carouselReactionCounts[id] ?? 0 }
-        )
-        .cascadeReveal(delay: 0.85)
-    }
-
-    // MARK: - Carousel Reactions
-
-    private func fetchCarouselReactionStates() async {
+    private func fetchReactionStates() async {
         guard let userId = auth.userId else { return }
-        let allLyrics = viewModel.trendingLyrics + viewModel.followFeedLyrics
-        let lyricIds = allLyrics.map { $0.lyric.id.uuidString }
+        let lyricIds = viewModel.pastLyrics.map { $0.id.uuidString }
         guard !lyricIds.isEmpty else { return }
 
         // Initialize counts from lyric data
-        for item in allLyrics {
-            carouselReactionCounts[item.lyric.id] = item.lyric.reactionCount ?? 0
+        for lyric in viewModel.pastLyrics {
+            if reactionCounts[lyric.id] == nil {
+                reactionCounts[lyric.id] = lyric.reactionCount ?? 0
+            }
         }
 
         do {
@@ -429,27 +314,29 @@ struct HomeView: View {
                 .execute()
                 .value
             for reaction in reactions {
-                carouselReactionStates[reaction.lyricId] = true
+                reactionStates[reaction.lyricId] = true
             }
         } catch {
-            print("Fetch carousel reaction states error: \(error)")
+            print("Fetch past lyrics reaction states error: \(error)")
         }
     }
 
-    private func toggleCarouselReaction(for lyric: Lyric) {
-        guard let userId = auth.userId else {
-            return
-        }
+    private func toggleReaction(for lyric: Lyric) {
+        guard let userId = auth.userId else { return }
 
-        let wasReacted = carouselReactionStates[lyric.id] ?? false
-        let currentCount = carouselReactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
+        let wasReacted = reactionStates[lyric.id] ?? false
+        let currentCount = reactionCounts[lyric.id] ?? lyric.reactionCount ?? 0
 
-        // Optimistic update
-        carouselReactionStates[lyric.id] = !wasReacted
-        carouselReactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
+        reactionStates[lyric.id] = !wasReacted
+        reactionCounts[lyric.id] = currentCount + (wasReacted ? -1 : 1)
 
         if !wasReacted {
+            animatingReactions.insert(lyric.id)
             Haptics.medium()
+            Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                animatingReactions.remove(lyric.id)
+            }
         } else {
             Haptics.light()
         }
@@ -471,11 +358,18 @@ struct HomeView: View {
                         .execute()
                 }
             } catch {
-                // Revert
-                carouselReactionStates[lyric.id] = wasReacted
-                carouselReactionCounts[lyric.id] = currentCount
+                reactionStates[lyric.id] = wasReacted
+                reactionCounts[lyric.id] = currentCount
                 toastManager.show("couldn't resonate, try again")
             }
+        }
+    }
+
+    private func toggleCommentVisibility(_ lyricId: UUID) {
+        if showCommentIds.contains(lyricId) {
+            showCommentIds.remove(lyricId)
+        } else {
+            showCommentIds.insert(lyricId)
         }
     }
 
@@ -657,4 +551,3 @@ struct IdentifiableUUID: Identifiable {
         self.value = value
     }
 }
-

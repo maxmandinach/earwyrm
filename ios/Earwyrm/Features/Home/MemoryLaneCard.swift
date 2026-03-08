@@ -65,8 +65,5 @@ struct MemoryLaneCard: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
-        .onTapGesture {
-            Haptics.light()
-        }
     }
 }
