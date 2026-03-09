@@ -4,6 +4,7 @@ struct ProfileLyricsView: View {
     let currentLyrics: [Lyric]
     let pastLyrics: [Lyric]
     var onLyricUpdated: (() -> Void)?
+    @Binding var navigationPath: NavigationPath
 
     @Environment(AuthManager.self) private var auth
     @Environment(AuthGate.self) private var authGate
@@ -59,6 +60,9 @@ struct ProfileLyricsView: View {
                                 onShare: { activeSheet = .share(lyric) },
                                 isOwn: lyric.userId == auth.userId,
                                 currentUserId: auth.userId,
+                                onNavigate: {
+                                    navigationPath.append(LyricWithProfile(lyric: lyric, username: nil))
+                                },
                                 onEdit: lyric.userId == auth.userId ? { activeSheet = .edit(lyric) } : nil,
                                 onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil
                             )
@@ -95,6 +99,9 @@ struct ProfileLyricsView: View {
                                     onShare: { activeSheet = .share(lyric) },
                                     isOwn: lyric.userId == auth.userId,
                                     currentUserId: auth.userId,
+                                    onNavigate: {
+                                        navigationPath.append(LyricWithProfile(lyric: lyric, username: nil))
+                                    },
                                     onEdit: lyric.userId == auth.userId ? { activeSheet = .edit(lyric) } : nil,
                                     onMakeCurrent: lyric.userId == auth.userId ? { Task { await makeCurrent(lyric) } } : nil,
                                     onDelete: lyric.userId == auth.userId ? { deletingLyric = lyric } : nil

@@ -19,6 +19,9 @@ struct ProfileLyricRow: View {
     let isOwn: Bool
     let currentUserId: UUID?
 
+    // Navigation
+    var onNavigate: (() -> Void)?
+
     // Long-press context menu actions
     var onEdit: (() -> Void)?
     var onMakeCurrent: (() -> Void)?
@@ -27,59 +30,58 @@ struct ProfileLyricRow: View {
     var body: some View {
         VStack(spacing: 0) {
             // Tappable content area → navigates to detail
-            NavigationLink(value: LyricWithProfile(lyric: lyric, username: nil)) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack {
-                        // Current badge
-                        if lyric.isCurrent == true {
-                            Text("CURRENT")
-                                .font(Theme.dmSans(10, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Theme.accent)
-                                .clipShape(Capsule())
-                        }
-
-                        Spacer()
-
-                        Text(relativeDate(lyric.createdAt))
-                            .font(Theme.dmSans(11))
-                            .foregroundStyle(Theme.textMuted)
-                            .opacity(0.7)
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    // Current badge
+                    if lyric.isCurrent == true {
+                        Text("CURRENT")
+                            .font(Theme.dmSans(10, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Theme.accent)
+                            .clipShape(Capsule())
                     }
 
-                    // Content
-                    Text(lyric.content)
-                        .font(Theme.caveat(24, weight: .medium))
-                        .foregroundStyle(Theme.textPrimary)
-                        .lineSpacing(6)
-                        .lineLimit(3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer()
 
-                    // Song — Artist
-                    if lyric.songTitle != nil || lyric.artistName != nil {
-                        HStack(spacing: 4) {
-                            if let song = lyric.songTitle {
-                                Text(song)
-                                    .font(Theme.dmSansItalic(13))
-                                    .foregroundStyle(Theme.accent)
-                            }
-                            if lyric.songTitle != nil && lyric.artistName != nil {
-                                Text("—")
-                                    .font(Theme.dmSans(13))
-                                    .foregroundStyle(Theme.textMuted)
-                            }
-                            if let artist = lyric.artistName {
-                                Text(artist)
-                                    .font(Theme.dmSansItalic(13))
-                                    .foregroundStyle(Theme.accent)
-                            }
+                    Text(relativeDate(lyric.createdAt))
+                        .font(Theme.dmSans(11))
+                        .foregroundStyle(Theme.textMuted)
+                        .opacity(0.7)
+                }
+
+                // Content
+                Text(lyric.content)
+                    .font(Theme.caveat(24, weight: .medium))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineSpacing(6)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Song — Artist
+                if lyric.songTitle != nil || lyric.artistName != nil {
+                    HStack(spacing: 4) {
+                        if let song = lyric.songTitle {
+                            Text(song)
+                                .font(Theme.dmSansItalic(13))
+                                .foregroundStyle(Theme.accent)
+                        }
+                        if lyric.songTitle != nil && lyric.artistName != nil {
+                            Text("—")
+                                .font(Theme.dmSans(13))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                        if let artist = lyric.artistName {
+                            Text(artist)
+                                .font(Theme.dmSansItalic(13))
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .onTapGesture { onNavigate?() }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.top, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xs)

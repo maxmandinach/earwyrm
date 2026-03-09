@@ -41,7 +41,8 @@ struct ProfileView: View {
                             ProfileLyricsView(
                                 currentLyrics: viewModel.currentLyrics,
                                 pastLyrics: viewModel.pastLyrics,
-                                onLyricUpdated: { Task { if let userId = auth.userId { await viewModel.loadAll(userId: userId) } } }
+                                onLyricUpdated: { Task { if let userId = auth.userId { await viewModel.loadAll(userId: userId) } } },
+                                navigationPath: $navigationPath
                             )
                         case 1:
                             ProfileResonatedView(resonatedLyrics: viewModel.resonatedLyrics)

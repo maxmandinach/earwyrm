@@ -346,6 +346,9 @@ struct HomeView: View {
                             onShare: { activeSheet = .sharePast(pastLyric) },
                             isOwn: pastLyric.userId == auth.userId,
                             currentUserId: auth.userId,
+                            onNavigate: {
+                                navigationPath.append(LyricWithProfile(lyric: pastLyric, username: nil))
+                            },
                             onEdit: pastLyric.userId == auth.userId ? { activeSheet = .editPast(pastLyric) } : nil,
                             onMakeCurrent: pastLyric.userId == auth.userId ? {
                                 Task { await makeCurrentFromHome(pastLyric) }
