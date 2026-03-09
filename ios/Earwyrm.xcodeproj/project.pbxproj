@@ -81,6 +81,8 @@
 		AA01BB02CC03DD04EE05FF0D /* ClusteredLyricCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF0C /* ClusteredLyricCard.swift */; };
 		AA01BB02CC03DD04EE05FF0F /* MostSavedSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF0E /* MostSavedSection.swift */; };
 		AA01BB02CC03DD04EE05FF11 /* PageShareImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF10 /* PageShareImageView.swift */; };
+		SD01SD01SD01SD01SD01SD02 /* ShareDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = SD01SD01SD01SD01SD01SD01 /* ShareDestination.swift */; };
+		SD02SD02SD02SD02SD02SD03 /* ShareDestinationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = SD02SD02SD02SD02SD02SD02 /* ShareDestinationRow.swift */; };
 		AA01BB02CC03DD04EE05FF13 /* PageShareRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF12 /* PageShareRenderer.swift */; };
 		AA01BB02CC03DD04EE05FF15 /* PageShareModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01BB02CC03DD04EE05FF14 /* PageShareModalView.swift */; };
 		AA11BB22CC33DD44EE55FF67 /* ShareImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF66 /* ShareImageView.swift */; };
@@ -266,6 +268,8 @@
 		CC03CC03CC03CC03CC03CC03 /* CollectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionManager.swift; sourceTree = "<group>"; };
 		CC09CC09CC09CC09CC09CC09 /* CollectionCarouselCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionCarouselCard.swift; sourceTree = "<group>"; };
 		CC33DD44EE55FF6677889900 /* ShareModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareModalView.swift; sourceTree = "<group>"; };
+		SD01SD01SD01SD01SD01SD01 /* ShareDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareDestination.swift; sourceTree = "<group>"; };
+		SD02SD02SD02SD02SD02SD02 /* ShareDestinationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareDestinationRow.swift; sourceTree = "<group>"; };
 		CD04CD04CD04CD04CD04CD04 /* ProfileCollectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCollectionsView.swift; sourceTree = "<group>"; };
 		CE05CE05CE05CE05CE05CE05 /* CollectionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionDetailView.swift; sourceTree = "<group>"; };
 		CE5EC881B898EE5D5F671711 /* ArtistAutocompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistAutocompleteView.swift; sourceTree = "<group>"; };
@@ -521,6 +525,8 @@
 				AA01BB02CC03DD04EE05FF10 /* PageShareImageView.swift */,
 				AA01BB02CC03DD04EE05FF14 /* PageShareModalView.swift */,
 				AA01BB02CC03DD04EE05FF12 /* PageShareRenderer.swift */,
+				SD01SD01SD01SD01SD01SD01 /* ShareDestination.swift */,
+				SD02SD02SD02SD02SD02SD02 /* ShareDestinationRow.swift */,
 				DD44EE55FF66778899001122 /* ShareActivityController.swift */,
 				AA11BB22CC33DD44EE55FF66 /* ShareImageView.swift */,
 				BB22CC33DD44EE55FF667788 /* ShareImageRenderer.swift */,
@@ -825,6 +831,8 @@
 				AA11BB22CC33DD44EE55FF67 /* ShareImageView.swift in Sources */,
 				BB22CC33DD44EE55FF667789 /* ShareImageRenderer.swift in Sources */,
 				CC33DD44EE55FF6677889901 /* ShareModalView.swift in Sources */,
+				SD01SD01SD01SD01SD01SD02 /* ShareDestination.swift in Sources */,
+				SD02SD02SD02SD02SD02SD03 /* ShareDestinationRow.swift in Sources */,
 				DD44EE55FF66778899001123 /* ShareActivityController.swift in Sources */,
 				FF66778899001122334455AB /* ShareTextFitter.swift in Sources */,
 				EE55FF6677889900112233AB /* SharedLyricDetailView.swift in Sources */,

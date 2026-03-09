@@ -151,26 +151,6 @@ struct LyricCardView: View {
                     }
                 }
 
-                // Action bar
-                if showActions,
-                   let onShare, let onToggleComments, let onResonate {
-                    CardActionBar(
-                        lyric: lyric,
-                        isPublic: isPublic,
-                        isOwn: isOwn,
-                        onShare: onShare,
-                        onEdit: onEdit ?? {},
-                        onVisibilityChange: onVisibilityChange ?? { _ in },
-                        onToggleComments: onToggleComments,
-                        onSave: onSave,
-                        isSaved: isSaved,
-                        hasReacted: hasReacted,
-                        reactionCount: reactionCount,
-                        isResonateAnimating: isResonateAnimating,
-                        onResonate: onResonate,
-                        commentCount: commentCount
-                    )
-                }
             }
             .padding(hero ? Theme.Spacing.xl + Theme.Spacing.sm : Theme.Spacing.lg)
             .frame(maxWidth: .infinity)
@@ -211,6 +191,28 @@ struct LyricCardView: View {
                 }
             }
 
+            // Action bar — outside context menu to prevent gesture interference
+            if showActions,
+               let onShare, let onToggleComments, let onResonate {
+                CardActionBar(
+                    lyric: lyric,
+                    isPublic: isPublic,
+                    isOwn: isOwn,
+                    onShare: onShare,
+                    onEdit: onEdit ?? {},
+                    onVisibilityChange: onVisibilityChange ?? { _ in },
+                    onToggleComments: onToggleComments,
+                    onSave: onSave,
+                    isSaved: isSaved,
+                    hasReacted: hasReacted,
+                    reactionCount: reactionCount,
+                    isResonateAnimating: isResonateAnimating,
+                    onResonate: onResonate,
+                    commentCount: commentCount
+                )
+                .padding(.horizontal, hero ? Theme.Spacing.xl + Theme.Spacing.sm : Theme.Spacing.lg)
+            }
+
             // Comment section — below the card
             if showComments {
                 CommentSectionView(
@@ -223,7 +225,7 @@ struct LyricCardView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: showComments)
+        // Animation removed — was interfering with button gestures
     }
 
     private var lyricAccessibilityLabel: String {

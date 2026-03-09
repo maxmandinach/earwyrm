@@ -82,6 +82,25 @@ struct ProfileLyricRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { onNavigate?() }
+            .contextMenu {
+                if isOwn {
+                    if let onEdit {
+                        Button { onEdit() } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                    }
+                    if let onMakeCurrent, lyric.isCurrent != true {
+                        Button { onMakeCurrent() } label: {
+                            Label("Make Current", systemImage: "arrow.uturn.up")
+                        }
+                    }
+                    if let onDelete {
+                        Button(role: .destructive) { onDelete() } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.top, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xs)
@@ -133,25 +152,6 @@ struct ProfileLyricRow: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
-        .contextMenu {
-            if isOwn {
-                if let onEdit {
-                    Button { onEdit() } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                }
-                if let onMakeCurrent, lyric.isCurrent != true {
-                    Button { onMakeCurrent() } label: {
-                        Label("Make Current", systemImage: "arrow.uturn.up")
-                    }
-                }
-                if let onDelete {
-                    Button(role: .destructive) { onDelete() } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-            }
-        }
     }
 
     private func relativeDate(_ date: Date) -> String {

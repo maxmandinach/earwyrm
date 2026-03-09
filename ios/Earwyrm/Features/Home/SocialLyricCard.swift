@@ -67,6 +67,7 @@ struct SocialLyricCard: View {
                         .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
                         .frame(minWidth: 36, minHeight: 36)
                     }
+                    .buttonStyle(.plain)
                 }
 
                 // Save
@@ -79,6 +80,7 @@ struct SocialLyricCard: View {
                             .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
                             .frame(minWidth: 36, minHeight: 36)
                     }
+                    .buttonStyle(.plain)
                 }
 
                 // Share
@@ -91,6 +93,7 @@ struct SocialLyricCard: View {
                             .foregroundStyle(Theme.textMuted)
                             .frame(minWidth: 36, minHeight: 36)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }

@@ -9,10 +9,11 @@ struct CascadeReveal: ViewModifier {
         content
             .opacity(isVisible ? 1 : 0)
             .offset(y: isVisible ? 0 : 12)
-            .animation(.easeOut(duration: 0.5), value: isVisible)
             .task {
                 try? await Task.sleep(for: .seconds(delay))
-                isVisible = true
+                withAnimation(.easeOut(duration: 0.5)) {
+                    isVisible = true
+                }
             }
     }
 }

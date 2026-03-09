@@ -11,7 +11,7 @@ struct ShareModalView: View {
 
     @State private var renderer = ShareImageRenderer()
     @State private var artVM = ArtGalleryViewModel()
-    @State private var showActivitySheet = false
+    @State private var showSystemSheet = false
     @State private var copiedLink = false
     @State private var savedPhoto = false
     @State private var showPaywall = false
@@ -137,26 +137,11 @@ struct ShareModalView: View {
                     }
                 }
 
-                // ── Actions ──
-                Button {
-                    Analytics.track(.shareActionChosen, ["action": "activity_sheet"])
-                    Haptics.success()
-                    renderer.format = .square
-                    rerender()
-                    showActivitySheet = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16, weight: .medium))
-                        Text("Share")
-                            .font(Theme.dmSans(16, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Theme.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+                // ── Share Destinations ──
+                ShareDestinationRow(
+                    destinations: ShareDestination.available,
+                    onSelect: handleShareDestination
+                )
 
                 // Secondary actions
                 HStack(spacing: 0) {
@@ -209,7 +194,7 @@ struct ShareModalView: View {
                 }
             }
         }
-        .sheet(isPresented: $showActivitySheet) {
+        .sheet(isPresented: $showSystemSheet) {
             if let image = renderer.renderedImage {
                 ShareActivityController(
                     items: shareActivityItems(image: image)
@@ -343,8 +328,14 @@ struct ShareModalView: View {
 
     private func saveToPhotos() {
         Analytics.track(.shareActionChosen, ["action": "save_photo"])
+        let previousFormat = renderer.format
+        renderer.format = .story
+        rerender()
         guard let image = renderer.renderedImage else { return }
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        // Restore preview format
+        renderer.format = previousFormat
+        rerender()
         Haptics.success()
         withAnimation { savedPhoto = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -360,6 +351,75 @@ struct ShareModalView: View {
         withAnimation { copiedLink = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation { copiedLink = false }
+        }
+    }
+
+    // MARK: - Share Destination Dispatch
+
+    private func handleShareDestination(_ destination: ShareDestination) {
+        Analytics.track(.shareActionChosen, [
+            "action": destination.rawValue,
+            "format": destination.format.rawValue
+        ])
+        Haptics.success()
+
+        // Render in the destination's preferred format
+        renderer.format = destination.format
+        rerender()
+
+        switch destination {
+        case .igStories:
+            shareToIGStories()
+        case .whatsapp:
+            shareToWhatsApp()
+        case .threads:
+            shareToThreads()
+        case .copyLink:
+            copyLink()
+        case .messages, .x, .tiktok, .more:
+            showSystemSheet = true
+        }
+    }
+
+    private func shareToIGStories() {
+        guard let image = renderer.renderedImage,
+              let imageData = image.pngData(),
+              let url = URL(string: "instagram-stories://share?source_application=com.earwyrm.app") else { return }
+
+        let pasteboardItems: [[String: Any]] = [[
+            "com.instagram.sharedSticker.backgroundImage": imageData
+        ]]
+        let options: [UIPasteboard.OptionsKey: Any] = [
+            .expirationDate: Date().addingTimeInterval(5 * 60)
+        ]
+        UIPasteboard.general.setItems(pasteboardItems, options: options)
+        UIApplication.shared.open(url)
+    }
+
+    private func shareToWhatsApp() {
+        guard let image = renderer.renderedImage,
+              let _ = image.jpegData(compressionQuality: 0.9) else { return }
+
+        // Copy image to pasteboard so user can paste in WhatsApp
+        UIPasteboard.general.image = image
+
+        let shareText = shareURL?.absoluteString ?? ""
+        let encoded = shareText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "whatsapp://send?text=\(encoded)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func shareToThreads() {
+        guard let image = renderer.renderedImage else { return }
+
+        // Copy image to pasteboard so user can paste in Threads
+        UIPasteboard.general.image = image
+
+        let shareText = shareURL?.absoluteString ?? ""
+        let encoded = shareText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "barcelona://create?text=\(encoded)") {
+            UIApplication.shared.open(url)
         }
     }
 }
