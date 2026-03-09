@@ -180,6 +180,10 @@ export default function Layout() {
           <Link to="/terms" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
             Terms
           </Link>
+          <span>·</span>
+          <a href="/dmca.html" className="py-3 sm:py-0 hover:text-charcoal transition-colors">
+            DMCA
+          </a>
         </div>
       </footer>
 

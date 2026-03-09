@@ -610,6 +610,21 @@ struct ProfileSettingsSheet: View {
                             .foregroundStyle(Theme.textMuted)
                     }
                 }
+
+                Divider()
+                    .foregroundStyle(Theme.dividerColor)
+
+                Link(destination: URL(string: "https://earwyrm.app/dmca.html")!) {
+                    HStack {
+                        Text("DMCA Policy")
+                            .font(Theme.dmSans(15))
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
             }
         }
     }

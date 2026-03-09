@@ -33,6 +33,16 @@ export default function Privacy() {
           </section>
 
           <section>
+            <h2 className="text-base font-medium text-charcoal mb-3">AI Art Generation</h2>
+            <p className="text-charcoal/40">
+              When you generate AI card art, we send song metadata (title, artist, and your note)
+              to a third-party AI image generation service to create your artwork. No personal
+              account information (email, username, etc.) is shared with this service. Generated
+              images are stored on our servers.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Cookies</h2>
             <p className="text-charcoal/40">
               We use essential cookies for authentication to keep you logged in. No tracking or
@@ -50,7 +60,7 @@ export default function Privacy() {
 
           <section className="pt-4">
             <p className="text-xs text-charcoal/30">
-              Last updated: January 2026
+              Last updated: March 2026
             </p>
           </section>
         </div>

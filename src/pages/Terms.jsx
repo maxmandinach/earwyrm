@@ -10,9 +10,45 @@ export default function Terms() {
           <section>
             <h2 className="text-base font-medium text-charcoal mb-3">Your Content</h2>
             <p className="text-charcoal/40">
-              You retain ownership of all lyrics and content you share on earwyrm. By using this
-              service, you grant us permission to store and display your content as needed to
-              operate the service.
+              You retain ownership of all original content you create on earwyrm, including personal notes
+              and reflections. By using this service, you grant us permission to store and display your
+              content as needed to operate the service.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-medium text-charcoal mb-3">Song Lyrics & Copyright</h2>
+            <p className="text-charcoal/40">
+              Song lyrics are the copyrighted property of their respective owners (songwriters, publishers,
+              and rights holders). Earwyrm does not claim ownership of any song lyrics. Users share short
+              excerpts of lyrics as part of personal expression and commentary. You are responsible for
+              ensuring your use of lyrics is lawful. Earwyrm does not provide, curate, or endorse
+              any lyric content — all lyrics on earwyrm are posted by users.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-medium text-charcoal mb-3">DMCA & Copyright Takedowns</h2>
+            <p className="text-charcoal/40">
+              Earwyrm respects intellectual property rights and complies with the Digital Millennium
+              Copyright Act (DMCA). If you believe content on earwyrm infringes your copyright, please
+              review our{' '}
+              <a href="/dmca.html" className="underline hover:text-charcoal transition-colors">
+                DMCA Policy
+              </a>{' '}
+              for instructions on submitting a takedown notice. We will respond promptly to valid notices
+              and may terminate accounts of repeat infringers.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-medium text-charcoal mb-3">AI-Generated Art</h2>
+            <p className="text-charcoal/40">
+              Earwyrm offers AI-generated card art as a feature. AI-generated images may not be
+              eligible for copyright protection under current law. You are free to use generated art
+              within earwyrm, but earwyrm makes no guarantees regarding intellectual property rights
+              over AI-generated content. AI art is generated using third-party services and is subject
+              to their terms of use.
             </p>
           </section>
 
@@ -21,6 +57,16 @@ export default function Terms() {
             <p className="text-charcoal/40">
               You are responsible for the content you post. We are not responsible for user-generated
               content and do not endorse or verify the accuracy of lyrics shared by users.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-medium text-charcoal mb-3">Subscriptions & Payments</h2>
+            <p className="text-charcoal/40">
+              Earwyrm+ is an optional paid subscription that provides additional features. Subscriptions
+              are billed through Apple's App Store or the web and are subject to their respective refund
+              policies. You may cancel your subscription at any time through your account settings.
+              Cancellation takes effect at the end of the current billing period.
             </p>
           </section>
 
@@ -58,7 +104,7 @@ export default function Terms() {
 
           <section className="pt-4">
             <p className="text-xs text-charcoal/30">
-              Last updated: January 2026
+              Last updated: March 2026
             </p>
           </section>
         </div>
