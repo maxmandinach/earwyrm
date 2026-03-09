@@ -50,15 +50,22 @@ struct CommentSectionView: View {
                 }
             }
         } label: {
-            Text(currentUserId == nil
-                 ? "sign in to join the discussion"
-                 : count > 0
-                    ? "\(count) \(count == 1 ? "comment" : "comments")"
-                    : "add a comment")
-                .font(Theme.dmSans(12))
-                .foregroundStyle(Theme.textMuted.opacity(0.6))
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
+            HStack(spacing: 6) {
+                Image(systemName: "bubble.left")
+                    .font(.system(size: 12))
+                Text(currentUserId == nil
+                     ? "sign in to join the discussion"
+                     : count > 0
+                        ? "\(count) \(count == 1 ? "comment" : "comments")"
+                        : "add a comment")
+                    .font(Theme.dmSans(12))
+            }
+            .foregroundStyle(Theme.textMuted)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(Theme.card.opacity(0.8))
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(Theme.dividerColor, lineWidth: 1))
         }
     }
 

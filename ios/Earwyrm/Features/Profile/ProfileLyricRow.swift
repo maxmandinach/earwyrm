@@ -103,6 +103,18 @@ struct ProfileLyricRow: View {
             )
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.sm)
+
+            // Comment section — shown when toggled
+            if showComments {
+                CommentSectionView(
+                    lyricId: lyric.id,
+                    currentUserId: currentUserId,
+                    initialCount: commentCount
+                )
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.md)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .background(
             ZStack {

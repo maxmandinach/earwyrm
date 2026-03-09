@@ -53,6 +53,7 @@ struct CardActionBar: View {
                         .foregroundStyle(Theme.textMuted)
                         .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Comments")
                     .accessibilityValue(commentCount > 0 ? "\(commentCount) comments" : "No comments")
                     .accessibilityHint("Toggle comments section")
@@ -72,6 +73,7 @@ struct CardActionBar: View {
                             .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
                             .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -90,6 +92,7 @@ struct CardActionBar: View {
                                 .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
                                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
+                        .buttonStyle(.plain)
                         .accessibilityLabel(isSaved ? "Remove from collection" : "Save to collection")
                     }
 
@@ -106,6 +109,7 @@ struct CardActionBar: View {
                                 .foregroundStyle(Theme.textMuted)
                                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -134,6 +138,7 @@ struct CardActionBar: View {
             .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
             .frame(minWidth: touchMinWidth, minHeight: touchHeight)
         }
+        .buttonStyle(.plain)
         .accessibilityLabel("Resonate")
         .accessibilityValue("\(reactionCount) resonations")
         .accessibilityHint(hasReacted ? "Remove resonation" : "Add resonation")
@@ -158,5 +163,6 @@ struct CardActionBar: View {
                 .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                 .offset(y: shareNudge ? -2 : 0)
         }
+        .buttonStyle(.plain)
     }
 }

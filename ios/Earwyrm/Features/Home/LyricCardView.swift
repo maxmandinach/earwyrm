@@ -27,6 +27,7 @@ struct LyricCardView: View {
 
     // Note (read-only display)
     var note: LyricNote?
+    @State private var noteCollapsed = false
 
     // For comment section
     var currentUserId: UUID?
@@ -97,32 +98,49 @@ struct LyricCardView: View {
                         .padding(.top, hero ? Theme.Spacing.lg : Theme.Spacing.md)
                 }
 
-                // Note (read-only)
+                // Note (read-only, tap to collapse/expand)
                 if let note {
-                    HStack(spacing: 6) {
-                        Rectangle()
-                            .fill(Theme.accent.opacity(0.4))
-                            .frame(width: 2)
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            noteCollapsed.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Rectangle()
+                                .fill(Theme.accent.opacity(0.4))
+                                .frame(width: 2)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(note.content)
-                                .font(Theme.noteFont(15))
-                                .foregroundStyle(Theme.textSecondary)
-                                .lineSpacing(4)
-                                .multilineTextAlignment(.leading)
-
-                            if isOwn && note.isPublic != true {
+                            if noteCollapsed {
                                 HStack(spacing: 3) {
-                                    Image(systemName: "lock")
+                                    Image(systemName: isOwn && note.isPublic != true ? "lock" : "note.text")
                                         .font(.system(size: 9))
-                                    Text("private note")
+                                    Text(isOwn && note.isPublic != true ? "private note" : "note")
                                         .font(Theme.dmSans(10))
                                 }
                                 .foregroundStyle(Theme.textMuted)
+                            } else {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(note.content)
+                                        .font(Theme.noteFont(15))
+                                        .foregroundStyle(Theme.textSecondary)
+                                        .lineSpacing(4)
+                                        .multilineTextAlignment(.leading)
+
+                                    if isOwn && note.isPublic != true {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "lock")
+                                                .font(.system(size: 9))
+                                            Text("private note")
+                                                .font(Theme.dmSans(10))
+                                        }
+                                        .foregroundStyle(Theme.textMuted)
+                                    }
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .buttonStyle(.plain)
                     .padding(.top, Theme.Spacing.md)
                 }
 
