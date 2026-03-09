@@ -28,6 +28,7 @@ struct LyricCardView: View {
     // Note (read-only display)
     var note: LyricNote?
     @State private var noteCollapsed = false
+    @State private var noteCollapseLoaded = false
 
     // For comment section
     var currentUserId: UUID?
@@ -103,6 +104,7 @@ struct LyricCardView: View {
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             noteCollapsed.toggle()
+                            UserDefaults.standard.set(noteCollapsed, forKey: "noteCollapsed-\(lyric.id)")
                         }
                     } label: {
                         HStack(spacing: 6) {
@@ -142,6 +144,11 @@ struct LyricCardView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.top, Theme.Spacing.md)
+                    .onAppear {
+                        guard !noteCollapseLoaded else { return }
+                        noteCollapseLoaded = true
+                        noteCollapsed = UserDefaults.standard.bool(forKey: "noteCollapsed-\(lyric.id)")
+                    }
                 }
 
                 // Action bar
