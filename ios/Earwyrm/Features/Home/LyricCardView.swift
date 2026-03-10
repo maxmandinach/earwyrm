@@ -60,7 +60,7 @@ struct LyricCardView: View {
                         // Cover art thumbnail
                         if let coverUrl = lyric.coverArtUrl,
                            let url = URL(string: coverUrl) {
-                            AsyncImage(url: url) { image in
+                            CachedAsyncImage(url: url) { image in
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)

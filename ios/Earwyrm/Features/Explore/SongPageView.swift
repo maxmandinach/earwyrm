@@ -263,7 +263,7 @@ struct SongPageView: View {
     private var songHeader: some View {
         VStack(spacing: Theme.Spacing.md) {
             if let urlStr = coverArtUrl, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { image in
+                CachedAsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     RoundedRectangle(cornerRadius: 12)
@@ -524,7 +524,7 @@ struct SongPageView: View {
         VStack(spacing: Theme.Spacing.xs) {
             if let url = lyric.coverArtUrl,
                let imageUrl = URL(string: url) {
-                AsyncImage(url: imageUrl) { image in
+                CachedAsyncImage(url: imageUrl) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     RoundedRectangle(cornerRadius: 6)

@@ -20,6 +20,15 @@ final class ImageCache: @unchecked Sendable {
         let cost = image.pngData()?.count ?? 0
         cache.setObject(image, forKey: url.absoluteString as NSString, cost: cost)
     }
+
+    /// Download an image or return it from cache.
+    func image(for url: URL) async -> UIImage? {
+        if let cached = get(url) { return cached }
+        guard let (data, _) = try? await URLSession.shared.data(from: url),
+              let image = UIImage(data: data) else { return nil }
+        set(image, for: url)
+        return image
+    }
 }
 
 /// Generates AI artwork for share cards via the generate-card-art Edge Function.

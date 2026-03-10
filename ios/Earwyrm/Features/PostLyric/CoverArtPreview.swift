@@ -5,7 +5,7 @@ struct CoverArtPreview: View {
 
     var body: some View {
         if let urlString = url, let imageUrl = URL(string: urlString) {
-            AsyncImage(url: imageUrl) { phase in
+            CachedAsyncImagePhased(url: imageUrl) { phase in
                 switch phase {
                 case .success(let image):
                     image

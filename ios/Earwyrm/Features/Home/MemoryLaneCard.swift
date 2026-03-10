@@ -52,7 +52,7 @@ struct MemoryLaneCard: View {
                         gradientEnd: 0.85
                     )
                 } else if let url = lyric.coverArtUrl, let imageUrl = URL(string: url) {
-                    AsyncImage(url: imageUrl) { image in
+                    CachedAsyncImage(url: imageUrl) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)

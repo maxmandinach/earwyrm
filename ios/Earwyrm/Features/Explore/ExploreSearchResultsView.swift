@@ -62,7 +62,7 @@ struct ExploreSearchResultsView: View {
     private func songRow(_ song: GeniusSuggestion) -> some View {
         HStack(spacing: 12) {
             if let urlStr = song.albumArt, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { image in
+                CachedAsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     RoundedRectangle(cornerRadius: 6)

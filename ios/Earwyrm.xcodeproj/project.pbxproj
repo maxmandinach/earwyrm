@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0567058B67B64DB096CDD7AF /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F9636B8AFF04EC4A2AA0EE7 /* CachedAsyncImage.swift */; };
 		0011223344556677AABBCCDE /* NavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0011223344556677AABBCCDD /* NavigationCoordinator.swift */; };
 		00682B7318916EBA43D0684D /* Follow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E393D761C12E15A59F0C47 /* Follow.swift */; };
 		02BF2A679CDCA584D2B473F6 /* Caveat-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2B70628A59D7DE003626271D /* Caveat-Variable.ttf */; };
@@ -155,6 +156,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2F9636B8AFF04EC4A2AA0EE7 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		0011223344556677AABBCCDD /* NavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinator.swift; sourceTree = "<group>"; };
 		00EC35ECFD65FD0FC1BB1E08 /* TrendingTagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendingTagsView.swift; sourceTree = "<group>"; };
 		00EDCDA3576B454DD2084818 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -358,8 +360,17 @@
 				61366DC4CDA939A88105C554 /* Networking */,
 				ADA4477418648E83AF2524C1 /* Supabase */,
 				FF01FF01FF01FF01FF01FF01 /* Subscription */,
+				FC464A2676CC439A9C550D35 /* UI */,
 			);
 			path = Core;
+			sourceTree = "<group>";
+		};
+		FC464A2676CC439A9C550D35 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				2F9636B8AFF04EC4A2AA0EE7 /* CachedAsyncImage.swift */,
+			);
+			path = UI;
 			sourceTree = "<group>";
 		};
 		1884F969D68F2F8DE43367C0 /* Network */ = {
@@ -894,6 +905,7 @@
 				AG03AG03AG03AG03AG03AG04 /* ArtGenerationSheet.swift in Sources */,
 				AG04AG04AG04AG04AG04AG05 /* ArtworkSectionView.swift in Sources */,
 				AG05AG05AG05AG05AG05AG06 /* CardArtBackground.swift in Sources */,
+				0567058B67B64DB096CDD7AF /* CachedAsyncImage.swift in Sources */,
 				AG06AG06AG06AG06AG06AG07 /* ArtGeneratingOverlay.swift in Sources */,
 				736E199FED5F188F2DC1ED3C /* ActivityInsightsCard.swift in Sources */,
 				C6BEC2A63A8B1E5DA1019AF3 /* ActivityInsightsViewModel.swift in Sources */,

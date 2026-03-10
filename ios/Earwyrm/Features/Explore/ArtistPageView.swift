@@ -200,7 +200,7 @@ struct ArtistPageView: View {
         VStack(spacing: Theme.Spacing.md) {
             if let firstCover = lyrics.first(where: { $0.coverArtUrl != nil })?.coverArtUrl,
                let url = URL(string: firstCover) {
-                AsyncImage(url: url) { image in
+                CachedAsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     artistInitialCircle
@@ -274,7 +274,7 @@ struct ArtistPageView: View {
         VStack(spacing: Theme.Spacing.sm) {
             if let url = song.coverArt,
                let imageUrl = URL(string: url) {
-                AsyncImage(url: imageUrl) { image in
+                CachedAsyncImage(url: imageUrl) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     RoundedRectangle(cornerRadius: 8)

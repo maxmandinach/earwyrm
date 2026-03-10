@@ -314,7 +314,7 @@ struct ShareModalView: View {
 
     private func rerender() {
         renderer.style = rendererStyle
-        renderer.render(lyric: lyric, note: noteText, username: username, aiArtImage: artVM.aiArtImage)
+        renderer.render(lyric: lyric, note: noteText, username: username, isPlus: subscriptionManager.isPlus, aiArtImage: artVM.aiArtImage)
     }
 
     private func shareActivityItems(image: UIImage) -> [Any] {
@@ -335,16 +335,18 @@ struct ShareModalView: View {
         Analytics.track(.shareActionChosen, ["action": "save_photo"])
         let previousFormat = renderer.format
         renderer.format = .story
-        rerender()
-        guard let image = renderer.renderedImage else { return }
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-        // Restore preview format
-        renderer.format = previousFormat
-        rerender()
-        Haptics.success()
-        withAnimation { savedPhoto = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation { savedPhoto = false }
+        renderer.style = rendererStyle
+        Task {
+            guard let image = await renderer.renderAndWait(lyric: lyric, note: noteText, username: username, isPlus: subscriptionManager.isPlus, aiArtImage: artVM.aiArtImage) else { return }
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            // Restore preview format
+            renderer.format = previousFormat
+            rerender()
+            Haptics.success()
+            withAnimation { savedPhoto = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation { savedPhoto = false }
+            }
         }
     }
 
@@ -368,23 +370,26 @@ struct ShareModalView: View {
         ])
         Haptics.success()
 
-        // Render in the destination's preferred format
+        // Render in the destination's preferred format off the main thread
         renderer.format = destination.format
-        rerender()
+        renderer.style = rendererStyle
+        Task {
+            _ = await renderer.renderAndWait(lyric: lyric, note: noteText, username: username, isPlus: subscriptionManager.isPlus, aiArtImage: artVM.aiArtImage)
 
-        switch destination {
-        case .igStories:
-            shareToIGStories()
-        case .whatsapp:
-            shareToWhatsApp()
-        case .threads:
-            shareToThreads()
-        case .copyLink:
-            copyLink()
-        case .x:
-            shareToX()
-        case .messages, .tiktok, .more:
-            showSystemSheet = true
+            switch destination {
+            case .igStories:
+                shareToIGStories()
+            case .whatsapp:
+                shareToWhatsApp()
+            case .threads:
+                shareToThreads()
+            case .copyLink:
+                copyLink()
+            case .x:
+                shareToX()
+            case .messages, .tiktok, .more:
+                showSystemSheet = true
+            }
         }
     }
 

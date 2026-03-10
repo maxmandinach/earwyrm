@@ -60,7 +60,7 @@ struct GeniusSuggestionBanner: View {
         } label: {
             HStack(spacing: 10) {
                 if let artUrl = suggestion.albumArt, let url = URL(string: artUrl) {
-                    AsyncImage(url: url) { image in
+                    CachedAsyncImage(url: url) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)

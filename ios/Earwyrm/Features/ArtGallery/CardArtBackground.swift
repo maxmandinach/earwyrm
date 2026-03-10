@@ -11,25 +11,22 @@ struct CardArtBackground: View {
 
     var body: some View {
         GeometryReader { geo in
-            AsyncImage(url: URL(string: url)) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                        .opacity(opacity)
-                        .overlay(
-                            LinearGradient(
-                                colors: [Theme.card.opacity(gradientStart), Theme.card.opacity(gradientEnd)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+            CachedAsyncImage(url: URL(string: url)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .opacity(opacity)
+                    .overlay(
+                        LinearGradient(
+                            colors: [Theme.card.opacity(gradientStart), Theme.card.opacity(gradientEnd)],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                default:
-                    EmptyView()
-                }
+                    )
+            } placeholder: {
+                EmptyView()
             }
         }
     }
