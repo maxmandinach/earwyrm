@@ -263,7 +263,14 @@ struct ShareImageView: View {
             // Main content — top-aligned, stops above footer
             VStack(spacing: 0) {
                 Spacer()
-                    .frame(minHeight: format == .story ? 240 : 120, maxHeight: format == .story ? 440 : 240)
+                    .frame(
+                        minHeight: emphasis == .lyricAndNote
+                            ? (format == .story ? 120 : 60)
+                            : (format == .story ? 240 : 120),
+                        maxHeight: emphasis == .lyricAndNote
+                            ? (format == .story ? 240 : 120)
+                            : (format == .story ? 440 : 240)
+                    )
 
                 switch emphasis {
                 case .lyricOnly:
