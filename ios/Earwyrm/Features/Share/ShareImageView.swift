@@ -392,19 +392,15 @@ struct ShareImageView: View {
                     .font(.custom("DM Sans", size: attributionSize * 0.85))
                     .foregroundStyle(theme.secondary.opacity(theme.usernameOpacity))
                 if isPlus {
-                    Text("e+")
-                        .font(.custom("Caveat", size: attributionSize * 0.85).weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, attributionSize * 0.35)
-                        .padding(.vertical, attributionSize * 0.1)
-                        .background(
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: attributionSize * 0.85))
+                        .foregroundStyle(
                             LinearGradient(
                                 colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: attributionSize * 0.25))
                 }
             }
 

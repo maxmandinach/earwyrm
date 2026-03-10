@@ -22,31 +22,28 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     }
 
     var body: some View {
-        if let uiImage {
-            content(Image(uiImage: uiImage))
-        } else if failed {
-            placeholder()
-        } else {
-            placeholder()
-                .task(id: url) {
-                    await loadImage()
-                }
+        Group {
+            if let uiImage {
+                content(Image(uiImage: uiImage))
+            } else {
+                placeholder()
+            }
+        }
+        .task(id: url) {
+            uiImage = nil
+            failed = false
+            await loadImage()
         }
     }
 
     private func loadImage() async {
-        guard let url else {
-            failed = true
-            return
-        }
+        guard let url else { return }
         if let cached = ImageCache.shared.get(url) {
             uiImage = cached
             return
         }
         if let image = await ImageCache.shared.image(for: url) {
             uiImage = image
-        } else {
-            failed = true
         }
     }
 }
@@ -66,15 +63,13 @@ struct CachedAsyncImagePhased<Content: View>: View {
     var body: some View {
         content(phase)
             .task(id: url) {
+                phase = .empty
                 await loadImage()
             }
     }
 
     private func loadImage() async {
-        guard let url else {
-            phase = .empty
-            return
-        }
+        guard let url else { return }
         if let cached = ImageCache.shared.get(url) {
             phase = .success(Image(uiImage: cached))
             return
