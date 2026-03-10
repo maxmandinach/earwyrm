@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
@@ -6,17 +6,16 @@ import { formatRelativeTime } from '../lib/utils'
 import ReportModal from './ReportModal'
 import PlusBadge from './PlusBadge'
 
-export default function CommentSection({ lyricId, initialCount = 0, startOpen = false, onSignupPrompt, highlightCommentId = null }) {
+export default function CommentSection({ lyricId, initialCount = 0, onSignupPrompt, highlightCommentId = null, onCountChange }) {
   const { user } = useAuth()
-  const [isOpen, setIsOpen] = useState(startOpen)
   const [comments, setComments] = useState([])
-  const [count, setCount] = useState(initialCount)
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [commentsLoading, setCommentsLoading] = useState(startOpen)
+  const [commentsLoading, setCommentsLoading] = useState(true)
   const [highlightedId, setHighlightedId] = useState(highlightCommentId)
   const [reportingCommentId, setReportingCommentId] = useState(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     if (highlightCommentId) {
@@ -27,7 +26,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
   }, [highlightCommentId])
 
   useEffect(() => {
-    if (!isOpen || !lyricId) return
+    if (!lyricId) return
 
     async function fetchComments() {
       setCommentsLoading(true)
@@ -51,7 +50,15 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
       }
     }
     fetchComments()
-  }, [isOpen, lyricId])
+  }, [lyricId])
+
+  // Auto-focus input when loading finishes
+  useEffect(() => {
+    if (!commentsLoading && inputRef.current) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
+  }, [commentsLoading])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -80,7 +87,7 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
         .single()
 
       setComments(prev => [...prev, { ...data, profiles: profile }])
-      setCount(prev => prev + 1)
+      onCountChange?.(1)
       setNewComment('')
       setReplyTo(null)
     } catch (err) {
@@ -100,22 +107,10 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
       if (error) throw error
 
       setComments(prev => prev.filter(c => c.id !== commentId))
-      setCount(prev => prev - 1)
+      onCountChange?.(-1)
     } catch (err) {
       console.error('Error deleting comment:', err)
     }
-  }
-
-  // Collapsed view
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
-      >
-        {count > 0 ? `${count} ${count === 1 ? 'thought' : 'thoughts'}` : 'add a thought'}
-      </button>
-    )
   }
 
   // Group comments: top-level + replies
@@ -255,53 +250,43 @@ export default function CommentSection({ lyricId, initialCount = 0, startOpen = 
         ))}
       </div>
 
-      {/* Input + footer — hidden while loading */}
-      {!commentsLoading && (
-        <>
-          {user ? (
-            <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value.slice(0, 280))}
-                placeholder={replyTo ? 'Reply...' : 'Share a thought...'}
-                className="flex-1 px-4 py-2 text-sm bg-transparent border border-charcoal/10 rounded-full text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
-                style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
-              />
-              <button
-                type="submit"
-                disabled={!newComment.trim() || submitting}
-                className="px-3 py-2 text-xs text-charcoal/50 hover:text-charcoal transition-colors disabled:opacity-30"
-              >
-                {submitting ? '...' : 'post'}
-              </button>
-              {replyTo && (
-                <button
-                  type="button"
-                  onClick={() => { setReplyTo(null); setNewComment('') }}
-                  className="text-xs text-charcoal/20 hover:text-charcoal/40"
-                >
-                  ✕
-                </button>
-              )}
-            </form>
-          ) : (
-            <p className="mt-4 text-xs text-charcoal/30 text-center">
-              {onSignupPrompt ? (
-                <button onClick={onSignupPrompt} className="underline hover:text-charcoal/50">Sign up</button>
-              ) : (
-                <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link>
-              )} to share your thoughts
-            </p>
-          )}
-
+      {/* Input */}
+      {user ? (
+        <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value.slice(0, 280))}
+            placeholder={replyTo ? 'Reply...' : 'Share a thought...'}
+            className="flex-1 px-4 py-2 text-sm bg-transparent border border-charcoal/10 rounded-full text-charcoal focus:outline-none focus:border-charcoal/30 placeholder:text-charcoal/25"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem' }}
+          />
           <button
-            onClick={() => setIsOpen(false)}
-            className="text-xs text-charcoal/20 hover:text-charcoal/40 transition-colors mt-3"
+            type="submit"
+            disabled={!newComment.trim() || submitting}
+            className="px-3 py-2 text-xs text-charcoal/50 hover:text-charcoal transition-colors disabled:opacity-30"
           >
-            hide thoughts
+            {submitting ? '...' : 'post'}
           </button>
-        </>
+          {replyTo && (
+            <button
+              type="button"
+              onClick={() => { setReplyTo(null); setNewComment('') }}
+              className="text-xs text-charcoal/20 hover:text-charcoal/40"
+            >
+              ✕
+            </button>
+          )}
+        </form>
+      ) : (
+        <p className="mt-4 text-xs text-charcoal/30 text-center">
+          {onSignupPrompt ? (
+            <button onClick={onSignupPrompt} className="underline hover:text-charcoal/50">Sign up</button>
+          ) : (
+            <Link to="/signup" className="underline hover:text-charcoal/50">Sign up</Link>
+          )} to share your thoughts
+        </p>
       )}
       {reportingCommentId && (
         <ReportModal

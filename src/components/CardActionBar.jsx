@@ -141,7 +141,9 @@ export default function CardActionBar({
           {/* Comment */}
           <button
             onClick={handleToggleComments}
-            className="flex items-center gap-1.5 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors py-1 px-2"
+            className={`flex items-center gap-1.5 text-xs transition-colors py-1 px-2 ${
+              commentCount > 0 ? 'text-charcoal/50 hover:text-charcoal/70' : 'text-charcoal/30 hover:text-charcoal/50'
+            }`}
             title="Thoughts"
             style={{
               transform: commentPop ? 'scale(1.12)' : 'scale(1)',

@@ -56,6 +56,7 @@ export default function LyricCard({
   const [showComments, setShowComments] = useState(initialShowComments)
   const [showSignup, setShowSignup] = useState(false)
   const [highlighted, setHighlighted] = useState(!!highlightRef)
+  const [localCommentCount, setLocalCommentCount] = useState(lyric.comment_count || 0)
 
   // Remove highlight class after animation completes
   useEffect(() => {
@@ -386,7 +387,7 @@ export default function LyricCard({
                 lyric={lyric}
                 isOwn={isOwn}
                 isAnon={isAnon}
-                commentCount={lyric.comment_count || 0}
+                commentCount={localCommentCount}
                 isPublic={isPublic}
                 profileIsPublic={profileIsPublic}
                 onShare={onShare}
@@ -414,10 +415,10 @@ export default function LyricCard({
         <div className="w-full max-w-lg mx-auto mt-2">
           <CommentSection
             lyricId={lyric.id}
-            initialCount={lyric.comment_count || 0}
-            startOpen
+            initialCount={localCommentCount}
             onSignupPrompt={isAnon ? () => setShowSignup(true) : undefined}
             highlightCommentId={highlightCommentId}
+            onCountChange={(delta) => setLocalCommentCount(prev => Math.max(0, prev + delta))}
           />
         </div>
       )}
