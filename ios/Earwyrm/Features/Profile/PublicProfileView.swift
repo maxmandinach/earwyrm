@@ -158,6 +158,20 @@ struct PublicProfileView: View {
                 .overlay {
                     CaveatText(text: initials, size: 26, color: Theme.accent)
                 }
+                .overlay {
+                    if profile?.isPlus == true {
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2.5
+                            )
+                            .frame(width: 78, height: 78)
+                    }
+                }
 
             // Username
             HStack(spacing: 2) {

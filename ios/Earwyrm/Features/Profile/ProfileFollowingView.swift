@@ -98,10 +98,28 @@ struct ProfileFollowingView: View {
                                         .overlay {
                                             CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.accent)
                                         }
+                                        .overlay {
+                                            if profile.isPlus {
+                                                Circle()
+                                                    .strokeBorder(
+                                                        LinearGradient(
+                                                            colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ),
+                                                        lineWidth: 1.5
+                                                    )
+                                                    .frame(width: 36, height: 36)
+                                            }
+                                        }
 
                                     Text("@\(profile.username)")
                                         .font(Theme.dmSans(15))
                                         .foregroundStyle(Theme.textPrimary)
+
+                                    if profile.isPlus {
+                                        PlusBadge(size: 12)
+                                    }
                                 }
                             }
 
@@ -163,10 +181,28 @@ struct ProfileFollowingView: View {
                                         .overlay {
                                             CaveatText(text: String(profile.username.prefix(1)).uppercased(), size: 16, color: Theme.accent)
                                         }
+                                        .overlay {
+                                            if profile.isPlus {
+                                                Circle()
+                                                    .strokeBorder(
+                                                        LinearGradient(
+                                                            colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ),
+                                                        lineWidth: 1.5
+                                                    )
+                                                    .frame(width: 36, height: 36)
+                                            }
+                                        }
 
                                     Text("@\(profile.username)")
                                         .font(Theme.dmSans(15))
                                         .foregroundStyle(Theme.textPrimary)
+
+                                    if profile.isPlus {
+                                        PlusBadge(size: 12)
+                                    }
                                 }
                             }
 

@@ -142,10 +142,40 @@ final class SubscriptionManager {
                 foundPlus = true
             }
         }
+
+        // If no App Store entitlement, check database subscription_tier as fallback
+        // (handles web purchases, manual upgrades, promo grants, etc.)
+        if !foundPlus {
+            foundPlus = await checkDatabaseTier()
+        }
+
         let wasPlus = isPlus
         isPlus = foundPlus
         if wasPlus && !foundPlus {
             await syncToSupabase(productId: nil, expiresAt: nil)
+        }
+    }
+
+    private func checkDatabaseTier() async -> Bool {
+        guard let userId = try? await supabase.auth.session.user.id else { return false }
+        struct TierRow: Decodable {
+            let subscriptionTier: String?
+            enum CodingKeys: String, CodingKey {
+                case subscriptionTier = "subscription_tier"
+            }
+        }
+        do {
+            let row: TierRow = try await supabase
+                .from("profiles")
+                .select("subscription_tier")
+                .eq("id", value: userId.uuidString)
+                .single()
+                .execute()
+                .value
+            return row.subscriptionTier == "plus"
+        } catch {
+            print("Subscription DB check error: \(error)")
+            return false
         }
     }
 

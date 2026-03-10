@@ -126,6 +126,7 @@ struct ShareImageView: View {
     let coverArtImage: UIImage?
     let aiArtImage: UIImage?
     let username: String?
+    let isPlus: Bool
     let format: ShareFormat
     let theme: ShareTheme
     let style: ShareStyle
@@ -386,9 +387,26 @@ struct ShareImageView: View {
     @ViewBuilder
     private func footerBrand() -> some View {
         if let username {
-            Text("@\(username)")
-                .font(.custom("DM Sans", size: attributionSize * 0.85))
-                .foregroundStyle(theme.secondary.opacity(theme.usernameOpacity))
+            HStack(spacing: attributionSize * 0.3) {
+                Text("@\(username)")
+                    .font(.custom("DM Sans", size: attributionSize * 0.85))
+                    .foregroundStyle(theme.secondary.opacity(theme.usernameOpacity))
+                if isPlus {
+                    Text("e+")
+                        .font(.custom("Caveat", size: attributionSize * 0.85).weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, attributionSize * 0.35)
+                        .padding(.vertical, attributionSize * 0.1)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: attributionSize * 0.25))
+                }
+            }
 
             Spacer()
                 .frame(height: 16)

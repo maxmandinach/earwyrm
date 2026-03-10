@@ -145,12 +145,31 @@ struct ProfileView: View {
                 .overlay {
                     CaveatText(text: initials, size: 26, color: Theme.accent)
                 }
+                .overlay {
+                    if auth.profile?.isPlus == true {
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color(hex: "#C8B8A8"), Color(hex: "#A08878")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2.5
+                            )
+                            .frame(width: 78, height: 78)
+                    }
+                }
 
             // Username
             if let username = auth.profile?.username {
-                Text("@\(username)")
-                    .font(Theme.dmSans(18, weight: .medium))
-                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 6) {
+                    Text("@\(username)")
+                        .font(Theme.dmSans(18, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                    if auth.profile?.isPlus == true {
+                        PlusBadge(size: 16)
+                    }
+                }
             }
 
             // Display name
