@@ -318,10 +318,15 @@ struct ShareModalView: View {
     }
 
     private func shareActivityItems(image: UIImage) -> [Any] {
-        var items: [Any] = [image]
+        // Use UIActivityItemSource for fine-grained control:
+        // - Image shows inline everywhere (including Messages)
+        // - Link is included for X, WhatsApp, etc. but excluded
+        //   from Messages (which would hide the image)
+        var items: [Any] = [
+            ShareImageItemSource(image: image, url: shareURL)
+        ]
         if let url = shareURL {
-            items.append(url)
-            items.append("a lyric that stayed with me\n\n— earwyrm\n\(url.absoluteString)")
+            items.append(ShareLinkItemSource(url: url))
         }
         return items
     }
@@ -376,7 +381,9 @@ struct ShareModalView: View {
             shareToThreads()
         case .copyLink:
             copyLink()
-        case .messages, .x, .tiktok, .more:
+        case .x:
+            shareToX()
+        case .messages, .tiktok, .more:
             showSystemSheet = true
         }
     }
@@ -406,6 +413,19 @@ struct ShareModalView: View {
         let shareText = shareURL?.absoluteString ?? ""
         let encoded = shareText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         if let url = URL(string: "whatsapp://send?text=\(encoded)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func shareToX() {
+        guard let image = renderer.renderedImage else { return }
+
+        // Copy image to pasteboard so user can paste in X
+        UIPasteboard.general.image = image
+
+        let shareText = shareURL?.absoluteString ?? ""
+        let encoded = shareText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "twitter://post?message=\(encoded)") {
             UIApplication.shared.open(url)
         }
     }

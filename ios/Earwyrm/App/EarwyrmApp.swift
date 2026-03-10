@@ -26,6 +26,9 @@ struct EarwyrmApp: App {
         appearance.shadowColor = .clear
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
+
+        // Disable touch delay in scroll views so taps register immediately
+        UIScrollView.appearance().delaysContentTouches = false
     }
 
     var body: some Scene {

@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/((?!\\.well-known/).*)","destination": "/" }
+    { "source": "/api/og/:token", "destination": "/api/og/[token]" },
+    { "source": "/((?!\\.well-known|api/).*)","destination": "/" }
   ],
   "headers": [
     {

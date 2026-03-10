@@ -82,25 +82,8 @@ struct ProfileLyricRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { onNavigate?() }
-            .contextMenu {
-                if isOwn {
-                    if let onEdit {
-                        Button { onEdit() } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                    }
-                    if let onMakeCurrent, lyric.isCurrent != true {
-                        Button { onMakeCurrent() } label: {
-                            Label("Make Current", systemImage: "arrow.uturn.up")
-                        }
-                    }
-                    if let onDelete {
-                        Button(role: .destructive) { onDelete() } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                }
-            }
+            // Context menu removed — its gesture recognizers interfere
+            // with CardActionBar tap recognition inside ScrollView.
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.top, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xs)

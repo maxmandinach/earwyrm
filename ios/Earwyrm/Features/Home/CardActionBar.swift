@@ -38,42 +38,40 @@ struct CardActionBar: View {
                     resonateButton
 
                     // Comments
-                    Button {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bubble.left")
+                            .font(.system(size: 14))
+                        if commentCount > 0 {
+                            Text("\(commentCount)")
+                                .font(Theme.dmSans(12))
+                        }
+                    }
+                    .foregroundStyle(Theme.textMuted)
+                    .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         Haptics.light()
                         onToggleComments()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "bubble.left")
-                                .font(.system(size: 14))
-                            if commentCount > 0 {
-                                Text("\(commentCount)")
-                                    .font(Theme.dmSans(12))
-                            }
-                        }
-                        .foregroundStyle(Theme.textMuted)
-                        .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                     }
-                    .buttonStyle(.plain)
                     .accessibilityLabel("Comments")
                     .accessibilityValue(commentCount > 0 ? "\(commentCount) comments" : "No comments")
                     .accessibilityHint("Toggle comments section")
 
                     // Visibility — own lyric only
                     if isOwn {
-                        Button {
+                        HStack(spacing: 4) {
+                            Image(systemName: isPublic ? "globe" : "lock")
+                                .font(.system(size: 12))
+                            Text(isPublic ? "public" : "private")
+                                .font(Theme.dmSans(11))
+                        }
+                        .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
+                        .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
                             Haptics.light()
                             onVisibilityChange(!isPublic)
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: isPublic ? "globe" : "lock")
-                                    .font(.system(size: 12))
-                                Text(isPublic ? "public" : "private")
-                                    .font(Theme.dmSans(11))
-                            }
-                            .foregroundStyle(isPublic ? Theme.textSecondary : Theme.textMuted)
-                            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
 
@@ -83,17 +81,16 @@ struct CardActionBar: View {
                 HStack(spacing: 0) {
                     // Bookmark / Save
                     if let onSave {
-                        Button {
-                            Haptics.light()
-                            onSave()
-                        } label: {
-                            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                                .font(.system(size: 14))
-                                .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
-                                .frame(minWidth: touchMinWidth, minHeight: touchHeight)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(isSaved ? "Remove from collection" : "Save to collection")
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 14))
+                            .foregroundStyle(isSaved ? Theme.accent : Theme.textMuted)
+                            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                Haptics.light()
+                                onSave()
+                            }
+                            .accessibilityLabel(isSaved ? "Remove from collection" : "Save to collection")
                     }
 
                     // Share
@@ -101,15 +98,14 @@ struct CardActionBar: View {
 
                     // Pencil — edit (own lyric only)
                     if isOwn {
-                        Button {
-                            onEdit()
-                        } label: {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 15))
-                                .foregroundStyle(Theme.textMuted)
-                                .frame(minWidth: touchMinWidth, minHeight: touchHeight)
-                        }
-                        .buttonStyle(.plain)
+                        Image(systemName: "pencil")
+                            .font(.system(size: 15))
+                            .foregroundStyle(Theme.textMuted)
+                            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                onEdit()
+                            }
                     }
                 }
             }
@@ -120,25 +116,24 @@ struct CardActionBar: View {
     // MARK: - Resonate Button
 
     private var resonateButton: some View {
-        Button {
-            onResonate()
-        } label: {
-            HStack(spacing: 4) {
-                ResonateIcon(
-                    isActive: hasReacted,
-                    isAnimating: isResonateAnimating,
-                    size: 18
-                )
+        HStack(spacing: 4) {
+            ResonateIcon(
+                isActive: hasReacted,
+                isAnimating: isResonateAnimating,
+                size: 18
+            )
 
-                if reactionCount > 0 {
-                    Text("\(reactionCount)")
-                        .font(Theme.dmSans(12))
-                }
+            if reactionCount > 0 {
+                Text("\(reactionCount)")
+                    .font(Theme.dmSans(12))
             }
-            .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
-            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
         }
-        .buttonStyle(.plain)
+        .foregroundStyle(hasReacted ? Theme.accent : Theme.textMuted)
+        .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onResonate()
+        }
         .accessibilityLabel("Resonate")
         .accessibilityValue("\(reactionCount) resonations")
         .accessibilityHint(hasReacted ? "Remove resonation" : "Add resonation")
@@ -147,22 +142,21 @@ struct CardActionBar: View {
     // MARK: - Share Button
 
     private var shareButton: some View {
-        Button {
-            Haptics.medium()
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                shareNudge = true
+        Image(systemName: "square.and.arrow.up")
+            .font(.system(size: 14))
+            .foregroundStyle(Theme.textMuted)
+            .frame(minWidth: touchMinWidth, minHeight: touchHeight)
+            .offset(y: shareNudge ? -2 : 0)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.medium()
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                    shareNudge = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    shareNudge = false
+                }
+                onShare()
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                shareNudge = false
-            }
-            onShare()
-        } label: {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 14))
-                .foregroundStyle(Theme.textMuted)
-                .frame(minWidth: touchMinWidth, minHeight: touchHeight)
-                .offset(y: shareNudge ? -2 : 0)
-        }
-        .buttonStyle(.plain)
     }
 }

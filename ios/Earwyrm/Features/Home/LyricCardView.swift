@@ -171,25 +171,9 @@ struct LyricCardView: View {
             // Hero: deeper shadow with more presence
             .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
             .shadow(color: .black.opacity(hero ? 0.1 : 0.08), radius: hero ? 24 : 12, y: hero ? 8 : 4)
-            .contextMenu {
-                if let onShare {
-                    Button { onShare() } label: {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                    }
-                }
-                if let onSave {
-                    Button { onSave() } label: {
-                        Label(isSaved ? "Remove from Collection" : "Save to Collection", systemImage: isSaved ? "bookmark.fill" : "bookmark")
-                    }
-                }
-                if isOwn {
-                    if let onEdit {
-                        Button { onEdit() } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                    }
-                }
-            }
+            // Context menu removed — its gesture recognizers interfere with
+            // CardActionBar button taps. The action bar provides the same
+            // share / save / edit actions.
 
             // Action bar — outside context menu to prevent gesture interference
             if showActions,

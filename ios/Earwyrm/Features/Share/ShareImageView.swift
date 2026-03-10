@@ -228,6 +228,9 @@ struct ShareImageView: View {
 
     private func aiArtLayout(image: UIImage) -> some View {
         ZStack {
+            // Solid backing to prevent transparency artifacts
+            theme.background
+
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fill)

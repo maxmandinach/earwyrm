@@ -1,3 +1,4 @@
+import SwiftUI
 import UIKit
 
 enum ShareDestination: String, CaseIterable, Identifiable {
@@ -46,17 +47,56 @@ enum ShareDestination: String, CaseIterable, Identifiable {
         }
     }
 
-    /// SF Symbol fallback when asset is missing
+    /// SF Symbol for icon overlay (white on colored background)
     var sfSymbol: String {
         switch self {
-        case .igStories: "camera.circle.fill"
+        case .igStories: "camera.fill"
         case .messages: "message.fill"
-        case .whatsapp: "phone.circle.fill"
-        case .x: "at.circle.fill"
-        case .threads: "at.circle.fill"
-        case .tiktok: "play.circle.fill"
-        case .copyLink: "link.circle.fill"
-        case .more: "ellipsis.circle.fill"
+        case .whatsapp: "phone.fill"
+        case .x: "xmark" // Bold X shape, matches brand
+        case .threads: "at"
+        case .tiktok: "music.note"
+        case .copyLink: "link"
+        case .more: "ellipsis"
+        }
+    }
+
+    /// Brand background color for the icon tile
+    var iconBackground: Color {
+        switch self {
+        case .igStories: Color(red: 0.88, green: 0.19, blue: 0.42)
+        case .messages: Color(red: 0.20, green: 0.78, blue: 0.35)
+        case .whatsapp: Color(red: 0.15, green: 0.68, blue: 0.38)
+        case .x: .black
+        case .threads: .black
+        case .tiktok: .black
+        case .copyLink: Color(UIColor.systemGray)
+        case .more: Color(UIColor.systemGray)
+        }
+    }
+
+    /// Whether the icon needs a border to be visible in dark mode
+    var needsDarkModeBorder: Bool {
+        switch self {
+        case .x, .threads, .tiktok: true
+        default: false
+        }
+    }
+
+    /// Whether icon uses a gradient background (e.g. Instagram)
+    var iconGradient: LinearGradient? {
+        switch self {
+        case .igStories:
+            return LinearGradient(
+                colors: [
+                    Color(red: 0.99, green: 0.84, blue: 0.21),
+                    Color(red: 0.95, green: 0.30, blue: 0.18),
+                    Color(red: 0.75, green: 0.15, blue: 0.65)
+                ],
+                startPoint: .bottomLeading,
+                endPoint: .topTrailing
+            )
+        default: return nil
         }
     }
 
@@ -89,7 +129,7 @@ enum ShareDestination: String, CaseIterable, Identifiable {
     /// Whether this destination uses the system activity sheet
     var usesSystemSheet: Bool {
         switch self {
-        case .messages, .x, .tiktok, .more: true
+        case .messages, .tiktok, .more: true
         default: false
         }
     }

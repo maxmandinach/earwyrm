@@ -173,9 +173,12 @@ struct HomeView: View {
                     toast: toastManager
                 )
                 Task {
-                    await resonateVM?.checkInitialState()
-                    await viewModel.fetchNote(lyricId: lyric.id, userId: userId)
-                    await viewModel.loadAllSections(userId: userId)
+                    // Run in parallel to minimize re-render window
+                    async let a: Void = resonateVM?.checkInitialState() ?? ()
+                    async let b: Void = viewModel.fetchNote(lyricId: lyric.id, userId: userId)
+                    async let c: Void = viewModel.loadAllSections(userId: userId)
+                    _ = await (a, b, c)
+                    // Fetch reaction states after past lyrics are loaded
                     await fetchReactionStates()
                 }
             } else {
@@ -318,9 +321,100 @@ struct HomeView: View {
         )
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.md)
-        .cascadeReveal(delay: 0.2)
 
-        // Past earwyrms
+        // Past earwyrms — separate view to isolate re-renders from hero card
+        PastEarwyrmsSection(
+            viewModel: viewModel,
+            reactionStates: $reactionStates,
+            reactionCounts: $reactionCounts,
+            animatingReactions: $animatingReactions,
+            showCommentIds: $showCommentIds,
+            activeSheet: $activeSheet,
+            navigationPath: $navigationPath,
+            deletingPastLyric: $deletingPastLyric
+        )
+
+        // Collections carousel
+        CollectionsCarouselSection(collections: collectionManager.collections)
+            .cascadeReveal(delay: 0.35)
+    }
+
+    // MARK: - Past Lyrics Reactions
+
+    private func fetchReactionStates() async {
+        guard let userId = auth.userId else { return }
+        let lyricIds = viewModel.pastLyrics.map { $0.id.uuidString }
+        guard !lyricIds.isEmpty else { return }
+
+        // Initialize counts from lyric data
+        for lyric in viewModel.pastLyrics {
+            if reactionCounts[lyric.id] == nil {
+                reactionCounts[lyric.id] = lyric.reactionCount ?? 0
+            }
+        }
+
+        do {
+            let reactions: [Reaction] = try await supabase
+                .from("reactions")
+                .select("id, lyric_id, user_id, created_at")
+                .eq("user_id", value: userId.uuidString)
+                .in("lyric_id", values: lyricIds)
+                .execute()
+                .value
+            for reaction in reactions {
+                reactionStates[reaction.lyricId] = true
+            }
+        } catch {
+            print("Fetch past lyrics reaction states error: \(error)")
+        }
+    }
+
+    private var emptyState: some View {
+        Button {
+            showPostSheet = true
+        } label: {
+            VStack(spacing: Theme.Spacing.md) {
+                Spacer()
+                    .frame(height: 80)
+
+                Text("what's stuck in your head?")
+                    .font(Theme.caveat(32))
+                    .foregroundStyle(Theme.textPrimary)
+
+                Text("Tap here to post your first lyric.")
+                    .font(Theme.dmSans(15))
+                    .foregroundStyle(Theme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.top, Theme.Spacing.xs)
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+        }
+    }
+
+}
+
+// MARK: - Past Earwyrms Section (isolated to prevent hero card re-renders)
+
+private struct PastEarwyrmsSection: View {
+    let viewModel: HomeViewModel
+    @Binding var reactionStates: [UUID: Bool]
+    @Binding var reactionCounts: [UUID: Int]
+    @Binding var animatingReactions: Set<UUID>
+    @Binding var showCommentIds: Set<UUID>
+    @Binding var activeSheet: HomeView.HomeSheet?
+    @Binding var navigationPath: NavigationPath
+    @Binding var deletingPastLyric: Lyric?
+
+    @Environment(AuthManager.self) private var auth
+    @Environment(CollectionManager.self) private var collectionManager
+    @Environment(ToastManager.self) private var toastManager
+
+    var body: some View {
         if !viewModel.pastLyrics.isEmpty {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 CaveatText(text: "past earwyrms", size: 24, color: Theme.textSecondary)
@@ -360,40 +454,6 @@ struct HomeView: View {
                 .padding(.horizontal, Theme.Spacing.md)
             }
             .cascadeReveal(delay: 0.3)
-        }
-
-        // Collections carousel
-        CollectionsCarouselSection(collections: collectionManager.collections)
-            .cascadeReveal(delay: 0.35)
-    }
-
-    // MARK: - Past Lyrics Reactions
-
-    private func fetchReactionStates() async {
-        guard let userId = auth.userId else { return }
-        let lyricIds = viewModel.pastLyrics.map { $0.id.uuidString }
-        guard !lyricIds.isEmpty else { return }
-
-        // Initialize counts from lyric data
-        for lyric in viewModel.pastLyrics {
-            if reactionCounts[lyric.id] == nil {
-                reactionCounts[lyric.id] = lyric.reactionCount ?? 0
-            }
-        }
-
-        do {
-            let reactions: [Reaction] = try await supabase
-                .from("reactions")
-                .select("id, lyric_id, user_id, created_at")
-                .eq("user_id", value: userId.uuidString)
-                .in("lyric_id", values: lyricIds)
-                .execute()
-                .value
-            for reaction in reactions {
-                reactionStates[reaction.lyricId] = true
-            }
-        } catch {
-            print("Fetch past lyrics reaction states error: \(error)")
         }
     }
 
@@ -441,10 +501,17 @@ struct HomeView: View {
         }
     }
 
+    private func toggleCommentVisibility(_ lyricId: UUID) {
+        if showCommentIds.contains(lyricId) {
+            showCommentIds.remove(lyricId)
+        } else {
+            showCommentIds.insert(lyricId)
+        }
+    }
+
     private func makeCurrentFromHome(_ lyric: Lyric) async {
         guard let userId = auth.userId else { return }
         do {
-            // Archive existing current lyric
             try await supabase
                 .from("lyrics")
                 .update(LyricArchiveUpdate(
@@ -455,7 +522,6 @@ struct HomeView: View {
                 .eq("is_current", value: true)
                 .execute()
 
-            // Insert new lyric as current with same content
             let insert = LyricInsert(
                 userId: userId,
                 content: lyric.content,
@@ -484,42 +550,6 @@ struct HomeView: View {
             toastManager.show("couldn't make current, try again")
         }
     }
-
-    private func toggleCommentVisibility(_ lyricId: UUID) {
-        if showCommentIds.contains(lyricId) {
-            showCommentIds.remove(lyricId)
-        } else {
-            showCommentIds.insert(lyricId)
-        }
-    }
-
-    private var emptyState: some View {
-        Button {
-            showPostSheet = true
-        } label: {
-            VStack(spacing: Theme.Spacing.md) {
-                Spacer()
-                    .frame(height: 80)
-
-                Text("what's stuck in your head?")
-                    .font(Theme.caveat(32))
-                    .foregroundStyle(Theme.textPrimary)
-
-                Text("Tap here to post your first lyric.")
-                    .font(Theme.dmSans(15))
-                    .foregroundStyle(Theme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-
-                Image(systemName: "plus.circle")
-                    .font(.system(size: 28))
-                    .foregroundStyle(Theme.accent)
-                    .padding(.top, Theme.Spacing.xs)
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-        }
-    }
-
 }
 
 // MARK: - Profile Username Resolver (deep link)
