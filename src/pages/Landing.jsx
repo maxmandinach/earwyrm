@@ -459,23 +459,58 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Section: Discovery ── */}
+      {/* ── Section: Follow & Discover ── */}
       <section className="py-20 sm:py-28 px-6" style={{ backgroundColor: 'var(--surface-card, #F5F2ED)' }}>
         <div className="max-w-2xl mx-auto">
           <RevealSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl text-charcoal mb-4" style={{ fontFamily: caveat, fontWeight: 600, lineHeight: 1.2 }}>
-              Same song. Different story.
+              Follow the music you love.<br />See what others hear in it.
             </h2>
             <p className="text-charcoal/40 max-w-md mx-auto leading-relaxed" style={{ fontFamily: dmSans }}>
-              See which lyrics resonate across the community.
-              Read why others connect with the same lines — or discover
-              songs you've never heard through someone else's moment.
+              Follow your favorite artists and songs to see every lyric
+              people are saving — and the personal stories behind them.
+              Discover new music through someone else's moment.
             </p>
           </RevealSection>
 
           <RevealSection delay={100}>
+            {/* Mock discussion thread */}
+            <div className="max-w-sm mx-auto space-y-3 mb-14">
+              <div className="p-5" style={cardStyle}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-charcoal/35" style={{ fontFamily: dmSans }}>@jessicapark</span>
+                  <span className="text-[10px] text-charcoal/20" style={{ fontFamily: dmSans }}>2h</span>
+                </div>
+                <p className="text-sm text-charcoal/55 leading-relaxed" style={{ fontFamily: dmSans }}>
+                  I've listened to this song a hundred times but never caught this line until last week.
+                  It completely changed how I hear the whole album.
+                </p>
+              </div>
+              <div className="p-5 ml-6" style={cardStyle}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-charcoal/35" style={{ fontFamily: dmSans }}>@tomwinters</span>
+                  <span className="text-[10px] text-charcoal/20" style={{ fontFamily: dmSans }}>1h</span>
+                </div>
+                <p className="text-sm text-charcoal/55 leading-relaxed" style={{ fontFamily: dmSans }}>
+                  Same — it's one of those lyrics that means something different
+                  every time you come back to it.
+                </p>
+              </div>
+            </div>
+          </RevealSection>
+
+          <RevealSection delay={200}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-lg sm:max-w-none mx-auto">
               {[
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                  ),
+                  title: 'Discuss',
+                  desc: 'Share your interpretation. Read theirs. Every lyric has a conversation waiting.',
+                },
                 {
                   icon: (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
@@ -489,24 +524,15 @@ export default function Landing() {
                 },
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                  ),
-                  title: 'Discuss',
-                  desc: 'Share your take. Read theirs. Every lyric has a conversation waiting.',
-                },
-                {
-                  icon: (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                     </svg>
                   ),
                   title: 'Collect',
-                  desc: 'Build collections by mood, memory, or meaning. Your musical diary grows over time.',
+                  desc: 'Save lyrics by mood, memory, or meaning. Your musical diary grows over time.',
                 },
               ].map((item, i) => (
-                <RevealSection key={i} delay={i * 120} className="text-center">
+                <RevealSection key={i} delay={250 + i * 120} className="text-center">
                   <div
                     className="w-11 h-11 mx-auto mb-4 flex items-center justify-center rounded-full"
                     style={{ backgroundColor: 'var(--surface-bg, #FAF8F5)', color: 'var(--color-accent, #B8A99A)' }}
