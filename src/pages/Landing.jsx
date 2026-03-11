@@ -376,9 +376,20 @@ export default function Landing() {
                 <br />I live upon morsels you happen to drop
               </blockquote>
               <div className="w-10 mt-4 mb-2.5" style={{ height: '1.5px', backgroundColor: 'var(--color-accent, #B8A99A)', opacity: 0.4 }} />
-              <p className="text-xs text-charcoal/40" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
-                Theme from the Bottom — Phish
-              </p>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 flex-shrink-0 rounded"
+                  style={{
+                    backgroundImage: 'url(https://images.genius.com/339ed236aa47b78ba5675177f037386f.300x301x1.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                  }}
+                />
+                <p className="text-xs text-charcoal/40" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
+                  Theme from the Bottom — Phish
+                </p>
+              </div>
               <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.05))' }}>
                 <p className="text-sm text-charcoal/45 leading-relaxed" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
                   "This song makes me think of the first time I saw Trey Anastasio
@@ -409,27 +420,51 @@ export default function Landing() {
           </RevealSection>
 
           <RevealSection delay={150}>
-            {/* Mock share card with "art" background */}
+            {/* Note → Art flow */}
+            <div className="max-w-xs mx-auto mb-5">
+              {/* Mock note */}
+              <div
+                className="p-4 sm:p-5"
+                style={{
+                  ...cardStyle,
+                  borderLeft: '3px solid var(--color-accent, #B8A99A)',
+                }}
+              >
+                <p className="text-[10px] uppercase tracking-[0.15em] text-charcoal/25 mb-2" style={{ fontFamily: dmSans, fontWeight: 500 }}>
+                  your note
+                </p>
+                <p className="text-sm text-charcoal/50 leading-relaxed" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
+                  "The simplicity of this line — welcoming someone into
+                  an imperfect home. It reminds me of my grandparents'
+                  farmhouse in Vermont, screen doors and all."
+                </p>
+              </div>
+              {/* Arrow connector */}
+              <div className="flex flex-col items-center py-3 text-charcoal/15">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <polyline points="19 12 12 19 5 12" />
+                </svg>
+                <span className="text-[10px] mt-1" style={{ fontFamily: dmSans }}>becomes</span>
+              </div>
+            </div>
+
+            {/* Real AI-generated share card */}
             <div className="max-w-xs mx-auto relative overflow-hidden" style={{ borderRadius: '2px' }}>
               <div
                 className="aspect-square flex flex-col justify-between p-8"
                 style={{
-                  background: 'linear-gradient(160deg, #C8B8A8 0%, #8B7B6B 40%, #5C4F42 100%)',
+                  backgroundImage: 'url(https://btrwdmeguitbbvcreokk.supabase.co/storage/v1/object/public/card-art/8BCAFAC3-B616-4F5D-A74E-CC3FA250CAF5/0e5e9671-6587-4d6a-baea-3264e491cb9f.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                   position: 'relative',
                 }}
               >
-                {/* Simulated art texture overlay */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'radial-gradient(ellipse at 30% 20%, rgba(255,220,180,0.3) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(180,160,140,0.4) 0%, transparent 50%)',
-                  }}
-                />
                 {/* Text overlay gradient */}
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)',
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 100%)',
                   }}
                 />
                 <div className="relative z-10 flex flex-col justify-center flex-1">
@@ -437,13 +472,23 @@ export default function Landing() {
                     className="text-white/90 leading-relaxed mb-4"
                     style={{ fontFamily: caveat, fontSize: '1.35rem', fontWeight: 500, lineHeight: 1.45 }}
                   >
-                    And in the end, the love you take
-                    <br />is equal to the love you make
+                    Welcome this is a farmhouse
+                    <br />We have cluster flies alas
                   </blockquote>
                   <div className="w-8 mb-2" style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.3)' }} />
-                  <p className="text-white/50 text-xs" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
-                    The End — The Beatles
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-6 h-6 flex-shrink-0 rounded-sm"
+                      style={{
+                        backgroundImage: 'url(https://images.genius.com/a51fa1264a01a7e02914f5762e849251.300x301x1.jpg)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    />
+                    <p className="text-white/50 text-xs" style={{ fontFamily: dmSans, fontStyle: 'italic' }}>
+                      Farmhouse — Phish
+                    </p>
+                  </div>
                 </div>
                 <p className="relative z-10 text-white/30 text-[10px]" style={{ fontFamily: dmSans, fontWeight: 600 }}>
                   earwyrm
