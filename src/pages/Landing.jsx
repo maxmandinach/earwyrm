@@ -220,8 +220,8 @@ export default function Landing() {
             className="text-4xl sm:text-5xl md:text-6xl text-charcoal leading-[1.15]"
             style={{ fontFamily: caveat, fontWeight: 600 }}
           >
-            The lyrics stay.<br />
-            <span style={{ color: 'var(--color-accent, #B8A99A)' }}>Now you can too.</span>
+            The lyrics stay with you.<br />
+            <span style={{ color: 'var(--color-accent, #B8A99A)' }}>Save the feeling.</span>
           </h1>
           <p
             className="text-charcoal/40 max-w-md mx-auto leading-relaxed mt-5 text-base sm:text-lg"
@@ -399,12 +399,12 @@ export default function Landing() {
               earwyrm+
             </p>
             <h2 className="text-3xl sm:text-4xl text-charcoal mb-4" style={{ fontFamily: caveat, fontWeight: 600, lineHeight: 1.2 }}>
-              Every lyric becomes art.
+              Share what the music means to you.
             </h2>
             <p className="text-charcoal/40 max-w-lg mx-auto leading-relaxed" style={{ fontFamily: dmSans }}>
-              AI reads your lyric and your personal note — the memory,
-              the mood, the meaning — and paints something that feels like both.
-              Impressionistic. Warm. Yours.
+              AI reads your personal note — the memory, the mood,
+              the meaning — and creates shareable art that captures
+              your connection to the song. Painterly. Warm. Yours.
             </p>
           </RevealSection>
 
