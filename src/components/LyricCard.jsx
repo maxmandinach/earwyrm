@@ -219,7 +219,7 @@ export default function LyricCard({
         ) : (
           // View mode
           <>
-            <blockquote className={`leading-relaxed ${compact ? 'mb-3 line-clamp-3' : 'mb-4'}`}>
+            <blockquote className={`leading-relaxed ${compact ? 'mb-3 line-clamp-3' : 'mb-4'}`} style={{ whiteSpace: 'pre-line' }}>
               {lyric.content}
             </blockquote>
 
@@ -235,10 +235,10 @@ export default function LyricCard({
                   }}
                 />
                 <div className="flex items-center gap-3">
-                  {/* Cover art thumbnail — hidden in compact */}
-                  {!compact && lyric.cover_art_url && (
+                  {/* Cover art thumbnail */}
+                  {lyric.cover_art_url && (
                     <div
-                      className={`${hero ? 'w-14 h-14' : 'w-10 h-10'} flex-shrink-0 rounded`}
+                      className={`${compact ? 'w-8 h-8' : hero ? 'w-14 h-14' : 'w-10 h-10'} flex-shrink-0 rounded`}
                       style={{
                         backgroundImage: `url(${lyric.cover_art_url})`,
                         backgroundSize: 'cover',
@@ -329,6 +329,15 @@ export default function LyricCard({
                 className="flex items-center gap-4 mt-3 pt-2"
                 style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}
               >
+                {lyric.profiles?.username && (
+                  <Link
+                    to={`/u/${lyric.profiles.username}`}
+                    className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+                    style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+                  >
+                    @{lyric.profiles.username}
+                  </Link>
+                )}
                 {(lyric.reaction_count || 0) > 0 && (
                   <span className="flex items-center gap-1 text-xs text-charcoal/30">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">

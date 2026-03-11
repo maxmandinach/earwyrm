@@ -65,7 +65,7 @@ export default function Explore() {
       try {
         let query = supabase
           .from('lyrics')
-          .select('*')
+          .select('*, profiles:user_id(username, subscription_tier)')
           .eq('is_public', true)
           .limit(50)
 

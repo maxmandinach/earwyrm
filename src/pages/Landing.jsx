@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { signatureStyle } from '../lib/themes'
+import { applyColorScheme } from '../lib/paperTexture'
 import PlusBadge from '../components/PlusBadge'
 
 const CYCLE_INTERVAL = 5000
@@ -103,6 +104,22 @@ export default function Landing() {
   const [fading, setFading] = useState(false)
   const platform = useRef(getDevicePlatform()).current
   const isMobile = platform === 'ios' || platform === 'android'
+
+  // Force light mode on landing page
+  useEffect(() => {
+    const prevTheme = localStorage.getItem('earwyrm-theme')
+    applyColorScheme('light')
+    return () => {
+      // Restore user's preference when leaving
+      const pref = prevTheme || 'auto'
+      if (pref === 'auto') {
+        const isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        applyColorScheme(isDark ? 'dark' : 'light')
+      } else {
+        applyColorScheme(pref)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     async function fetchFeaturedLyrics() {
