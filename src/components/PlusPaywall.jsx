@@ -5,7 +5,7 @@ import { createCheckoutSession } from '../lib/card-art'
 import { supabase } from '../lib/supabase-wrapper'
 
 export default function PlusPaywall({ context, onClose }) {
-  const { user } = useAuth()
+  useAuth()
   const [loading, setLoading] = useState(null) // 'monthly' | 'yearly' | null
   const [error, setError] = useState('')
   const [visible, setVisible] = useState(false)

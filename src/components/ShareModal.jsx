@@ -190,7 +190,7 @@ export default function ShareModal({ lyric, note: noteProp, onClose, onNoteCreat
   const [aiArtImg, setAiArtImg] = useState(null)
   const [aiArtLoading, setAiArtLoading] = useState(false)
   const [aiArtError, setAiArtError] = useState('')
-  const [artRemaining, setArtRemaining] = useState(null)
+  const [, setArtRemaining] = useState(null)
   const [showPaywall, setShowPaywall] = useState(false)
   const [showFreeGenConfirm, setShowFreeGenConfirm] = useState(false)
   const [showRegenConfirm, setShowRegenConfirm] = useState(false)
@@ -342,7 +342,7 @@ export default function ShareModal({ lyric, note: noteProp, onClose, onNoteCreat
       await navigator.clipboard.writeText(linkToCopy)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
+    } catch {
       try {
         const input = document.createElement('input')
         input.value = linkToCopy

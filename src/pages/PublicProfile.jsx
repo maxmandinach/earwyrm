@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { useAuth } from '../contexts/AuthContext'
 import { useBlock } from '../contexts/BlockContext'
 import LyricCard from '../components/LyricCard'
 import PlusBadge from '../components/PlusBadge'
 
-function AnonymousFooter({ username }) {
+function AnonymousFooter() {
   return (
     <div className="fixed bottom-0 left-0 right-0 py-4 px-6 z-20"
       style={{
@@ -29,11 +29,10 @@ function AnonymousFooter({ username }) {
   )
 }
 
-export default function PublicProfile({ showHistory = false }) {
+export default function PublicProfile() {
   const { username } = useParams()
   const { user } = useAuth()
   const { blockUser, unblockUser, isBlocked } = useBlock()
-  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [lyric, setLyric] = useState(null)
   const [note, setNote] = useState(null)

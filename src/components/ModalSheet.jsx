@@ -4,8 +4,6 @@ import { createPortal } from 'react-dom'
 export default function ModalSheet({ onClose, title, maxWidth = 'max-w-lg', children }) {
   const overlayRef = useRef(null)
   const sheetRef = useRef(null)
-  const firstFocusableRef = useRef(null)
-
   // Lock body scroll
   useEffect(() => {
     const original = document.body.style.overflow

@@ -103,7 +103,7 @@ export function initializePageTexture() {
  * For share card canvas - apply background
  * Matches signatureStyle.backgroundColor in themes.js
  */
-export function applyPaperTextureToCanvas(ctx, width, height, options = {}) {
+export function applyPaperTextureToCanvas(ctx, width, height) {
   ctx.fillStyle = '#F5F2ED'  // warm cream
   ctx.fillRect(0, 0, width, height)
 }
@@ -112,7 +112,7 @@ export function applyPaperTextureToCanvas(ctx, width, height, options = {}) {
  * For dark share cards
  * Matches darkVariant.backgroundColor in themes.js
  */
-export function applyDarkPaperTexture(ctx, width, height, options = {}) {
+export function applyDarkPaperTexture(ctx, width, height) {
   ctx.fillStyle = '#252220'  // warm dark
   ctx.fillRect(0, 0, width, height)
 }

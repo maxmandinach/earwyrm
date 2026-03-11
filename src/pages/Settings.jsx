@@ -7,14 +7,13 @@ import { supabase } from '../lib/supabase-wrapper'
 import { isValidUsername, getPublicProfileUrl } from '../lib/utils'
 import { setColorSchemePreference } from '../lib/paperTexture'
 import { createCheckoutSession } from '../lib/card-art'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 
 export default function Settings() {
-  const { user, profile, signOut, updateProfile, refreshProfile } = useAuth()
+  const { user, profile, updateProfile, refreshProfile } = useAuth()
   const { currentLyric, setVisibility } = useLyric()
   const { follows } = useFollow()
   const { blockedUserIds, unblockUser } = useBlock()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [blockedProfiles, setBlockedProfiles] = useState([])
   const [subscribeLoading, setSubscribeLoading] = useState(null)
@@ -626,6 +625,20 @@ export default function Settings() {
               </button>
             </form>
           </section>
+
+          {/* Admin */}
+          {profile?.is_admin && (
+            <section className="border-b border-charcoal/10 pb-8">
+              <h2 className="text-xs text-charcoal/30 uppercase tracking-wider mb-4">admin</h2>
+              <Link
+                to="/admin"
+                className="text-sm hover:underline"
+                style={{ color: 'var(--accent, #B8A99A)' }}
+              >
+                moderation dashboard
+              </Link>
+            </section>
+          )}
 
           {/* Delete Account */}
           <section className="pb-8">

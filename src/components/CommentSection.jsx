@@ -7,7 +7,7 @@ import ReportModal from './ReportModal'
 import PlusBadge from './PlusBadge'
 
 export default function CommentSection({ lyricId, initialCount = 0, onSignupPrompt, highlightCommentId = null, onCountChange }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -62,7 +62,7 @@ export default function CommentSection({ lyricId, initialCount = 0, onSignupProm
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!user || !newComment.trim() || submitting) return
+    if (!user || !newComment.trim() || submitting || profile?.banned_at) return
 
     setSubmitting(true)
     try {

@@ -23,7 +23,7 @@ export default function ExploreFollowing() {
   const { follows, loading: followsLoading } = useFollow()
   const { isBlocked } = useBlock()
   const [allMatched, setAllMatched] = useState([])
-  const [notes, setNotes] = useState({})
+  const [, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -59,10 +59,6 @@ export default function ExploreFollowing() {
     async function fetchFeed() {
       setLoading(true)
       try {
-        const artistFollows = follows.filter(f => f.filter_type === 'artist').map(f => f.filter_value)
-        const songFollows = follows.filter(f => f.filter_type === 'song').map(f => f.filter_value)
-        const tagFollows = follows.filter(f => f.filter_type === 'tag').map(f => f.filter_value)
-
         const { data } = await supabase
           .from('lyrics')
           .select('*')
@@ -117,10 +113,6 @@ export default function ExploreFollowing() {
   }, [follows, followsLoading])
 
   // Derive active follows from filter IDs
-  const activeFollows = activeFilterIds === null
-    ? follows
-    : follows.filter(f => activeFilterIds.has(f.id))
-
   // Filter lyrics by active follows, excluding blocked users
   let displayedLyrics = (activeFilterIds === null
     ? allMatched

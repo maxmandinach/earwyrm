@@ -21,7 +21,7 @@ export default function ExploreForYou() {
   const { follows } = useFollow()
   const { isBlocked } = useBlock()
   const [lyrics, setLyrics] = useState([])
-  const [notes, setNotes] = useState({})
+  const [, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')

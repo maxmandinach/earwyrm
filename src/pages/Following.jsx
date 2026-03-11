@@ -40,8 +40,8 @@ export default function Following() {
     setUnfollowing(key)
     try {
       await unfollow(filterType, filterValue)
-    } catch (err) {
-      console.error('Error unfollowing:', err)
+    } catch {
+      console.error('Error unfollowing')
     } finally {
       setUnfollowing(null)
     }

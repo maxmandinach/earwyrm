@@ -395,7 +395,7 @@ export async function getCoverArt(releaseId) {
 
     const url = front?.thumbnails?.['250'] || front?.thumbnails?.small || null
     return ensureHttps(url)
-  } catch (err) {
+  } catch {
     // Cover art not available is common, don't log as error
     return null
   }
@@ -417,7 +417,7 @@ export async function getCoverArtByReleaseGroup(releaseGroupId) {
 
     const url = front?.thumbnails?.['250'] || front?.thumbnails?.small || null
     return ensureHttps(url)
-  } catch (err) {
+  } catch {
     return null
   }
 }

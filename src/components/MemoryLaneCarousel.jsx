@@ -4,26 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import { supabase } from '../lib/supabase-wrapper'
 
-function formatDuration(createdAt, replacedAt) {
-  const start = new Date(createdAt)
-  const end = replacedAt ? new Date(replacedAt) : new Date()
-  const diffMs = end - start
-  const diffMins = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  const diffWeeks = Math.floor(diffDays / 7)
-  const diffMonths = Math.floor(diffDays / 30)
-
-  if (diffMonths >= 1) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'}`
-  if (diffWeeks >= 1) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'}`
-  if (diffDays >= 1) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`
-  if (diffHours >= 1) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'}`
-  return `${diffMins} ${diffMins === 1 ? 'min' : 'mins'}`
-}
-
 function CompactMemoryCard({ lyric, index }) {
-  const duration = formatDuration(lyric.created_at, lyric.replaced_at)
-
   return (
     <div
       className="flex-shrink-0 w-[240px] sm:w-[260px] carousel-card"
