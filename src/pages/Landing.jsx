@@ -681,6 +681,8 @@ export default function Landing() {
           <Link to="/privacy" className="py-2 hover:text-charcoal/50 transition-colors">Privacy</Link>
           <span style={{ opacity: 0.4 }}>·</span>
           <Link to="/terms" className="py-2 hover:text-charcoal/50 transition-colors">Terms</Link>
+          <span style={{ opacity: 0.4 }}>·</span>
+          <a href="/dmca.html" className="py-2 hover:text-charcoal/50 transition-colors">DMCA</a>
         </div>
       </footer>
     </div>
