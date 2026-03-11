@@ -79,6 +79,7 @@ export function LyricProvider({ children }) {
 
   async function setLyric({ content, songTitle, artistName, tags = [], theme = 'signature', canonicalLyricId = null, coverArtUrl = null, musicbrainzRecordingId = null, musicbrainzReleaseId = null, album = null }) {
     if (!user) throw new Error('Must be logged in to set a lyric')
+    if (profile?.banned_at) throw new Error('Your account has been suspended.')
 
     try {
       // First, mark any existing current lyric as not current

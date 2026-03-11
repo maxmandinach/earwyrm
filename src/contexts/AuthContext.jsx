@@ -119,10 +119,15 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  const isBanned = !!profile?.banned_at
+  const isAdmin = !!profile?.is_admin
+
   const value = {
     user,
     profile,
     loading,
+    isBanned,
+    isAdmin,
     signUp,
     signIn,
     signOut,

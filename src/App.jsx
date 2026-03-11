@@ -24,6 +24,7 @@ const Activity = lazy(() => import('./pages/Activity'))
 const Following = lazy(() => import('./pages/Following'))
 const EmailConfirmed = lazy(() => import('./pages/EmailConfirmed'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+const Admin = lazy(() => import('./pages/Admin'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -168,6 +169,14 @@ export default function App() {
         <Route path="confirmed" element={<EmailConfirmed />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="terms" element={<Terms />} />
+        <Route
+          path="admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Redirects from old explore filter routes to new dedicated pages */}
         <Route path="explore/artist/:name" element={<RedirectToArtist />} />
