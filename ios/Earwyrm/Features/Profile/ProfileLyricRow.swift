@@ -11,6 +11,8 @@ struct ProfileLyricRow: View {
     let commentCount: Int
     let showComments: Bool
     let onToggleComments: () -> Void
+    var topComment: CommentWithProfile? = nil
+    var onCommentCountChanged: ((Int) -> Void)? = nil
     let isPublic: Bool
     let onVisibilityChange: (Bool) -> Void
     let onSave: () -> Void
@@ -108,12 +110,43 @@ struct ProfileLyricRow: View {
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.sm)
 
+            // Comment preview — show top comment when section is closed
+            if !showComments, let topComment, commentCount > 0 {
+                Button {
+                    onToggleComments()
+                } label: {
+                    HStack(alignment: .top, spacing: 8) {
+                        Rectangle()
+                            .fill(Theme.accent.opacity(0.4))
+                            .frame(width: 2)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            if let username = topComment.username {
+                                Text("@\(username)")
+                                    .font(Theme.dmSans(11, weight: .medium))
+                                    .foregroundStyle(Theme.textSecondary.opacity(0.5))
+                            }
+                            Text(topComment.content)
+                                .font(Theme.caveat(17))
+                                .foregroundStyle(Theme.textPrimary.opacity(0.5))
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.sm)
+            }
+
             // Comment section — shown when toggled
             if showComments {
                 CommentSectionView(
                     lyricId: lyric.id,
                     currentUserId: currentUserId,
-                    initialCount: commentCount
+                    initialCount: commentCount,
+                    onCountChanged: onCommentCountChanged
                 )
                 .padding(.horizontal, Theme.Spacing.md)
                 .padding(.bottom, Theme.Spacing.md)

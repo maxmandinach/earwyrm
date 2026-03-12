@@ -41,6 +41,12 @@ struct HomeView: View {
     @State private var animatingReactions: Set<UUID> = []
     @State private var showCommentIds: Set<UUID> = []
 
+    // Comment state
+    @State private var heroCommentCount: Int = 0
+    @State private var heroTopComment: CommentWithProfile?
+    @State private var commentCounts: [UUID: Int] = [:]
+    @State private var topComments: [UUID: CommentWithProfile] = [:]
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollViewReader { proxy in
@@ -166,6 +172,8 @@ struct HomeView: View {
             // Create/recreate resonate VM when lyric changes
             if let lyric = viewModel.currentLyric, let userId = auth.userId {
                 showComments = false
+                heroCommentCount = lyric.commentCount ?? 0
+                heroTopComment = nil
                 resonateVM = ResonateViewModel(
                     lyricId: lyric.id,
                     userId: userId,
@@ -177,9 +185,13 @@ struct HomeView: View {
                     async let a: Void = resonateVM?.checkInitialState() ?? ()
                     async let b: Void = viewModel.fetchNote(lyricId: lyric.id, userId: userId)
                     async let c: Void = viewModel.loadAllSections(userId: userId)
-                    _ = await (a, b, c)
+                    async let d: CommentWithProfile? = Self.fetchTopComment(lyricId: lyric.id)
+                    let (_, _, _, topComment) = await (a, b, c, d)
+                    heroTopComment = topComment
                     // Fetch reaction states after past lyrics are loaded
                     await fetchReactionStates()
+                    // Fetch top comments for past lyrics
+                    await fetchPastTopComments()
                 }
             } else {
                 resonateVM = nil
@@ -309,9 +321,13 @@ struct HomeView: View {
             reactionCount: resonateVM?.count ?? (lyric.reactionCount ?? 0),
             isResonateAnimating: resonateVM?.isAnimating ?? false,
             onResonate: { resonateVM?.toggle() },
-            commentCount: lyric.commentCount ?? 0,
+            commentCount: heroCommentCount,
             showComments: showComments,
             onToggleComments: { showComments.toggle() },
+            topComment: heroTopComment,
+            onCommentCountChanged: { newCount in
+                heroCommentCount = newCount
+            },
             onSave: {
                 activeSheet = .bookmark(lyric.id)
             },
@@ -329,6 +345,8 @@ struct HomeView: View {
             reactionCounts: $reactionCounts,
             animatingReactions: $animatingReactions,
             showCommentIds: $showCommentIds,
+            commentCounts: $commentCounts,
+            topComments: $topComments,
             activeSheet: $activeSheet,
             navigationPath: $navigationPath,
             deletingPastLyric: $deletingPastLyric
@@ -369,6 +387,58 @@ struct HomeView: View {
         }
     }
 
+    static func fetchTopComment(lyricId: UUID) async -> CommentWithProfile? {
+        do {
+            let comments: [Comment] = try await supabase
+                .from("comments")
+                .select("id, lyric_id, user_id, content, parent_comment_id, created_at")
+                .eq("lyric_id", value: lyricId.uuidString)
+                .filter("parent_comment_id", operator: "is", value: "null")
+                .order("created_at", ascending: false)
+                .limit(1)
+                .execute()
+                .value
+
+            guard let comment = comments.first else { return nil }
+
+            let profiles: [CommentProfile] = try await supabase
+                .from("profiles")
+                .select("id, username, subscription_tier")
+                .eq("id", value: comment.userId.uuidString)
+                .limit(1)
+                .execute()
+                .value
+
+            return CommentWithProfile(
+                comment: comment,
+                username: profiles.first?.username,
+                isPlus: profiles.first?.isPlus ?? false
+            )
+        } catch {
+            print("Fetch top comment error: \(error)")
+            return nil
+        }
+    }
+
+    private func fetchPastTopComments() async {
+        let pastLyrics = viewModel.pastLyrics.filter { ($0.commentCount ?? 0) > 0 }
+        guard !pastLyrics.isEmpty else { return }
+
+        await withTaskGroup(of: (UUID, CommentWithProfile?).self) { group in
+            for lyric in pastLyrics {
+                group.addTask {
+                    let comment = await Self.fetchTopComment(lyricId: lyric.id)
+                    return (lyric.id, comment)
+                }
+            }
+            for await (lyricId, comment) in group {
+                if let comment {
+                    topComments[lyricId] = comment
+                }
+            }
+        }
+    }
+
     private var emptyState: some View {
         Button {
             showPostSheet = true
@@ -406,6 +476,8 @@ private struct PastEarwyrmsSection: View {
     @Binding var reactionCounts: [UUID: Int]
     @Binding var animatingReactions: Set<UUID>
     @Binding var showCommentIds: Set<UUID>
+    @Binding var commentCounts: [UUID: Int]
+    @Binding var topComments: [UUID: CommentWithProfile]
     @Binding var activeSheet: HomeView.HomeSheet?
     @Binding var navigationPath: NavigationPath
     @Binding var deletingPastLyric: Lyric?
@@ -428,9 +500,13 @@ private struct PastEarwyrmsSection: View {
                             reactionCount: reactionCounts[pastLyric.id] ?? pastLyric.reactionCount ?? 0,
                             isResonateAnimating: animatingReactions.contains(pastLyric.id),
                             onResonate: { toggleReaction(for: pastLyric) },
-                            commentCount: pastLyric.commentCount ?? 0,
+                            commentCount: commentCounts[pastLyric.id] ?? pastLyric.commentCount ?? 0,
                             showComments: showCommentIds.contains(pastLyric.id),
                             onToggleComments: { toggleCommentVisibility(pastLyric.id) },
+                            topComment: topComments[pastLyric.id],
+                            onCommentCountChanged: { newCount in
+                                commentCounts[pastLyric.id] = newCount
+                            },
                             isPublic: pastLyric.isPublic ?? false,
                             onVisibilityChange: { newValue in
                                 Task { await viewModel.toggleVisibility(lyricId: pastLyric.id, isPublic: newValue) }

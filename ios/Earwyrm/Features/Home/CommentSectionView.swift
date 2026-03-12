@@ -7,9 +7,11 @@ struct CommentSectionView: View {
     let lyricId: UUID
     let currentUserId: UUID?
     let initialCount: Int
+    var onCountChanged: ((Int) -> Void)?
 
     @Environment(AuthGate.self) private var authGate
     @Environment(BlockManager.self) private var blockManager
+    @FocusState private var isInputFocused: Bool
     @State private var isOpen = true
     @State private var reportCommentId: UUID?
     @State private var comments: [CommentWithProfile] = []
@@ -21,10 +23,11 @@ struct CommentSectionView: View {
 
     private let maxLength = 280
 
-    init(lyricId: UUID, currentUserId: UUID?, initialCount: Int) {
+    init(lyricId: UUID, currentUserId: UUID?, initialCount: Int, onCountChanged: ((Int) -> Void)? = nil) {
         self.lyricId = lyricId
         self.currentUserId = currentUserId
         self.initialCount = initialCount
+        self.onCountChanged = onCountChanged
         _count = State(initialValue: initialCount)
     }
 
@@ -78,6 +81,13 @@ struct CommentSectionView: View {
                 ForEach(0..<min(max(initialCount, 1), 3), id: \.self) { _ in
                     skeletonComment
                 }
+            } else if comments.isEmpty {
+                // Warm empty state
+                Text("be the first to share a thought")
+                    .font(Theme.caveat(20))
+                    .foregroundStyle(Theme.textMuted.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, Theme.Spacing.xs)
             } else {
                 commentThread
             }
@@ -100,6 +110,9 @@ struct CommentSectionView: View {
             }
         }
         .padding(.top, Theme.Spacing.sm)
+        .onAppear {
+            isInputFocused = true
+        }
         .task {
             await fetchComments()
         }
@@ -156,12 +169,14 @@ struct CommentSectionView: View {
             // Username + timestamp
             HStack(spacing: 6) {
                 if let username = comment.username {
-                    HStack(spacing: 2) {
-                        Text("@\(username)")
-                            .font(Theme.dmSans(12, weight: .medium))
-                            .foregroundStyle(Theme.textSecondary.opacity(0.7))
-                        if comment.isPlus {
-                            PlusBadge()
+                    NavigationLink(value: ProfileDestination(userId: comment.userId, username: username)) {
+                        HStack(spacing: 2) {
+                            Text("@\(username)")
+                                .font(Theme.dmSans(12, weight: .medium))
+                                .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                            if comment.isPlus {
+                                PlusBadge()
+                            }
                         }
                     }
                 }
@@ -241,6 +256,7 @@ struct CommentSectionView: View {
                     replyTo != nil ? "Reply..." : "Write a comment...",
                     text: $newComment
                 )
+                .focused($isInputFocused)
                 .font(Theme.caveat(18))
                 .foregroundStyle(Theme.textPrimary)
                 .autocorrectionDisabled()
@@ -387,6 +403,7 @@ struct CommentSectionView: View {
                 Haptics.success()
                 comments.append(withProfile)
                 count += 1
+                onCountChanged?(count)
                 newComment = ""
                 replyTo = nil
             } catch {
@@ -409,6 +426,7 @@ struct CommentSectionView: View {
                 Haptics.light()
                 comments.removeAll { $0.id == commentId }
                 count -= 1
+                onCountChanged?(count)
             } catch {
                 print("Delete comment error: \(error)")
             }
