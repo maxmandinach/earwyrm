@@ -17,17 +17,30 @@ final class ImageCache: @unchecked Sendable {
     }
 
     func set(_ image: UIImage, for url: URL) {
-        let cost = image.pngData()?.count ?? 0
+        // Estimate cost from cgImage dimensions instead of re-encoding as PNG
+        let cost: Int
+        if let cg = image.cgImage {
+            cost = cg.bytesPerRow * cg.height
+        } else {
+            cost = 1024 * 1024 // fallback 1MB estimate
+        }
         cache.setObject(image, forKey: url.absoluteString as NSString, cost: cost)
     }
 
     /// Download an image or return it from cache.
     func image(for url: URL) async -> UIImage? {
         if let cached = get(url) { return cached }
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
-              let image = UIImage(data: data) else { return nil }
-        set(image, for: url)
-        return image
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let image = UIImage(data: data) else { return nil }
+            set(image, for: url)
+            return image
+        } catch is CancellationError {
+            return nil
+        } catch {
+            print("ImageCache: download failed for \(url.lastPathComponent): \(error.localizedDescription)")
+            return nil
+        }
     }
 }
 

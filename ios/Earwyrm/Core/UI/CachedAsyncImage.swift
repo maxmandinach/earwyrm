@@ -9,7 +9,6 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let placeholder: () -> Placeholder
 
     @State private var uiImage: UIImage?
-    @State private var failed = false
 
     init(
         url: URL?,
@@ -19,6 +18,10 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         self.url = url
         self.content = content
         self.placeholder = placeholder
+        // Check cache synchronously so cached images render on first frame
+        if let url, let cached = ImageCache.shared.get(url) {
+            _uiImage = State(initialValue: cached)
+        }
     }
 
     var body: some View {
@@ -30,8 +33,8 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
             }
         }
         .task(id: url) {
-            uiImage = nil
-            failed = false
+            // Skip if already loaded (cache hit in init or previous load)
+            guard uiImage == nil else { return }
             await loadImage()
         }
     }
@@ -42,7 +45,9 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
             uiImage = cached
             return
         }
+        guard !Task.isCancelled else { return }
         if let image = await ImageCache.shared.image(for: url) {
+            guard !Task.isCancelled else { return }
             uiImage = image
         }
     }
@@ -58,12 +63,15 @@ struct CachedAsyncImagePhased<Content: View>: View {
     init(url: URL?, @ViewBuilder content: @escaping (AsyncImagePhase) -> Content) {
         self.url = url
         self.content = content
+        if let url, let cached = ImageCache.shared.get(url) {
+            _phase = State(initialValue: .success(Image(uiImage: cached)))
+        }
     }
 
     var body: some View {
         content(phase)
             .task(id: url) {
-                phase = .empty
+                guard case .empty = phase else { return }
                 await loadImage()
             }
     }
@@ -74,7 +82,9 @@ struct CachedAsyncImagePhased<Content: View>: View {
             phase = .success(Image(uiImage: cached))
             return
         }
+        guard !Task.isCancelled else { return }
         if let image = await ImageCache.shared.image(for: url) {
+            guard !Task.isCancelled else { return }
             phase = .success(Image(uiImage: image))
         } else {
             phase = .failure(URLError(.badServerResponse))
