@@ -10,7 +10,7 @@ struct CommentSectionView: View {
 
     @Environment(AuthGate.self) private var authGate
     @Environment(BlockManager.self) private var blockManager
-    @State private var isOpen = false
+    @State private var isOpen = true
     @State private var reportCommentId: UUID?
     @State private var comments: [CommentWithProfile] = []
     @State private var count: Int
