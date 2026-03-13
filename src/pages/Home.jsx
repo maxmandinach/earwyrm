@@ -298,79 +298,110 @@ function PastEarwyrms({ currentLyricId }) {
         past earwyrms
       </p>
       <div className="space-y-4">
-        {lyrics.map((lyric) => (
-          <div
-            key={lyric.id}
-            className="p-5"
-            style={{
-              backgroundColor: 'var(--surface-card, #F5F2ED)',
-              boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-              border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-            }}
-          >
-            <blockquote
-              className="leading-relaxed mb-3 line-clamp-4"
+        {lyrics.map((lyric) => {
+          const bgArt = lyric.card_art_url || lyric.cover_art_url
+          const hasArt = !!bgArt
+          return (
+            <div
+              key={lyric.id}
+              className="relative overflow-hidden p-5"
               style={{
-                fontFamily: theme.fontFamily,
-                fontSize: '1.3rem',
-                fontWeight: theme.fontWeight,
-                lineHeight: theme.lineHeight,
-                whiteSpace: 'pre-line',
+                backgroundColor: 'var(--surface-card, #F5F2ED)',
+                boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+                border: hasArt ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
               }}
             >
-              {lyric.content}
-            </blockquote>
+              {/* Art background */}
+              {hasArt && (
+                <>
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `url(${bgArt})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      opacity: lyric.card_art_url ? 0.7 : 0.12,
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: lyric.card_art_url
+                        ? 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5))'
+                        : 'none',
+                    }}
+                  />
+                </>
+              )}
 
-            {(lyric.song_title || lyric.artist_name) && (
-              <>
-                <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: 'var(--color-accent, #B8A99A)', opacity: 0.4 }} />
-                <div className="flex items-center gap-2">
-                  {lyric.cover_art_url && (
-                    <div
-                      className="w-8 h-8 flex-shrink-0 rounded"
-                      style={{
-                        backgroundImage: `url(${lyric.cover_art_url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                      }}
-                    />
+              {/* Content */}
+              <div className="relative">
+                <blockquote
+                  className="leading-relaxed mb-3 line-clamp-4"
+                  style={{
+                    fontFamily: theme.fontFamily,
+                    fontSize: '1.3rem',
+                    fontWeight: theme.fontWeight,
+                    lineHeight: theme.lineHeight,
+                    whiteSpace: 'pre-line',
+                    ...(lyric.card_art_url ? { color: '#FAF8F5' } : {}),
+                  }}
+                >
+                  {lyric.content}
+                </blockquote>
+
+                {(lyric.song_title || lyric.artist_name) && (
+                  <>
+                    <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)', opacity: lyric.card_art_url ? 1 : 0.4 }} />
+                    <div className="flex items-center gap-2">
+                      {lyric.cover_art_url && (
+                        <div
+                          className="w-8 h-8 flex-shrink-0 rounded"
+                          style={{
+                            backgroundImage: `url(${lyric.cover_art_url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+                          }}
+                        />
+                      )}
+                      <p className="text-xs italic truncate" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary, #6B635A)' }}>
+                        {lyric.song_title}
+                        {lyric.song_title && lyric.artist_name && ' — '}
+                        {lyric.artist_name}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {notes[lyric.id]?.content && (
+                  <div className="mt-3 pl-3" style={{ borderLeft: `2px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)'}` }}>
+                    <p className="text-xs italic line-clamp-2" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary, #6B635A)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+                      {notes[lyric.id].content}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: `1px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'}` }}>
+                  {lyric.created_at && (
+                    <span className="text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)', opacity: lyric.card_art_url ? 1 : 0.6 }}>
+                      {formatRelativeTime(lyric.created_at)}
+                    </span>
                   )}
-                  <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary, #6B635A)' }}>
-                    {lyric.song_title}
-                    {lyric.song_title && lyric.artist_name && ' — '}
-                    {lyric.artist_name}
-                  </p>
+                  {lyric.tags && lyric.tags.length > 0 && (
+                    <div className="flex gap-1.5 ml-auto">
+                      {lyric.tags.map((tag, i) => (
+                        <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs transition-colors" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--text-muted, #9C948A)', opacity: lyric.card_art_url ? 1 : 0.5 }}>
+                          #{tag}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </>
-            )}
-
-            {notes[lyric.id]?.content && (
-              <div className="mt-3 pl-3" style={{ borderLeft: '2px solid var(--color-accent, #B8A99A)', opacity: 0.6 }}>
-                <p className="text-xs italic line-clamp-2" style={{ color: 'var(--text-secondary, #6B635A)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-                  {notes[lyric.id].content}
-                </p>
               </div>
-            )}
-
-            <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
-              {lyric.created_at && (
-                <span className="text-xs" style={{ color: 'var(--text-muted, #9C948A)', opacity: 0.6 }}>
-                  {formatRelativeTime(lyric.created_at)}
-                </span>
-              )}
-              {lyric.tags && lyric.tags.length > 0 && (
-                <div className="flex gap-1.5 ml-auto">
-                  {lyric.tags.map((tag, i) => (
-                    <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
-                      #{tag}
-                    </Link>
-                  ))}
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -399,10 +430,10 @@ function AppDownloadNudge() {
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm" style={{ color: 'var(--text-primary, #2C2825)' }}>
-          Get AI art, sharing, and more
+          earwyrm for iOS
         </p>
         <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted, #9C948A)' }}>
-          The full earwyrm experience lives on iOS
+          Generate AI art, identify songs, and more
         </p>
       </div>
       <a

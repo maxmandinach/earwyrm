@@ -103,10 +103,15 @@ export default function LyricCard({
     color: 'var(--text-secondary, #6B635A)',
   }
 
+  // Art background for hero cards
+  const heroArt = hero ? (lyric.card_art_url || lyric.cover_art_url) : null
+  const hasHeroArt = !!heroArt
+  const isAiArt = hero && !!lyric.card_art_url
+
   // Card styling - clean surface with depth
   const cardStyle = {
     backgroundColor: 'var(--surface-card, #F5F2ED)',
-    color: 'var(--text-primary, #2C2825)',
+    color: hasHeroArt && isAiArt ? '#FAF8F5' : 'var(--text-primary, #2C2825)',
     fontFamily: theme.fontFamily,
     fontSize: compact ? '1.35rem' : hero ? 'clamp(1.4rem, 4vw, 1.8rem)' : theme.fontSize,
     fontWeight: theme.fontWeight,
@@ -139,10 +144,33 @@ export default function LyricCard({
         className={`w-full max-w-lg mx-auto relative ${compact ? 'p-4 sm:p-5' : hero ? 'p-7 sm:p-10 md:p-14' : 'p-5 sm:p-8 md:p-10'} ${highlighted ? 'notification-highlight' : ''} ${className}`}
         style={{
           ...cardStyle,
-          overflow: 'visible',
+          overflow: hasHeroArt ? 'hidden' : 'visible',
           ...(justSaved ? { transform: 'scale(1.01)', transition: 'transform 0.3s ease' } : {}),
         }}
       >
+        {/* Hero art background */}
+        {hasHeroArt && (
+          <>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${heroArt})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: isAiArt ? 0.75 : 0.12,
+              }}
+            />
+            {isAiArt && (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.45))',
+                }}
+              />
+            )}
+          </>
+        )}
+
         {isEditing ? (
           // Edit mode
           <>
@@ -218,7 +246,7 @@ export default function LyricCard({
           </>
         ) : (
           // View mode
-          <>
+          <div className="relative">
             <blockquote className={`leading-relaxed ${compact ? 'mb-3 line-clamp-3' : 'mb-4'}`} style={{ whiteSpace: 'pre-line' }}>
               {lyric.content}
             </blockquote>
@@ -230,8 +258,8 @@ export default function LyricCard({
                   className={compact ? 'w-12 mt-3 mb-2' : 'w-20 mt-5 mb-4'}
                   style={{
                     height: '1.5px',
-                    backgroundColor: 'var(--color-accent, #B8A99A)',
-                    opacity: 0.5
+                    backgroundColor: isAiArt ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)',
+                    opacity: isAiArt ? 1 : 0.5
                   }}
                 />
                 <div className="flex items-center gap-3">
@@ -252,7 +280,7 @@ export default function LyricCard({
                       fontFamily: "'DM Sans', system-ui, sans-serif",
                       fontSize: compact ? '0.8rem' : '0.875rem',
                       fontStyle: 'italic',
-                      color: 'var(--text-secondary, #6B635A)',
+                      color: isAiArt ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary, #6B635A)',
                     }}
                   >
                     {lyric.song_title && (
@@ -380,10 +408,11 @@ export default function LyricCard({
             {/* Full timestamp — non-compact only */}
             {!compact && showTimestamp && lyric.created_at && (
               <p
-                className="text-xs mt-5 opacity-40"
+                className="text-xs mt-5"
                 style={{
                   fontFamily: "'DM Sans', system-ui, sans-serif",
-                  color: 'var(--text-muted, #9C948A)',
+                  color: isAiArt ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)',
+                  opacity: isAiArt ? 1 : 0.4,
                 }}
               >
                 {formatRelativeTime(lyric.created_at)}
@@ -408,7 +437,7 @@ export default function LyricCard({
                 highlightRef={highlightRef}
               />
             )}
-          </>
+          </div>
         )}
       </div>
 
