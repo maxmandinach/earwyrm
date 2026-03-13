@@ -107,11 +107,13 @@ enum ShareTheme: String, CaseIterable {
 enum ShareEmphasis: String, CaseIterable {
     case lyricOnly
     case lyricAndNote
+    case artOnly
 
     var label: String {
         switch self {
         case .lyricOnly: "Lyric"
         case .lyricAndNote: "Lyric + Note"
+        case .artOnly: "Art Only"
         }
     }
 }
@@ -164,7 +166,7 @@ struct ShareImageView: View {
         let secondaryText: String?
 
         switch emphasis {
-        case .lyricOnly:
+        case .lyricOnly, .artOnly:
             heroText = content
             secondaryText = nil
         case .lyricAndNote:
@@ -237,19 +239,21 @@ struct ShareImageView: View {
                 .aspectRatio(contentMode: .fill)
                 .frame(width: size.width, height: size.height)
                 .clipped()
-                .opacity(0.8)
+                .opacity(emphasis == .artOnly ? 0.95 : 0.8)
 
-            // Gradient overlay for text legibility — lighter at top to let art show
-            LinearGradient(
-                colors: [
-                    theme.background.opacity(0.05),
-                    theme.background.opacity(0.2),
-                    theme.background.opacity(0.55),
-                    theme.background.opacity(0.8)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Gradient overlay for text legibility — skip for artOnly (it handles its own)
+            if emphasis != .artOnly {
+                LinearGradient(
+                    colors: [
+                        theme.background.opacity(0.05),
+                        theme.background.opacity(0.2),
+                        theme.background.opacity(0.55),
+                        theme.background.opacity(0.8)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
 
             cardContent()
         }
@@ -259,39 +263,84 @@ struct ShareImageView: View {
 
     @ViewBuilder
     private func cardContent() -> some View {
-        let fit = fitResult
+        if emphasis == .artOnly {
+            artOnlyContent()
+        } else {
+            let fit = fitResult
+
+            ZStack(alignment: .bottom) {
+                // Main content — top-aligned, stops above footer
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(
+                            minHeight: emphasis == .lyricAndNote
+                                ? (format == .story ? 200 : 60)
+                                : (format == .story ? 480 : 120),
+                            maxHeight: emphasis == .lyricAndNote
+                                ? (format == .story ? 380 : 120)
+                                : (format == .story ? 680 : 240)
+                        )
+
+                    switch emphasis {
+                    case .lyricOnly:
+                        lyricOnlyContent(fit: fit)
+                    case .lyricAndNote:
+                        lyricAndNoteContent(fit: fit)
+                    case .artOnly:
+                        EmptyView()
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, marginX)
+                .padding(.bottom, footerHeight)
+
+                // Footer — always visible at bottom
+                VStack(spacing: 0) {
+                    footerBrand()
+
+                    Spacer()
+                        .frame(height: format == .story ? 80 : 56)
+                }
+                .padding(.horizontal, marginX)
+            }
+        }
+    }
+
+    // MARK: - Art Only (just the art + minimal attribution at bottom)
+
+    @ViewBuilder
+    private func artOnlyContent() -> some View {
+        let bottomPad: CGFloat = format == .story ? 80 : 56
 
         ZStack(alignment: .bottom) {
-            // Main content — top-aligned, stops above footer
-            VStack(spacing: 0) {
+            // Very subtle gradient only at the very bottom for attribution legibility
+            VStack {
                 Spacer()
-                    .frame(
-                        minHeight: emphasis == .lyricAndNote
-                            ? (format == .story ? 200 : 60)
-                            : (format == .story ? 480 : 120),
-                        maxHeight: emphasis == .lyricAndNote
-                            ? (format == .story ? 380 : 120)
-                            : (format == .story ? 680 : 240)
-                    )
-
-                switch emphasis {
-                case .lyricOnly:
-                    lyricOnlyContent(fit: fit)
-                case .lyricAndNote:
-                    lyricAndNoteContent(fit: fit)
-                }
-
-                Spacer()
+                LinearGradient(
+                    colors: [
+                        Color.clear,
+                        theme.background.opacity(0.4),
+                        theme.background.opacity(0.7)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: size.height * 0.25)
             }
-            .padding(.horizontal, marginX)
-            .padding(.bottom, footerHeight)
 
-            // Footer — always visible at bottom
             VStack(spacing: 0) {
+                // Attribution row
+                attributionRow(textColor: theme.secondary)
+
+                Spacer()
+                    .frame(height: 20)
+
+                // Username + brand
                 footerBrand()
 
                 Spacer()
-                    .frame(height: format == .story ? 80 : 56)
+                    .frame(height: bottomPad)
             }
             .padding(.horizontal, marginX)
         }

@@ -119,19 +119,20 @@ struct ShareModalView: View {
                                 .overlay(Circle().strokeBorder(Theme.dividerColor, lineWidth: 1))
                         }
 
-                        // Emphasis: note toggle (only when note exists)
-                        if noteText != nil {
+                        // Emphasis: cycle through options
+                        if noteText != nil || artVM.hasAIArt {
                             Button {
-                                renderer.emphasis = renderer.emphasis == .lyricOnly ? .lyricAndNote : .lyricOnly
+                                renderer.emphasis = nextEmphasis()
                                 rerender()
                             } label: {
-                                Image(systemName: renderer.emphasis == .lyricAndNote ? "note.text" : "text.quote")
+                                let isAccented = renderer.emphasis != .lyricOnly
+                                Image(systemName: emphasisIcon())
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(renderer.emphasis == .lyricAndNote ? Theme.accent : Theme.textSecondary)
+                                    .foregroundStyle(isAccented ? Theme.accent : Theme.textSecondary)
                                     .frame(width: 34, height: 34)
-                                    .background(renderer.emphasis == .lyricAndNote ? Theme.accent.opacity(0.12) : Theme.card)
+                                    .background(isAccented ? Theme.accent.opacity(0.12) : Theme.card)
                                     .clipShape(Circle())
-                                    .overlay(Circle().strokeBorder(renderer.emphasis == .lyricAndNote ? Theme.accent.opacity(0.3) : Theme.dividerColor, lineWidth: 1))
+                                    .overlay(Circle().strokeBorder(isAccented ? Theme.accent.opacity(0.3) : Theme.dividerColor, lineWidth: 1))
                             }
                         }
                     }
@@ -310,10 +311,39 @@ struct ShareModalView: View {
             .foregroundStyle(Theme.textMuted)
     }
 
+    // MARK: - Emphasis Cycling
+
+    private func nextEmphasis() -> ShareEmphasis {
+        switch renderer.emphasis {
+        case .lyricOnly:
+            if noteText != nil { return .lyricAndNote }
+            if artVM.hasAIArt { return .artOnly }
+            return .lyricOnly
+        case .lyricAndNote:
+            if artVM.hasAIArt { return .artOnly }
+            return .lyricOnly
+        case .artOnly:
+            return .lyricOnly
+        }
+    }
+
+    private func emphasisIcon() -> String {
+        switch renderer.emphasis {
+        case .lyricOnly: return "text.quote"
+        case .lyricAndNote: return "note.text"
+        case .artOnly: return "photo"
+        }
+    }
+
     // MARK: - Actions
 
     private func rerender() {
-        renderer.style = rendererStyle
+        // Art Only requires AI art style
+        if renderer.emphasis == .artOnly && artVM.hasAIArt {
+            renderer.style = .aiArt
+        } else {
+            renderer.style = rendererStyle
+        }
         renderer.render(lyric: lyric, note: noteText, username: username, isPlus: subscriptionManager.isPlus, aiArtImage: artVM.aiArtImage)
     }
 
