@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLyric } from '../contexts/LyricContext'
 import { useFollow } from '../contexts/FollowContext'
@@ -9,7 +9,8 @@ import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import IdentifySongModal from '../components/IdentifySongModal'
 import OnboardingFlow from '../components/OnboardingFlow'
-import { getRandomPrompt } from '../lib/utils'
+import { getRandomPrompt, formatRelativeTime } from '../lib/utils'
+import { signatureStyle } from '../lib/themes'
 import { supabase } from '../lib/supabase-wrapper'
 
 function CompactPostPrompt() {
@@ -228,6 +229,205 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed, p
   )
 }
 
+// ── Past Earwyrms Feed ──
+function PastEarwyrms({ currentLyricId }) {
+  const { user } = useAuth()
+  const [lyrics, setLyrics] = useState([])
+  const [notes, setNotes] = useState({})
+  const [loading, setLoading] = useState(true)
+  const theme = signatureStyle
+
+  useEffect(() => {
+    async function fetchHistory() {
+      if (!user) return
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('lyrics')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_saved', false)
+          .order('created_at', { ascending: false })
+
+        if (error) { setLyrics([]); return }
+        const realLyrics = (data || []).filter(l => l.id !== currentLyricId)
+        setLyrics(realLyrics)
+
+        if (realLyrics.length > 0) {
+          const { data: notesData } = await supabase
+            .from('lyric_notes')
+            .select('*')
+            .eq('user_id', user.id)
+          if (notesData) {
+            const notesMap = {}
+            notesData.forEach(note => { notesMap[note.lyric_id] = note })
+            setNotes(notesMap)
+          }
+        }
+      } catch {
+        setLyrics([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [user, currentLyricId])
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-lg mx-auto space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="p-5" style={{ backgroundColor: 'var(--surface-card, #F5F2ED)', border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
+            <div className="skeleton h-5 w-full mb-2" />
+            <div className="skeleton h-5 w-3/4 mb-2" />
+            <div className="skeleton h-3 w-32 mt-4" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (lyrics.length === 0) return null
+
+  return (
+    <div className="w-full max-w-lg mx-auto">
+      <p
+        className="text-sm text-charcoal/30 mb-4"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem' }}
+      >
+        past earwyrms
+      </p>
+      <div className="space-y-4">
+        {lyrics.map((lyric) => (
+          <div
+            key={lyric.id}
+            className="p-5"
+            style={{
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+              border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+            }}
+          >
+            <blockquote
+              className="leading-relaxed mb-3 line-clamp-4"
+              style={{
+                fontFamily: theme.fontFamily,
+                fontSize: '1.3rem',
+                fontWeight: theme.fontWeight,
+                lineHeight: theme.lineHeight,
+                whiteSpace: 'pre-line',
+              }}
+            >
+              {lyric.content}
+            </blockquote>
+
+            {(lyric.song_title || lyric.artist_name) && (
+              <>
+                <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: 'var(--color-accent, #B8A99A)', opacity: 0.4 }} />
+                <div className="flex items-center gap-2">
+                  {lyric.cover_art_url && (
+                    <div
+                      className="w-8 h-8 flex-shrink-0 rounded"
+                      style={{
+                        backgroundImage: `url(${lyric.cover_art_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                  )}
+                  <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary, #6B635A)' }}>
+                    {lyric.song_title}
+                    {lyric.song_title && lyric.artist_name && ' — '}
+                    {lyric.artist_name}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {notes[lyric.id]?.content && (
+              <div className="mt-3 pl-3" style={{ borderLeft: '2px solid var(--color-accent, #B8A99A)', opacity: 0.6 }}>
+                <p className="text-xs italic line-clamp-2" style={{ color: 'var(--text-secondary, #6B635A)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+                  {notes[lyric.id].content}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
+              {lyric.created_at && (
+                <span className="text-xs" style={{ color: 'var(--text-muted, #9C948A)', opacity: 0.6 }}>
+                  {formatRelativeTime(lyric.created_at)}
+                </span>
+              )}
+              {lyric.tags && lyric.tags.length > 0 && (
+                <div className="flex gap-1.5 ml-auto">
+                  {lyric.tags.map((tag, i) => (
+                    <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
+                      #{tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── App Download Nudge ──
+function AppDownloadNudge() {
+  const [dismissed, setDismissed] = useState(() => {
+    return localStorage.getItem('earwyrm-app-nudge-dismissed') === 'true'
+  })
+
+  if (dismissed) return null
+
+  const handleDismiss = () => {
+    setDismissed(true)
+    localStorage.setItem('earwyrm-app-nudge-dismissed', 'true')
+  }
+
+  return (
+    <div
+      className="w-full max-w-lg mx-auto p-4 flex items-center gap-4"
+      style={{
+        backgroundColor: 'var(--surface-card, #F5F2ED)',
+        border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+      }}
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm" style={{ color: 'var(--text-primary, #2C2825)' }}>
+          Get AI art, sharing, and more
+        </p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted, #9C948A)' }}>
+          The full earwyrm experience lives on iOS
+        </p>
+      </div>
+      <a
+        href="https://apps.apple.com/app/earwyrm/id000000000"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+        style={{
+          backgroundColor: 'var(--color-accent, #B8A99A)',
+          color: 'white',
+          borderRadius: '6px',
+        }}
+      >
+        Get the app
+      </a>
+      <button
+        onClick={handleDismiss}
+        className="flex-shrink-0 text-charcoal/20 hover:text-charcoal/40 transition-colors text-sm leading-none"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
 export default function Home() {
   const { profile } = useAuth()
   const { currentLyric, loading, setLyric, replaceLyric, setVisibility, saveNote } = useLyric()
@@ -332,9 +532,9 @@ export default function Home() {
     setReplacePrefill(prefillData)
   }
 
-  // Home view — always show feed sections, with or without a current lyric
+  // Home view — hero card + past earwyrms feed
   return (
-    <div className="flex-1 flex flex-col items-center px-4 py-8 space-y-10">
+    <div className="flex-1 flex flex-col items-center px-4 py-8 space-y-8">
       {currentLyric ? (
         <LyricView
           lyric={currentLyric}
@@ -357,6 +557,10 @@ export default function Home() {
           <EmptyState onSetLyric={setLyric} revealed={revealed} />
         </div>
       )}
+
+      <AppDownloadNudge />
+
+      <PastEarwyrms currentLyricId={currentLyric?.id} />
 
       {showIdentifyModal && (
         <IdentifySongModal
