@@ -9,7 +9,7 @@ import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import IdentifySongModal from '../components/IdentifySongModal'
 import OnboardingFlow from '../components/OnboardingFlow'
-import { getRandomPrompt, formatRelativeTime } from '../lib/utils'
+import { getRandomPrompt, formatRelativeTime, getDevicePlatform, STORE_URLS } from '../lib/utils'
 import { signatureStyle } from '../lib/themes'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -430,6 +430,7 @@ function AppDownloadNudge() {
   const [dismissed, setDismissed] = useState(() => {
     return localStorage.getItem('earwyrm-app-nudge-dismissed') === 'true'
   })
+  const platform = getDevicePlatform()
 
   if (dismissed) return null
 
@@ -437,6 +438,9 @@ function AppDownloadNudge() {
     setDismissed(true)
     localStorage.setItem('earwyrm-app-nudge-dismissed', 'true')
   }
+
+  const storeUrl = platform === 'android' ? STORE_URLS.android : STORE_URLS.ios
+  const storeName = platform === 'android' ? 'Google Play' : 'App Store'
 
   return (
     <div
@@ -448,25 +452,32 @@ function AppDownloadNudge() {
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm" style={{ color: 'var(--text-primary, #2C2825)' }}>
-          earwyrm for iOS
+          earwyrm for {platform === 'android' ? 'Android' : platform === 'ios' ? 'iPhone' : 'mobile'}
         </p>
         <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted, #9C948A)' }}>
           Generate AI art, identify songs, and more
         </p>
       </div>
-      <a
-        href="https://apps.apple.com/app/earwyrm/id000000000"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
-        style={{
-          backgroundColor: 'var(--color-accent, #B8A99A)',
-          color: 'white',
-          borderRadius: '6px',
-        }}
-      >
-        Get the app
-      </a>
+      {platform === 'desktop' ? (
+        <div className="flex-shrink-0 flex gap-2">
+          <a href={STORE_URLS.ios} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1.5 text-xs font-medium transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--color-accent, #B8A99A)', color: 'white', borderRadius: '6px' }}>
+            iOS
+          </a>
+          <a href={STORE_URLS.android} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1.5 text-xs font-medium transition-opacity hover:opacity-80" style={{ backgroundColor: 'var(--color-accent, #B8A99A)', color: 'white', borderRadius: '6px' }}>
+            Android
+          </a>
+        </div>
+      ) : (
+        <a
+          href={storeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
+          style={{ backgroundColor: 'var(--color-accent, #B8A99A)', color: 'white', borderRadius: '6px' }}
+        >
+          {storeName}
+        </a>
+      )}
       <button
         onClick={handleDismiss}
         className="flex-shrink-0 text-charcoal/20 hover:text-charcoal/40 transition-colors text-sm leading-none"

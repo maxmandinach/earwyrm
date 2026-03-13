@@ -88,3 +88,20 @@ export function normalizeLyricText(text) {
     .replace(/\s+/g, ' ')
     .trim()
 }
+
+/**
+ * Detect user's device platform from user agent
+ */
+export function getDevicePlatform() {
+  if (typeof navigator === 'undefined') return 'unknown'
+  const ua = navigator.userAgent || ''
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios'
+  if (/Android/i.test(ua)) return 'android'
+  return 'desktop'
+}
+
+// Placeholder store URLs — update when live
+export const STORE_URLS = {
+  ios: 'https://apps.apple.com/app/earwyrm/id000000000',
+  android: 'https://play.google.com/store/apps/details?id=app.earwyrm',
+}

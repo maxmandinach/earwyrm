@@ -3,24 +3,11 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase-wrapper'
 import { signatureStyle } from '../lib/themes'
 import { applyColorScheme } from '../lib/paperTexture'
+import { getDevicePlatform, STORE_URLS } from '../lib/utils'
 import PlusBadge from '../components/PlusBadge'
 
 const CYCLE_INTERVAL = 5000
 const FADE_DURATION = 500
-
-function getDevicePlatform() {
-  if (typeof navigator === 'undefined') return 'unknown'
-  const ua = navigator.userAgent || ''
-  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios'
-  if (/Android/i.test(ua)) return 'android'
-  return 'desktop'
-}
-
-// Placeholder store URLs — update when live
-const STORE_URLS = {
-  ios: 'https://apps.apple.com/app/earwyrm/id000000000',
-  android: 'https://play.google.com/store/apps/details?id=app.earwyrm',
-}
 
 // Reusable store badge
 function StoreBadge({ platform: p, size = 'default' }) {
