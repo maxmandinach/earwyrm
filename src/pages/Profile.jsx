@@ -123,11 +123,7 @@ function LyricsTab() {
     )
   }
 
-  const pastLyrics = currentLyric
-    ? lyrics.filter(l => l.id !== currentLyric.id)
-    : lyrics
-
-  if (pastLyrics.length === 0) {
+  if (lyrics.length === 0) {
     return (
       <div className="text-center py-16">
         <p className="text-charcoal/40 mb-2" style={{ fontFamily: "'Caveat', cursive", fontSize: '1.2rem' }}>
@@ -142,75 +138,140 @@ function LyricsTab() {
 
   return (
     <div className="space-y-4">
-      {pastLyrics.map((lyric) => (
-        <div
-          key={lyric.id}
-          className="p-5"
-          style={{
-            backgroundColor: 'var(--surface-card, #F5F2ED)',
-            boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-            border: '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-          }}
-        >
-          <blockquote
-            className="leading-relaxed mb-3 line-clamp-4"
+      {lyrics.map((lyric) => {
+        const isCurrent = currentLyric && lyric.id === currentLyric.id
+        const bgArt = lyric.card_art_url || lyric.cover_art_url
+        const hasArt = !!bgArt
+        const isAiArt = !!lyric.card_art_url
+        return (
+          <div
+            key={lyric.id}
+            className="relative overflow-hidden p-5"
             style={{
-              fontFamily: theme.fontFamily,
-              fontSize: '1.3rem',
-              fontWeight: theme.fontWeight,
-              lineHeight: theme.lineHeight,
-              whiteSpace: 'pre-line',
+              backgroundColor: 'var(--surface-card, #F5F2ED)',
+              boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+              border: hasArt ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
             }}
           >
-            {lyric.content}
-          </blockquote>
-
-          {(lyric.song_title || lyric.artist_name) && (
-            <>
-              <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: 'var(--color-accent, #B8A99A)', opacity: 0.4 }} />
-              <div className="flex items-center gap-2">
-                {lyric.cover_art_url && (
+            {/* Art background */}
+            {hasArt && (
+              <>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${bgArt})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: isAiArt ? 0.7 : 0.12,
+                  }}
+                />
+                {isAiArt && (
                   <div
-                    className="w-8 h-8 flex-shrink-0 rounded"
-                    style={{
-                      backgroundImage: `url(${lyric.cover_art_url})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    }}
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5))' }}
                   />
                 )}
-                <p className="text-xs text-charcoal/40 italic truncate">
-                  {lyric.song_title}
-                  {lyric.song_title && lyric.artist_name && ' — '}
-                  {lyric.artist_name}
-                </p>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle, rgba(0,0,0,0.06))' }}>
-            {lyric.created_at && (
-              <span className="text-xs text-charcoal/25">
-                {formatRelativeTime(lyric.created_at)}
-              </span>
-            )}
-            {lyric.tags && lyric.tags.length > 0 && (
-              <div className="flex gap-1.5 ml-auto">
-                {lyric.tags.map((tag, i) => (
-                  <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
-                    #{tag}
-                  </Link>
-                ))}
+            {/* Content */}
+            <div className="relative">
+              {isCurrent && (
+                <span
+                  className="inline-block text-xs font-medium uppercase tracking-wider px-2 py-0.5 mb-3"
+                  style={{
+                    backgroundColor: isAiArt ? 'rgba(255,255,255,0.15)' : 'var(--color-accent, #B8A99A)',
+                    color: isAiArt ? 'rgba(255,255,255,0.8)' : 'white',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.1em',
+                  }}
+                >
+                  current
+                </span>
+              )}
+
+              <blockquote
+                className="leading-relaxed mb-3 line-clamp-4"
+                style={{
+                  fontFamily: theme.fontFamily,
+                  fontSize: '1.3rem',
+                  fontWeight: theme.fontWeight,
+                  lineHeight: theme.lineHeight,
+                  whiteSpace: 'pre-line',
+                  ...(isAiArt ? { color: '#FAF8F5' } : {}),
+                }}
+              >
+                {lyric.content}
+              </blockquote>
+
+              {(lyric.song_title || lyric.artist_name) && (
+                <>
+                  <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: isAiArt ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)', opacity: isAiArt ? 1 : 0.4 }} />
+                  <div className="flex items-center gap-2">
+                    {lyric.cover_art_url && (
+                      <div
+                        className="w-8 h-8 flex-shrink-0 rounded"
+                        style={{
+                          backgroundImage: `url(${lyric.cover_art_url})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+                        }}
+                      />
+                    )}
+                    <p className="text-xs italic truncate" style={{ color: isAiArt ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary, #6B635A)' }}>
+                      {lyric.song_title}
+                      {lyric.song_title && lyric.artist_name && ' — '}
+                      {lyric.artist_name}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: `1px solid ${isAiArt ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'}` }}>
+                {(lyric.reaction_count || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-xs" style={{ color: isAiArt ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+                      {[{ x: 4, h: 6 }, { x: 8, h: 10 }, { x: 12, h: 14 }, { x: 16, h: 10 }, { x: 20, h: 6 }].map((bar, i) => (
+                        <line key={i} x1={bar.x} y1={12 - bar.h / 2} x2={bar.x} y2={12 + bar.h / 2} stroke="currentColor" strokeWidth="2" />
+                      ))}
+                    </svg>
+                    {lyric.reaction_count}
+                  </span>
+                )}
+                {(lyric.comment_count || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-xs" style={{ color: isAiArt ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    {lyric.comment_count}
+                  </span>
+                )}
+                {lyric.created_at && (
+                  <span className="text-xs" style={{ color: isAiArt ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)', opacity: isAiArt ? 1 : 0.6 }}>
+                    {formatRelativeTime(lyric.created_at)}
+                  </span>
+                )}
+                {lyric.tags && lyric.tags.length > 0 && (
+                  <div className="flex gap-1.5 ml-auto">
+                    {lyric.tags.map((tag, i) => (
+                      <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs transition-colors" style={{ color: isAiArt ? 'rgba(255,255,255,0.3)' : 'var(--text-muted, #9C948A)', opacity: isAiArt ? 1 : 0.5 }}>
+                        #{tag}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+
+              {notes[lyric.id] && (
+                <div className="mt-4">
+                  <NoteEditor lyricId={lyric.id} initialNote={notes[lyric.id]} className="" />
+                </div>
+              )}
+            </div>
           </div>
-
-          {notes[lyric.id] && (
-            <NoteEditor lyricId={lyric.id} initialNote={notes[lyric.id]} className="mt-4" />
-          )}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

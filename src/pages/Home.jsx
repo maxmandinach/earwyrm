@@ -382,7 +382,25 @@ function PastEarwyrms({ currentLyricId }) {
                   </div>
                 )}
 
-                <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: `1px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'}` }}>
+                <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: `1px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'}` }}>
+                  {(lyric.reaction_count || 0) > 0 && (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+                        {[{ x: 4, h: 6 }, { x: 8, h: 10 }, { x: 12, h: 14 }, { x: 16, h: 10 }, { x: 20, h: 6 }].map((bar, i) => (
+                          <line key={i} x1={bar.x} y1={12 - bar.h / 2} x2={bar.x} y2={12 + bar.h / 2} stroke="currentColor" strokeWidth="2" />
+                        ))}
+                      </svg>
+                      {lyric.reaction_count}
+                    </span>
+                  )}
+                  {(lyric.comment_count || 0) > 0 && (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                      </svg>
+                      {lyric.comment_count}
+                    </span>
+                  )}
                   {lyric.created_at && (
                     <span className="text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)', opacity: lyric.card_art_url ? 1 : 0.6 }}>
                       {formatRelativeTime(lyric.created_at)}
