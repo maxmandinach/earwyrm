@@ -239,12 +239,13 @@ struct ShareImageView: View {
                 .clipped()
                 .opacity(0.8)
 
-            // Gradient overlay for text legibility
+            // Gradient overlay for text legibility — lighter at top to let art show
             LinearGradient(
                 colors: [
-                    theme.background.opacity(0.3),
-                    theme.background.opacity(0.6),
-                    theme.background.opacity(0.85)
+                    theme.background.opacity(0.05),
+                    theme.background.opacity(0.2),
+                    theme.background.opacity(0.55),
+                    theme.background.opacity(0.8)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -266,11 +267,11 @@ struct ShareImageView: View {
                 Spacer()
                     .frame(
                         minHeight: emphasis == .lyricAndNote
-                            ? (format == .story ? 120 : 60)
-                            : (format == .story ? 240 : 120),
+                            ? (format == .story ? 200 : 60)
+                            : (format == .story ? 480 : 120),
                         maxHeight: emphasis == .lyricAndNote
-                            ? (format == .story ? 240 : 120)
-                            : (format == .story ? 440 : 240)
+                            ? (format == .story ? 380 : 120)
+                            : (format == .story ? 680 : 240)
                     )
 
                 switch emphasis {

@@ -29,7 +29,7 @@ enum ShareTextFitter {
     private static func chromeHeight(for format: ShareFormat) -> CGFloat {
         switch format {
         case .square: return 380
-        case .story: return 570
+        case .story: return 780
         }
     }
 
@@ -43,7 +43,7 @@ enum ShareTextFitter {
     private static func maxFont(for format: ShareFormat) -> CGFloat {
         switch format {
         case .square: return 80
-        case .story: return 96
+        case .story: return 80
         }
     }
 
