@@ -9,10 +9,6 @@ import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
 import IdentifySongModal from '../components/IdentifySongModal'
 import OnboardingFlow from '../components/OnboardingFlow'
-import TrendingSection from '../components/TrendingSection'
-import FollowFeed from '../components/FollowFeed'
-import MemoryLaneCarousel from '../components/MemoryLaneCarousel'
-import CollectionsCarousel from '../components/CollectionsCarousel'
 import { getRandomPrompt } from '../lib/utils'
 import { supabase } from '../lib/supabase-wrapper'
 
@@ -361,26 +357,6 @@ export default function Home() {
           <EmptyState onSetLyric={setLyric} revealed={revealed} />
         </div>
       )}
-
-      {/* Hub sections - staggered cascade after hero */}
-      {[
-        { key: 'follows', delay: 600, component: <FollowFeed /> },
-        { key: 'trending', delay: 800, component: <TrendingSection /> },
-        { key: 'memory', delay: 1000, component: <MemoryLaneCarousel /> },
-        { key: 'collections', delay: 1200, component: <CollectionsCarousel /> },
-      ].map(({ key, delay, component }) => (
-        <div
-          key={key}
-          className="w-full transition-all duration-700 ease-out"
-          style={{
-            opacity: revealed ? 1 : 0,
-            transform: revealed ? 'translateY(0)' : 'translateY(12px)',
-            transitionDelay: `${delay}ms`,
-          }}
-        >
-          {component}
-        </div>
-      ))}
 
       {showIdentifyModal && (
         <IdentifySongModal

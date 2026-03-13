@@ -1,36 +1,16 @@
-import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import SearchBar from './SearchBar'
 import ActivityDropdown from './ActivityDropdown'
-import IdentifySongModal from './IdentifySongModal'
 
 export default function Layout() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const location = useLocation()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [showIdentifyModal, setShowIdentifyModal] = useState(false)
-  const menuRef = useRef(null)
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsMenuOpen(false)
-      }
-    }
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isMenuOpen])
-
-  // Close menu when navigating
-  useEffect(() => {
-    setIsMenuOpen(false)
-  }, [location.pathname])
+  function isActive(path) {
+    return location.pathname.startsWith(path)
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,7 +24,7 @@ export default function Layout() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {/* Global search - available to all users */}
+          {/* Global search */}
           <SearchBar />
 
           {/* Anonymous header links */}
@@ -65,102 +45,35 @@ export default function Layout() {
             </div>
           )}
 
+          {/* Logged-in nav */}
           {user && !isAuthPage && (
-            <>
-              <ActivityDropdown />
-              <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-3 text-charcoal/40 hover:text-charcoal transition-colors"
-                aria-label="Menu"
+            <div className="flex items-center gap-1">
+              <Link
+                to="/home"
+                className={`px-3 py-2 text-sm transition-colors ${
+                  isActive('/home') ? 'text-charcoal/70' : 'text-charcoal/30 hover:text-charcoal/50'
+                }`}
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="3" y1="5" x2="17" y2="5" />
-                  <line x1="3" y1="10" x2="17" y2="10" />
-                  <line x1="3" y1="15" x2="17" y2="15" />
-                </svg>
-              </button>
-
-              {isMenuOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50"
-                  style={{
-                    backgroundColor: 'var(--surface-elevated, #FAF8F5)',
-                    border: '1px solid var(--border-medium, rgba(0,0,0,0.1))',
-                  }}
-                >
-                  <nav className="py-2">
-                    {/* Your artifact */}
-                    <Link
-                      to="/home"
-                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      home
-                    </Link>
-
-                    <div className="my-1 border-t border-charcoal/10" />
-
-                    {/* Discover */}
-                    <Link
-                      to="/explore"
-                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      explore
-                    </Link>
-
-                    <div className="my-1 border-t border-charcoal/10" />
-
-                    {/* Your archive */}
-                    <Link
-                      to="/history"
-                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      memory lane
-                    </Link>
-                    <Link
-                      to="/collections"
-                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      collections
-                    </Link>
-
-                    <div className="my-1 border-t border-charcoal/10" />
-
-                    <button
-                      onClick={() => { setShowIdentifyModal(true); setIsMenuOpen(false) }}
-                      className="w-full text-left px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      name that tune
-                    </button>
-
-                    <div className="my-1 border-t border-charcoal/10" />
-
-                    {/* Meta */}
-                    <Link
-                      to="/settings"
-                      className="block px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      settings
-                    </Link>
-                    <button
-                      onClick={signOut}
-                      className="w-full text-left px-4 py-2.5 text-base sm:text-sm text-charcoal/40 hover:text-charcoal hover:bg-charcoal/5 transition-colors"
-                    >
-                      sign out
-                    </button>
-                  </nav>
-                </div>
-              )}
-              </div>
-            </>
+                home
+              </Link>
+              <Link
+                to="/explore"
+                className={`px-3 py-2 text-sm transition-colors ${
+                  isActive('/explore') ? 'text-charcoal/70' : 'text-charcoal/30 hover:text-charcoal/50'
+                }`}
+              >
+                explore
+              </Link>
+              <Link
+                to="/profile"
+                className={`px-3 py-2 text-sm transition-colors ${
+                  isActive('/profile') ? 'text-charcoal/70' : 'text-charcoal/30 hover:text-charcoal/50'
+                }`}
+              >
+                profile
+              </Link>
+              <ActivityDropdown />
+            </div>
           )}
         </div>
       </header>
@@ -186,17 +99,6 @@ export default function Layout() {
           </a>
         </div>
       </footer>
-
-      {showIdentifyModal && (
-        <IdentifySongModal
-          onClose={() => setShowIdentifyModal(false)}
-          onSaveAsEarwyrm={(prefill) => {
-            setShowIdentifyModal(false)
-            // Navigate to home where the replace modal will open with pre-filled data
-            window.dispatchEvent(new CustomEvent('earwyrm:identify-save', { detail: prefill }))
-          }}
-        />
-      )}
     </div>
   )
 }

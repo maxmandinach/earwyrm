@@ -9,13 +9,12 @@ import LoadingScreen from './components/LoadingScreen'
 // Lazy-loaded routes
 const Login = lazy(() => import('./pages/Login'))
 const Signup = lazy(() => import('./pages/Signup'))
-const History = lazy(() => import('./pages/History'))
-const Settings = lazy(() => import('./pages/Settings'))
+const Profile = lazy(() => import('./pages/Profile'))
 const PublicProfile = lazy(() => import('./pages/PublicProfile'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const SharedLyric = lazy(() => import('./pages/SharedLyric'))
-const Collections = lazy(() => import('./pages/Collections'))
+const Collections = lazy(() => import('./pages/Collections')) // kept for redirect
 const CollectionDetail = lazy(() => import('./pages/CollectionDetail'))
 const Explore = lazy(() => import('./pages/Explore'))
 const ArtistPage = lazy(() => import('./pages/ArtistPage'))
@@ -105,30 +104,18 @@ export default function App() {
           }
         />
         <Route
-          path="history"
+          path="profile"
           element={
             <ProtectedRoute>
-              <History />
+              <Profile />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="collections"
-          element={
-            <ProtectedRoute>
-              <Collections />
-            </ProtectedRoute>
-          }
-        />
+        {/* Redirects from old standalone pages to profile tabs */}
+        <Route path="history" element={<Navigate to="/profile?tab=lyrics" replace />} />
+        <Route path="collections" element={<Navigate to="/profile?tab=collections" replace />} />
+        <Route path="settings" element={<Navigate to="/profile?tab=settings" replace />} />
         <Route path="collections/:id" element={<CollectionDetail />} />
-        <Route
-          path="settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="activity"
           element={
