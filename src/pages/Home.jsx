@@ -7,6 +7,9 @@ import LyricCard from '../components/LyricCard'
 import LyricForm from '../components/LyricForm'
 import ReplaceModal from '../components/ReplaceModal'
 import ShareModal from '../components/ShareModal'
+import CardActionBar from '../components/CardActionBar'
+import CommentSection from '../components/CommentSection'
+import NoteEditor from '../components/NoteEditor'
 import IdentifySongModal from '../components/IdentifySongModal'
 import OnboardingFlow from '../components/OnboardingFlow'
 import { getRandomPrompt, formatRelativeTime, getDevicePlatform, STORE_URLS } from '../lib/utils'
@@ -229,13 +232,203 @@ function LyricView({ lyric, onUpdate, onReplace, onVisibilityChange, revealed, p
   )
 }
 
+// ── Past Earwyrm Card (expandable) ──
+function PastEarwyrmCard({ lyric, note, isExpanded, onToggle, profile }) {
+  const theme = signatureStyle
+  const bgArt = lyric.card_art_url || lyric.cover_art_url
+  const hasArt = !!bgArt
+  const isAiArt = !!lyric.card_art_url
+  const textColor = isAiArt ? '#FAF8F5' : undefined
+  const mutedColor = isAiArt ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)'
+  const secColor = isAiArt ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary, #6B635A)'
+  const ruleColor = isAiArt ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)'
+  const borderColor = isAiArt ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'
+
+  const [showComments, setShowComments] = useState(false)
+  const [commentCount, setCommentCount] = useState(lyric.comment_count || 0)
+
+  return (
+    <div>
+      <div
+        className="relative overflow-hidden p-5 cursor-pointer transition-all duration-200"
+        onClick={() => onToggle(lyric.id)}
+        style={{
+          backgroundColor: 'var(--surface-card, #F5F2ED)',
+          boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
+          border: hasArt ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
+        }}
+      >
+        {/* Art background */}
+        {hasArt && (
+          <>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${bgArt})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: isAiArt ? 0.7 : 0.12,
+              }}
+            />
+            {isAiArt && (
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5))' }}
+              />
+            )}
+          </>
+        )}
+
+        {/* Content */}
+        <div className="relative">
+          <blockquote
+            className={`leading-relaxed mb-3 ${isExpanded ? '' : 'line-clamp-4'}`}
+            style={{
+              fontFamily: theme.fontFamily,
+              fontSize: '1.3rem',
+              fontWeight: theme.fontWeight,
+              lineHeight: theme.lineHeight,
+              whiteSpace: 'pre-line',
+              ...(textColor ? { color: textColor } : {}),
+            }}
+          >
+            {lyric.content}
+          </blockquote>
+
+          {(lyric.song_title || lyric.artist_name) && (
+            <>
+              <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: ruleColor, opacity: isAiArt ? 1 : 0.4 }} />
+              <div className="flex items-center gap-2">
+                {lyric.cover_art_url && (
+                  <div
+                    className={`${isExpanded ? 'w-10 h-10' : 'w-8 h-8'} flex-shrink-0 rounded transition-all`}
+                    style={{
+                      backgroundImage: `url(${lyric.cover_art_url})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                )}
+                <p className="text-xs italic truncate" style={{ color: secColor }}>
+                  {lyric.song_title}
+                  {lyric.song_title && lyric.artist_name && ' — '}
+                  {lyric.artist_name}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Note — show full when expanded, truncated when collapsed */}
+          {note?.content && (
+            <div className="mt-3 pl-3" style={{ borderLeft: `2px solid ${ruleColor}` }}>
+              <p className={`text-xs italic ${isExpanded ? '' : 'line-clamp-2'}`} style={{ color: isAiArt ? 'rgba(255,255,255,0.6)' : secColor, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+                {note.content}
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          {isExpanded && lyric.tags && lyric.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {lyric.tags.map((tag, i) => (
+                <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs transition-colors" style={{ color: mutedColor, opacity: isAiArt ? 1 : 0.5 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Collapsed: compact info row */}
+          {!isExpanded && (
+            <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: `1px solid ${borderColor}` }}>
+              {(lyric.reaction_count || 0) > 0 && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: mutedColor }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+                    {[{ x: 4, h: 6 }, { x: 8, h: 10 }, { x: 12, h: 14 }, { x: 16, h: 10 }, { x: 20, h: 6 }].map((bar, i) => (
+                      <line key={i} x1={bar.x} y1={12 - bar.h / 2} x2={bar.x} y2={12 + bar.h / 2} stroke="currentColor" strokeWidth="2" />
+                    ))}
+                  </svg>
+                  {lyric.reaction_count}
+                </span>
+              )}
+              {commentCount > 0 && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: mutedColor }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  {commentCount}
+                </span>
+              )}
+              {lyric.created_at && (
+                <span className="text-xs" style={{ color: mutedColor, opacity: isAiArt ? 1 : 0.6 }}>
+                  {formatRelativeTime(lyric.created_at)}
+                </span>
+              )}
+              {lyric.tags && lyric.tags.length > 0 && (
+                <div className="flex gap-1.5 ml-auto">
+                  {lyric.tags.slice(0, 2).map((tag, i) => (
+                    <span key={i} className="text-xs" style={{ color: mutedColor, opacity: isAiArt ? 1 : 0.5 }}>
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Expanded: full action bar */}
+          {isExpanded && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <CardActionBar
+                lyric={lyric}
+                isOwn
+                commentCount={commentCount}
+                isPublic={lyric.is_public}
+                profileIsPublic={profile?.is_public}
+                onVisibilityChange={async (isPublic) => {
+                  try {
+                    await supabase.from('lyrics').update({ is_public: isPublic }).eq('id', lyric.id)
+                    lyric.is_public = isPublic
+                  } catch (err) {
+                    console.error('Error updating visibility:', err)
+                  }
+                }}
+                onToggleComments={() => setShowComments(!showComments)}
+                username={profile?.username}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Comment section — outside the card for proper layout */}
+      {isExpanded && showComments && (
+        <div className="w-full mt-2" onClick={(e) => e.stopPropagation()}>
+          <CommentSection
+            lyricId={lyric.id}
+            initialCount={commentCount}
+            onCountChange={(delta) => setCommentCount(prev => Math.max(0, prev + delta))}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Past Earwyrms Feed ──
 function PastEarwyrms({ currentLyricId }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [lyrics, setLyrics] = useState([])
   const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(true)
-  const theme = signatureStyle
+  const [expandedId, setExpandedId] = useState(null)
+
+  const handleToggle = (id) => {
+    setExpandedId(prev => prev === id ? null : id)
+  }
 
   useEffect(() => {
     async function fetchHistory() {
@@ -298,128 +491,16 @@ function PastEarwyrms({ currentLyricId }) {
         past earwyrms
       </p>
       <div className="space-y-4">
-        {lyrics.map((lyric) => {
-          const bgArt = lyric.card_art_url || lyric.cover_art_url
-          const hasArt = !!bgArt
-          return (
-            <div
-              key={lyric.id}
-              className="relative overflow-hidden p-5"
-              style={{
-                backgroundColor: 'var(--surface-card, #F5F2ED)',
-                boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08))',
-                border: hasArt ? 'none' : '1px solid var(--border-subtle, rgba(0,0,0,0.06))',
-              }}
-            >
-              {/* Art background */}
-              {hasArt && (
-                <>
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage: `url(${bgArt})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      opacity: lyric.card_art_url ? 0.7 : 0.12,
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: lyric.card_art_url
-                        ? 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5))'
-                        : 'none',
-                    }}
-                  />
-                </>
-              )}
-
-              {/* Content */}
-              <div className="relative">
-                <blockquote
-                  className="leading-relaxed mb-3 line-clamp-4"
-                  style={{
-                    fontFamily: theme.fontFamily,
-                    fontSize: '1.3rem',
-                    fontWeight: theme.fontWeight,
-                    lineHeight: theme.lineHeight,
-                    whiteSpace: 'pre-line',
-                    ...(lyric.card_art_url ? { color: '#FAF8F5' } : {}),
-                  }}
-                >
-                  {lyric.content}
-                </blockquote>
-
-                {(lyric.song_title || lyric.artist_name) && (
-                  <>
-                    <div className="w-10 mt-3 mb-2" style={{ height: '1.5px', backgroundColor: lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)', opacity: lyric.card_art_url ? 1 : 0.4 }} />
-                    <div className="flex items-center gap-2">
-                      {lyric.cover_art_url && (
-                        <div
-                          className="w-8 h-8 flex-shrink-0 rounded"
-                          style={{
-                            backgroundImage: `url(${lyric.cover_art_url})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-                          }}
-                        />
-                      )}
-                      <p className="text-xs italic truncate" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary, #6B635A)' }}>
-                        {lyric.song_title}
-                        {lyric.song_title && lyric.artist_name && ' — '}
-                        {lyric.artist_name}
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                {notes[lyric.id]?.content && (
-                  <div className="mt-3 pl-3" style={{ borderLeft: `2px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--color-accent, #B8A99A)'}` }}>
-                    <p className="text-xs italic line-clamp-2" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary, #6B635A)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-                      {notes[lyric.id].content}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 mt-3 pt-2" style={{ borderTop: `1px solid ${lyric.card_art_url ? 'rgba(255,255,255,0.1)' : 'var(--border-subtle, rgba(0,0,0,0.06))'}` }}>
-                  {(lyric.reaction_count || 0) > 0 && (
-                    <span className="flex items-center gap-1 text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
-                        {[{ x: 4, h: 6 }, { x: 8, h: 10 }, { x: 12, h: 14 }, { x: 16, h: 10 }, { x: 20, h: 6 }].map((bar, i) => (
-                          <line key={i} x1={bar.x} y1={12 - bar.h / 2} x2={bar.x} y2={12 + bar.h / 2} stroke="currentColor" strokeWidth="2" />
-                        ))}
-                      </svg>
-                      {lyric.reaction_count}
-                    </span>
-                  )}
-                  {(lyric.comment_count || 0) > 0 && (
-                    <span className="flex items-center gap-1 text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                      </svg>
-                      {lyric.comment_count}
-                    </span>
-                  )}
-                  {lyric.created_at && (
-                    <span className="text-xs" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.4)' : 'var(--text-muted, #9C948A)', opacity: lyric.card_art_url ? 1 : 0.6 }}>
-                      {formatRelativeTime(lyric.created_at)}
-                    </span>
-                  )}
-                  {lyric.tags && lyric.tags.length > 0 && (
-                    <div className="flex gap-1.5 ml-auto">
-                      {lyric.tags.map((tag, i) => (
-                        <Link key={i} to={`/explore/tag/${encodeURIComponent(tag)}`} className="text-xs transition-colors" style={{ color: lyric.card_art_url ? 'rgba(255,255,255,0.3)' : 'var(--text-muted, #9C948A)', opacity: lyric.card_art_url ? 1 : 0.5 }}>
-                          #{tag}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {lyrics.map((lyric) => (
+          <PastEarwyrmCard
+            key={lyric.id}
+            lyric={lyric}
+            note={notes[lyric.id]}
+            isExpanded={expandedId === lyric.id}
+            onToggle={handleToggle}
+            profile={profile}
+          />
+        ))}
       </div>
     </div>
   )
