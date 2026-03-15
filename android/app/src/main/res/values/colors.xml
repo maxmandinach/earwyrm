@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <color name="accent">#FFB8A99A</color>
+    <color name="accent_light">#FFD4C8BC</color>
+
+    <!-- Light mode -->
+    <color name="light_background">#FFFAF8F5</color>
+    <color name="light_card">#FFFFFFFF</color>
+    <color name="light_text_primary">#FF1A1A1A</color>
+    <color name="light_text_secondary">#FF6B6B6B</color>
+    <color name="light_text_muted">#FF9B9B9B</color>
+    <color name="light_divider">#FFE8E4DF</color>
+
+    <!-- Dark mode -->
+    <color name="dark_background">#FF1A1816</color>
+    <color name="dark_card">#FF262320</color>
+    <color name="dark_text_primary">#FFF5F0EB</color>
+    <color name="dark_text_secondary">#FFA09890</color>
+    <color name="dark_text_muted">#FF6B6360</color>
+    <color name="dark_divider">#FF3A3530</color>
+
+    <!-- Semantic -->
+    <color name="error">#FFDC3545</color>
+    <color name="success">#FF28A745</color>
+</resources>
