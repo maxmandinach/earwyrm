@@ -45,7 +45,8 @@ fun CollectionPickerSheet(
     lyricId: String,
     userId: String,
     collectionManager: CollectionManager,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit = {}
 ) {
     val collections by collectionManager.collections.collectAsState()
     val savedIds by collectionManager.savedLyricIds.collectAsState()
@@ -81,6 +82,7 @@ fun CollectionPickerSheet(
                             onClick = {
                                 scope.launch {
                                     collectionManager.addLyricToCollection(lyricId, collection.id)
+                                    onSaved()
                                     onDismiss()
                                 }
                             }

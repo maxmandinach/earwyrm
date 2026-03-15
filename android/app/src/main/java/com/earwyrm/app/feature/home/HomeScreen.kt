@@ -19,9 +19,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.navigation.Screen
 import com.earwyrm.app.feature.collections.CollectionPickerSheet
 import com.earwyrm.app.feature.share.ShareSheet
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,26 +40,29 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = hilt
     var showEditSheet by remember { mutableStateOf(false) }
     var showSaveSheet by remember { mutableStateOf(false) }
     var showShareSheet by remember { mutableStateOf(false) }
+    val haptics = rememberHaptics()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     if (showEditSheet && currentLyric != null) {
         EditLyricSheet(lyric = currentLyric!!, onDismiss = { showEditSheet = false }, onSave = { newContent -> viewModel.updateLyric(newContent); showEditSheet = false })
     }
 
     if (showShareSheet && currentLyric != null) {
-        ShareSheet(lyric = currentLyric!!, onDismiss = { showShareSheet = false }, onShared = { viewModel.sendShareNotification(currentLyric!!) })
+        ShareSheet(lyric = currentLyric!!, onDismiss = { showShareSheet = false }, onShared = { viewModel.sendShareNotification(currentLyric!!); haptics.success(); scope.launch { snackbarHostState.showSnackbar("Copied link") } })
     }
 
     if (showSaveSheet && currentLyric != null && profile != null) {
         LaunchedEffect(Unit) { viewModel.collectionManager.fetchCollections(profile!!.id) }
-        CollectionPickerSheet(lyricId = currentLyric!!.id, userId = profile!!.id, collectionManager = viewModel.collectionManager, onDismiss = { showSaveSheet = false })
+        CollectionPickerSheet(lyricId = currentLyric!!.id, userId = profile!!.id, collectionManager = viewModel.collectionManager, onDismiss = { showSaveSheet = false }, onSaved = { haptics.light(); scope.launch { snackbarHostState.showSnackbar("Saved to collection") } })
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        PullToRefreshBox(isRefreshing = isLoading, onRefresh = { viewModel.loadData() }, modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(isRefreshing = isLoading, onRefresh = { haptics.light(); viewModel.loadData() }, modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, bottom = 100.dp, start = 16.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 item { Text("earwyrm", fontFamily = CaveatFamily, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Theme.accent, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
                 if (currentLyric != null) {
-                    item { LyricCardView(lyric = currentLyric!!, note = currentNote, isCurrent = true, hasReacted = hasReacted, reactionCount = reactionCount, onReactionToggle = { viewModel.toggleReaction() }, onVisibilityToggle = { viewModel.toggleVisibility() }, onCommentClick = { }, onShareClick = { showShareSheet = true }, onEditClick = { showEditSheet = true }, onSaveClick = { showSaveSheet = true }, navController = navController) }
+                    item { LyricCardView(lyric = currentLyric!!, note = currentNote, isCurrent = true, hasReacted = hasReacted, reactionCount = reactionCount, onReactionToggle = { haptics.light(); viewModel.toggleReaction() }, onVisibilityToggle = { viewModel.toggleVisibility() }, onCommentClick = { }, onShareClick = { showShareSheet = true }, onEditClick = { showEditSheet = true }, onSaveClick = { haptics.light(); showSaveSheet = true }, navController = navController) }
                     item { CommentSection(comments = comments, profiles = commentProfiles, currentUserId = profile?.id, onSubmitComment = { c, p -> viewModel.submitComment(c, p) }, onDeleteComment = { viewModel.deleteComment(it) }) }
                     item { NoteEditor(note = currentNote, onSave = { c, p -> viewModel.saveNote(c, p) }) }
                 } else {
@@ -70,5 +75,6 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = hilt
             }
         }
         FloatingActionButton(onClick = { navController.navigate(Screen.PostLyric.route) }, modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp), containerColor = Theme.accent, contentColor = Color.White) { Icon(Icons.Default.Add, "Post lyric") }
+        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp))
     }
 }

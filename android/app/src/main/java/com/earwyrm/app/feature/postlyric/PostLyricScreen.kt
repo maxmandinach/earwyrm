@@ -24,6 +24,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
+import kotlinx.coroutines.launch
 
 private val ghostTextPrompts = listOf(
     "what lyric is stuck in your head?",
@@ -47,9 +49,13 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
     val artistSuggestions by viewModel.artistSuggestions.collectAsState(); val songSuggestions by viewModel.songSuggestions.collectAsState()
     val geniusSuggestions by viewModel.geniusSuggestions.collectAsState()
     val isSearchingGenius by viewModel.isSearchingGenius.collectAsState()
-    LaunchedEffect(saveSuccess) { if (saveSuccess) navController.popBackStack() }
+    val haptics = rememberHaptics()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(saveSuccess) { if (saveSuccess) { haptics.success(); scope.launch { snackbarHostState.showSnackbar("Earwyrm posted!") }; navController.popBackStack() } }
 
-    Column(Modifier.fillMaxSize().padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())) {
+    Box(Modifier.fillMaxSize().padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())) {
+    Column(Modifier.fillMaxSize()) {
         TopAppBar(title = { Text("new earwyrm", fontFamily = CaveatFamily, fontWeight = FontWeight.Bold, color = Theme.accent) }, navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, "Back", tint = Theme.textPrimary) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             val ghostText = remember { ghostTextPrompts.random() }
@@ -126,5 +132,7 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
             Button(onClick = { viewModel.save() }, Modifier.fillMaxWidth().height(50.dp), enabled = content.isNotBlank() && !isSaving, colors = ButtonDefaults.buttonColors(containerColor = Theme.accent, contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.height(20.dp)) else Text("Post", style = Theme.dmSans(16f, FontWeight.SemiBold)) }
             Spacer(Modifier.height(32.dp))
         }
+    }
+    SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
     }
 }

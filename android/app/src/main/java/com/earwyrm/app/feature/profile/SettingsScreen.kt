@@ -32,6 +32,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Switch
@@ -61,7 +63,9 @@ import com.earwyrm.app.core.auth.AuthManager
 import com.earwyrm.app.core.design.AppThemeMode
 import com.earwyrm.app.core.design.AppearanceManager
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.model.Profile
+import com.earwyrm.app.core.navigation.Screen
 import com.earwyrm.app.core.supabase.BlockManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -200,6 +204,16 @@ fun SettingsScreen(
     val saveMessage by viewModel.saveMessage.collectAsState()
     val blockedProfiles by viewModel.blockedProfiles.collectAsState()
     val isLoadingBlocked by viewModel.isLoadingBlocked.collectAsState()
+    val haptics = rememberHaptics()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbar when profile is saved
+    LaunchedEffect(saveMessage) {
+        if (saveMessage == "Profile saved") {
+            haptics.success()
+            snackbarHostState.showSnackbar("Profile updated")
+        }
+    }
 
     // Sync profile data when it changes
     LaunchedEffect(profile) {
@@ -210,6 +224,7 @@ fun SettingsScreen(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -450,13 +465,39 @@ fun SettingsScreen(
                 value = session?.user?.email ?: "Not available"
             )
 
-            AccountRow(
-                label = "Subscription",
-                value = when (profile?.subscriptionTier) {
-                    "plus" -> "Earwyrm Plus"
-                    else -> "Free"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { navController.navigate(Screen.PlusPaywall.route) }
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Subscription",
+                    style = Theme.dmSans(15f),
+                    color = Theme.textPrimary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        when (profile?.subscriptionTier) {
+                            "plus" -> "Earwyrm Plus"
+                            else -> "Free"
+                        },
+                        style = Theme.dmSans(14f),
+                        color = Theme.accent
+                    )
+                    Text(
+                        "\u203A",
+                        style = Theme.dmSans(16f),
+                        color = Theme.textMuted
+                    )
                 }
-            )
+            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -480,6 +521,8 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(48.dp))
         }
+    }
+    SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
     }
 }
 

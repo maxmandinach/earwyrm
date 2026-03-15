@@ -37,6 +37,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -71,6 +73,7 @@ import com.earwyrm.app.core.auth.AuthManager
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.PlusBadge
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.model.EarwyrmCollection
 import com.earwyrm.app.core.model.Follow
 import com.earwyrm.app.core.model.Lyric
@@ -263,6 +266,9 @@ fun ProfileScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
+    val haptics = rememberHaptics()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val tabs = if (isOwnProfile) listOf("Lyrics", "Resonated", "Notes", "Collections", "Following")
     else listOf("Lyrics")
@@ -278,7 +284,7 @@ fun ProfileScreen(
             text = { Text("They won't be able to see your earwyrms or interact with you.", style = Theme.dmSans(14f), color = Theme.textSecondary) },
             confirmButton = {
                 Button(
-                    onClick = { viewModel.blockUser(profile!!.id) { showBlockDialog = false; navController.popBackStack() } },
+                    onClick = { viewModel.blockUser(profile!!.id) { haptics.success(); scope.launch { snackbarHostState.showSnackbar("Blocked user") }; showBlockDialog = false; navController.popBackStack() } },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
                 ) { Text("Block", style = Theme.dmSans(14f, FontWeight.SemiBold)) }
             },
@@ -292,6 +298,7 @@ fun ProfileScreen(
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -380,7 +387,7 @@ fun ProfileScreen(
             if (!isOwnProfile && profile != null) {
                 val isFollowing = viewModel.isFollowing(profile!!.id)
                 Button(
-                    onClick = { viewModel.toggleFollow(profile!!.id) },
+                    onClick = { haptics.light(); viewModel.toggleFollow(profile!!.id) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isFollowing) Theme.divider else Theme.accent,
                         contentColor = if (isFollowing) Theme.textPrimary else Color.White
@@ -437,6 +444,8 @@ fun ProfileScreen(
             3 -> ProfileCollectionsTab(collections = collections, navController = navController)
             4 -> ProfileFollowingTab(follows = follows, onUnfollow = { viewModel.unfollowItem(it) })
         }
+    }
+    SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp))
     }
 }
 

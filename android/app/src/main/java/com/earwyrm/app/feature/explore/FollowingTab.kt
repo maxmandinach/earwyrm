@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 
 @Composable
 fun FollowingTab(
@@ -28,6 +29,7 @@ fun FollowingTab(
     val profiles by viewModel.lyricProfiles.collectAsState()
     val reactedIds by viewModel.reactedLyricIds.collectAsState()
     val reactionDeltas by viewModel.reactionCountDeltas.collectAsState()
+    val haptics = rememberHaptics()
 
     if (lyrics.isEmpty()) {
         Column(
@@ -55,7 +57,7 @@ fun FollowingTab(
                     navController = navController,
                     hasReacted = lyric.id in reactedIds,
                     reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
-                    onReactionToggle = { viewModel.toggleReaction(lyric.id) },
+                    onReactionToggle = { haptics.light(); viewModel.toggleReaction(lyric.id) },
                     onShareClick = { /* TODO */ }
                 )
             }

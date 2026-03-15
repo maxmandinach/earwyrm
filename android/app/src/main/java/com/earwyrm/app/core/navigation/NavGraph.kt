@@ -38,7 +38,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.earwyrm.app.core.design.DmSansFamily
+import com.earwyrm.app.core.design.OfflineBanner
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.network.NetworkMonitor
 import com.earwyrm.app.core.supabase.NotificationManager
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.EntryPoint
@@ -55,6 +57,7 @@ import com.earwyrm.app.feature.home.HomeScreen
 import com.earwyrm.app.feature.postlyric.PostLyricScreen
 import com.earwyrm.app.feature.profile.ProfileScreen
 import com.earwyrm.app.feature.profile.SettingsScreen
+import com.earwyrm.app.feature.subscription.PlusPaywallScreen
 
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
@@ -72,12 +75,19 @@ sealed class Screen(val route: String) {
         fun createRoute(title: String, artist: String?) = "full_lyrics/${java.net.URLEncoder.encode(title, "UTF-8")}?artist=${java.net.URLEncoder.encode(artist ?: "", "UTF-8")}"
     }
     data object PublicProfile : Screen("user/{username}") { fun createRoute(u: String) = "user/$u" }
+    data object PlusPaywall : Screen("plus_paywall")
 }
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface NotificationManagerEntryPoint {
     fun notificationManager(): NotificationManager
+}
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface NetworkMonitorEntryPoint {
+    fun networkMonitor(): NetworkMonitor
 }
 
 data class TabItem(val screen: Screen, val label: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector)
@@ -97,6 +107,9 @@ fun NavGraph(navController: NavHostController) {
     val context = LocalContext.current
     val notificationManager = remember {
         EntryPointAccessors.fromApplication(context, NotificationManagerEntryPoint::class.java).notificationManager()
+    }
+    val networkMonitor = remember {
+        EntryPointAccessors.fromApplication(context, NetworkMonitorEntryPoint::class.java).networkMonitor()
     }
     val unreadCount by notificationManager.unreadCount.collectAsState()
 
@@ -125,10 +138,12 @@ fun NavGraph(navController: NavHostController) {
             composable(Screen.PublicProfile.route, arguments = listOf(navArgument("username") { type = NavType.StringType })) {
                 ProfileScreen(navController = navController, viewingUsername = it.arguments?.getString("username"))
             }
+            composable(Screen.PlusPaywall.route) { PlusPaywallScreen(navController = navController) }
         }
         AnimatedVisibility(visible = showBottomBar, modifier = Modifier.align(Alignment.BottomCenter), enter = slideInVertically { it }, exit = slideOutVertically { it }) {
             EarwyrmTabBar(navController, currentRoute, unreadCount)
         }
+        OfflineBanner(networkMonitor = networkMonitor)
     }
 }
 

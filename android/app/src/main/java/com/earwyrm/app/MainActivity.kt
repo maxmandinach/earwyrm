@@ -10,12 +10,18 @@ import androidx.compose.ui.Modifier
 import com.earwyrm.app.core.auth.AuthGate
 import com.earwyrm.app.core.design.EarwyrmTheme
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.subscription.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var billingManager: BillingManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        billingManager.initialize()
         enableEdgeToEdge()
         setContent {
             EarwyrmTheme {
@@ -27,5 +33,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        billingManager.destroy()
     }
 }

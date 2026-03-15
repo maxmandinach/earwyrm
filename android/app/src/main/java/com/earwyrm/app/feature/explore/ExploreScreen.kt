@@ -47,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +62,7 @@ fun ExploreScreen(
     val selectedTag by viewModel.selectedTag.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
     val timeRange by viewModel.timeRange.collectAsState()
+    val haptics = rememberHaptics()
 
     Column(
         modifier = Modifier
@@ -206,7 +208,7 @@ fun ExploreScreen(
 
         PullToRefreshBox(
             isRefreshing = isLoading,
-            onRefresh = { viewModel.loadData() },
+            onRefresh = { haptics.light(); viewModel.loadData() },
             modifier = Modifier.fillMaxSize()
         ) {
             when (selectedTab) {

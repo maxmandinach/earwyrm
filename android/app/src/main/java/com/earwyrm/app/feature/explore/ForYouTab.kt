@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.earwyrm.app.core.design.rememberHaptics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -57,6 +58,7 @@ fun ForYouTab(
     val profiles by viewModel.lyricProfiles.collectAsState()
     val reactedIds by viewModel.reactedLyricIds.collectAsState()
     val reactionDeltas by viewModel.reactionCountDeltas.collectAsState()
+    val haptics = rememberHaptics()
 
     if (lyrics.isEmpty()) {
         Column(
@@ -84,7 +86,7 @@ fun ForYouTab(
                     navController = navController,
                     hasReacted = lyric.id in reactedIds,
                     reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
-                    onReactionToggle = { viewModel.toggleReaction(lyric.id) },
+                    onReactionToggle = { haptics.light(); viewModel.toggleReaction(lyric.id) },
                     onShareClick = { /* TODO */ }
                 )
             }
