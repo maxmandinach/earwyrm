@@ -3,6 +3,7 @@ package com.earwyrm.app.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.earwyrm.app.core.auth.AuthManager
+import com.earwyrm.app.core.design.ToastManager
 import com.earwyrm.app.core.model.*
 import com.earwyrm.app.core.supabase.CollectionManager
 import com.earwyrm.app.core.network.NetworkMonitor
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, private val authManager: AuthManager, val collectionManager: CollectionManager, private val notificationManager: NotificationManager, val networkMonitor: NetworkMonitor, val billingManager: BillingManager) : ViewModel() {
+class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, private val authManager: AuthManager, val collectionManager: CollectionManager, private val notificationManager: NotificationManager, val networkMonitor: NetworkMonitor, val billingManager: BillingManager, private val toastManager: ToastManager) : ViewModel() {
     private val _currentLyric = MutableStateFlow<Lyric?>(null); val currentLyric: StateFlow<Lyric?> = _currentLyric.asStateFlow()
     private val _pastLyrics = MutableStateFlow<List<Lyric>>(emptyList()); val pastLyrics: StateFlow<List<Lyric>> = _pastLyrics.asStateFlow()
     private val _currentNote = MutableStateFlow<LyricNote?>(null); val currentNote: StateFlow<LyricNote?> = _currentNote.asStateFlow()
@@ -50,12 +51,12 @@ class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, pr
     fun toggleReaction() {
         val lyricId = _currentLyric.value?.id ?: return; val userId = authManager.userId ?: return
         val was = _hasReacted.value; _hasReacted.value = !was; _reactionCount.value += if (was) -1 else 1
-        viewModelScope.launch { try { if (was) supabase.postgrest.from("reactions").delete { filter { eq("lyric_id", lyricId); eq("user_id", userId) } } else supabase.postgrest.from("reactions").insert(ReactionInsert(lyricId, userId)) } catch (_: Exception) { _hasReacted.value = was; _reactionCount.value += if (was) 1 else -1 } }
+        viewModelScope.launch { try { if (was) supabase.postgrest.from("reactions").delete { filter { eq("lyric_id", lyricId); eq("user_id", userId) } } else supabase.postgrest.from("reactions").insert(ReactionInsert(lyricId, userId)) } catch (_: Exception) { _hasReacted.value = was; _reactionCount.value += if (was) 1 else -1; toastManager.show("couldn't resonate, try again") } }
     }
 
     fun toggleVisibility() {
         val lyric = _currentLyric.value ?: return; val newPublic = !(lyric.isPublic ?: true)
-        viewModelScope.launch { try { supabase.postgrest.from("lyrics").update(LyricUpdate(isPublic = newPublic)) { filter { eq("id", lyric.id) } }; _currentLyric.value = lyric.copy(isPublic = newPublic) } catch (_: Exception) { } }
+        viewModelScope.launch { try { supabase.postgrest.from("lyrics").update(LyricUpdate(isPublic = newPublic)) { filter { eq("id", lyric.id) } }; _currentLyric.value = lyric.copy(isPublic = newPublic) } catch (_: Exception) { toastManager.show("couldn't update visibility, try again") } }
     }
 
     fun fetchComments(lyricId: String) {
@@ -71,19 +72,19 @@ class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, pr
 
     fun submitComment(content: String, parentCommentId: String? = null) {
         val lyricId = _currentLyric.value?.id ?: return; val userId = authManager.userId ?: return
-        viewModelScope.launch { try { supabase.postgrest.from("comments").insert(CommentInsert(lyricId, userId, content.take(280), parentCommentId)); fetchComments(lyricId) } catch (_: Exception) { } }
+        viewModelScope.launch { try { supabase.postgrest.from("comments").insert(CommentInsert(lyricId, userId, content.take(280), parentCommentId)); fetchComments(lyricId) } catch (_: Exception) { toastManager.show("couldn't post comment, try again") } }
     }
 
-    fun deleteComment(commentId: String) { viewModelScope.launch { try { supabase.postgrest.from("comments").delete { filter { eq("id", commentId) } }; _comments.value = _comments.value.filter { it.id != commentId } } catch (_: Exception) { } } }
+    fun deleteComment(commentId: String) { viewModelScope.launch { try { supabase.postgrest.from("comments").delete { filter { eq("id", commentId) } }; _comments.value = _comments.value.filter { it.id != commentId } } catch (_: Exception) { toastManager.show("couldn't delete comment, try again") } } }
 
     fun updateLyric(newContent: String) {
         val lyric = _currentLyric.value ?: return
-        viewModelScope.launch { try { supabase.postgrest.from("lyrics").update(LyricUpdate(content = newContent)) { filter { eq("id", lyric.id) } }; _currentLyric.value = lyric.copy(content = newContent) } catch (_: Exception) { } }
+        viewModelScope.launch { try { supabase.postgrest.from("lyrics").update(LyricUpdate(content = newContent)) { filter { eq("id", lyric.id) } }; _currentLyric.value = lyric.copy(content = newContent) } catch (_: Exception) { toastManager.show("couldn't update lyric, try again") } }
     }
 
     fun saveNote(content: String, isPublic: Boolean) {
         val lyricId = _currentLyric.value?.id ?: return; val userId = authManager.userId ?: return
-        viewModelScope.launch { try { supabase.postgrest.from("lyric_notes").upsert(LyricNoteUpsert(lyricId, userId, content.take(500), isPublic)); fetchNote(lyricId) } catch (_: Exception) { } }
+        viewModelScope.launch { try { supabase.postgrest.from("lyric_notes").upsert(LyricNoteUpsert(lyricId, userId, content.take(500), isPublic)); fetchNote(lyricId) } catch (_: Exception) { toastManager.show("couldn't save note, try again") } }
     }
 
     fun sendShareNotification(lyric: Lyric) {

@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.earwyrm.app.feature.activity.ActivityScreen
 import com.earwyrm.app.feature.collections.CollectionDetailScreen
 import com.earwyrm.app.feature.collections.CollectionsScreen
+import com.earwyrm.app.feature.explore.ArtistPage
 import com.earwyrm.app.feature.explore.ExploreScreen
 import com.earwyrm.app.feature.explore.FullLyricsView
 import com.earwyrm.app.feature.explore.SongPage
@@ -78,6 +79,9 @@ sealed class Screen(val route: String) {
     }
     data object PublicProfile : Screen("user/{username}") { fun createRoute(u: String) = "user/$u" }
     data object SharedLyricDetail : Screen("shared_lyric/{shareToken}") { fun createRoute(token: String) = "shared_lyric/$token" }
+    data object ArtistPage : Screen("artist/{artistName}") {
+        fun createRoute(artistName: String) = "artist/${java.net.URLEncoder.encode(artistName, "UTF-8")}"
+    }
     data object PlusPaywall : Screen("plus_paywall")
 }
 
@@ -137,6 +141,10 @@ fun NavGraph(navController: NavHostController, deepLinkDestination: DeepLinkDest
                 val t = java.net.URLDecoder.decode(it.arguments?.getString("title") ?: "", "UTF-8")
                 val a = java.net.URLDecoder.decode(it.arguments?.getString("artist") ?: "", "UTF-8").ifEmpty { null }
                 SongPage(title = t, artist = a, navController = navController)
+            }
+            composable(Screen.ArtistPage.route, arguments = listOf(navArgument("artistName") { type = NavType.StringType })) {
+                val name = java.net.URLDecoder.decode(it.arguments?.getString("artistName") ?: "", "UTF-8")
+                ArtistPage(artistName = name, navController = navController)
             }
             composable(Screen.FullLyrics.route, arguments = listOf(navArgument("title") { type = NavType.StringType }, navArgument("artist") { type = NavType.StringType; defaultValue = "" })) {
                 val t = java.net.URLDecoder.decode(it.arguments?.getString("title") ?: "", "UTF-8")

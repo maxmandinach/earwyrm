@@ -37,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.earwyrm.app.core.design.rememberHaptics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -51,6 +50,7 @@ import coil.compose.AsyncImage
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.PlusBadge
 import com.earwyrm.app.core.design.Theme
+import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.model.Lyric
 import com.earwyrm.app.core.model.Profile
 import com.earwyrm.app.core.navigation.Screen
@@ -103,14 +103,24 @@ fun ForYouTab(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(lyrics, key = { it.id }) { lyric ->
-                ExploreLyricCard(
+                val profile = profiles[lyric.userId]
+                CompactLyricCard(
                     lyric = lyric,
-                    profile = profiles[lyric.userId],
-                    navController = navController,
+                    username = profile?.username ?: "...",
+                    isPlus = profile?.isPlus == true,
                     hasReacted = lyric.id in reactedIds,
                     reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
-                    onReactionToggle = { haptics.light(); viewModel.toggleReaction(lyric.id) },
-                    onShareClick = { /* TODO */ },
+                    commentCount = lyric.commentCount ?: 0,
+                    onResonate = { haptics.light(); viewModel.toggleReaction(lyric.id) },
+                    onShare = { /* TODO */ },
+                    onSongClick = {
+                        lyric.songTitle?.let { title ->
+                            navController.navigate(Screen.SongPage.createRoute(title, lyric.artistName))
+                        }
+                    },
+                    onUserClick = {
+                        profile?.username?.let { navController.navigate(Screen.PublicProfile.createRoute(it)) }
+                    },
                     onReportClick = { reportLyricId = lyric.id }
                 )
             }
@@ -230,7 +240,12 @@ fun ExploreLyricCard(
                                 style = Theme.dmSans(12f),
                                 color = Theme.textSecondary,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.clickable {
+                                    navController.navigate(
+                                        Screen.ArtistPage.createRoute(lyric.artistName)
+                                    )
+                                }
                             )
                         }
                     }

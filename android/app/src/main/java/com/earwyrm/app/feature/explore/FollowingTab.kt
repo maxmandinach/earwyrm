@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
+import com.earwyrm.app.core.navigation.Screen
 import com.earwyrm.app.feature.share.ReportSheet
 
 @Composable
@@ -70,14 +71,24 @@ fun FollowingTab(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(lyrics, key = { it.id }) { lyric ->
-                ExploreLyricCard(
+                val profile = profiles[lyric.userId]
+                CompactLyricCard(
                     lyric = lyric,
-                    profile = profiles[lyric.userId],
-                    navController = navController,
+                    username = profile?.username ?: "...",
+                    isPlus = profile?.isPlus == true,
                     hasReacted = lyric.id in reactedIds,
                     reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
-                    onReactionToggle = { haptics.light(); viewModel.toggleReaction(lyric.id) },
-                    onShareClick = { /* TODO */ },
+                    commentCount = lyric.commentCount ?: 0,
+                    onResonate = { haptics.light(); viewModel.toggleReaction(lyric.id) },
+                    onShare = { /* TODO */ },
+                    onSongClick = {
+                        lyric.songTitle?.let { title ->
+                            navController.navigate(Screen.SongPage.createRoute(title, lyric.artistName))
+                        }
+                    },
+                    onUserClick = {
+                        profile?.username?.let { navController.navigate(Screen.PublicProfile.createRoute(it)) }
+                    },
                     onReportClick = { reportLyricId = lyric.id }
                 )
             }
