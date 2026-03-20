@@ -53,6 +53,7 @@ import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.model.Lyric
 import com.earwyrm.app.core.model.Profile
 import com.earwyrm.app.core.navigation.Screen
+import com.earwyrm.app.feature.share.ReportSheet
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -68,6 +69,7 @@ fun SongPage(
     var lyrics by remember { mutableStateOf<List<Lyric>>(emptyList()) }
     var profiles by remember { mutableStateOf<Map<String, Profile>>(emptyMap()) }
     var coverArtUrl by remember { mutableStateOf<String?>(null) }
+    var reportLyricId by remember { mutableStateOf<String?>(null) }
 
     // Use hilt to get supabase client
     val viewModel: SongPageViewModel = hiltViewModel()
@@ -79,6 +81,20 @@ fun SongPage(
             lyrics = result.first
             profiles = result.second
             coverArtUrl = result.first.firstOrNull()?.coverArtUrl
+        }
+    }
+
+    // Report sheet
+    reportLyricId?.let { lyricId ->
+        val reporterId = viewModel.getReporterId()
+        if (reporterId != null) {
+            ReportSheet(
+                contentType = "lyric",
+                contentId = lyricId,
+                reporterId = reporterId,
+                blockManager = viewModel.getBlockManager(),
+                onDismiss = { reportLyricId = null }
+            )
         }
     }
 
@@ -178,7 +194,8 @@ fun SongPage(
                 ExploreLyricCard(
                     lyric = lyric,
                     profile = profiles[lyric.userId],
-                    navController = navController
+                    navController = navController,
+                    onReportClick = { reportLyricId = lyric.id }
                 )
             }
             item { Spacer(modifier = Modifier.height(80.dp)) }

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.earwyrm.app.core.auth.AuthManager
 import com.earwyrm.app.core.model.*
 import com.earwyrm.app.core.supabase.CollectionManager
+import com.earwyrm.app.core.network.NetworkMonitor
+import com.earwyrm.app.core.subscription.BillingManager
 import com.earwyrm.app.core.supabase.NotificationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -17,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, private val authManager: AuthManager, val collectionManager: CollectionManager, private val notificationManager: NotificationManager) : ViewModel() {
+class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, private val authManager: AuthManager, val collectionManager: CollectionManager, private val notificationManager: NotificationManager, val networkMonitor: NetworkMonitor, val billingManager: BillingManager) : ViewModel() {
     private val _currentLyric = MutableStateFlow<Lyric?>(null); val currentLyric: StateFlow<Lyric?> = _currentLyric.asStateFlow()
     private val _pastLyrics = MutableStateFlow<List<Lyric>>(emptyList()); val pastLyrics: StateFlow<List<Lyric>> = _pastLyrics.asStateFlow()
     private val _currentNote = MutableStateFlow<LyricNote?>(null); val currentNote: StateFlow<LyricNote?> = _currentNote.asStateFlow()
@@ -30,7 +32,7 @@ class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, pr
 
     init { loadData() }
 
-    fun loadData() { viewModelScope.launch { _isLoading.value = true; try { fetchCurrentLyric(); fetchPastLyrics() } finally { _isLoading.value = false } } }
+    fun loadData() { viewModelScope.launch { _isLoading.value = true; try { fetchCurrentLyric(); fetchPastLyrics(); authManager.userId?.let { collectionManager.fetchCollections(it) } } finally { _isLoading.value = false } } }
 
     private suspend fun fetchCurrentLyric() {
         val userId = authManager.userId ?: return

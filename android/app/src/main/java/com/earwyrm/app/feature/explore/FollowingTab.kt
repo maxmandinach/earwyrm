@@ -12,6 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
+import com.earwyrm.app.feature.share.ReportSheet
 
 @Composable
 fun FollowingTab(
@@ -30,6 +34,21 @@ fun FollowingTab(
     val reactedIds by viewModel.reactedLyricIds.collectAsState()
     val reactionDeltas by viewModel.reactionCountDeltas.collectAsState()
     val haptics = rememberHaptics()
+    var reportLyricId by remember { mutableStateOf<String?>(null) }
+
+    // Report sheet
+    reportLyricId?.let { lyricId ->
+        val reporterId = viewModel.getReporterId()
+        if (reporterId != null) {
+            ReportSheet(
+                contentType = "lyric",
+                contentId = lyricId,
+                reporterId = reporterId,
+                blockManager = viewModel.getBlockManager(),
+                onDismiss = { reportLyricId = null }
+            )
+        }
+    }
 
     if (lyrics.isEmpty()) {
         Column(
@@ -58,7 +77,8 @@ fun FollowingTab(
                     hasReacted = lyric.id in reactedIds,
                     reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
                     onReactionToggle = { haptics.light(); viewModel.toggleReaction(lyric.id) },
-                    onShareClick = { /* TODO */ }
+                    onShareClick = { /* TODO */ },
+                    onReportClick = { reportLyricId = lyric.id }
                 )
             }
             item { Spacer(modifier = Modifier.height(80.dp)) }

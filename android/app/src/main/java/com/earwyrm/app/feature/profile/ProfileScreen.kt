@@ -86,6 +86,7 @@ import com.earwyrm.app.core.supabase.BlockManager
 import com.earwyrm.app.core.supabase.CollectionManager
 import com.earwyrm.app.core.supabase.FollowManager
 import com.earwyrm.app.feature.explore.ExploreLyricCard
+import com.earwyrm.app.feature.share.ReportSheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
@@ -244,6 +245,18 @@ class ProfileViewModel @Inject constructor(
             onComplete()
         }
     }
+
+    fun reportUser(userId: String, reason: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val myId = authManager.userId ?: return@launch
+            blockManager.reportContent(myId, "user", userId, reason)
+            onComplete()
+        }
+    }
+
+    fun getBlockManager(): BlockManager = blockManager
+
+    fun getReporterId(): String? = authManager.userId
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -266,6 +279,7 @@ fun ProfileScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
+    var showReportSheet by remember { mutableStateOf(false) }
     val haptics = rememberHaptics()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -298,6 +312,19 @@ fun ProfileScreen(
         )
     }
 
+    if (showReportSheet && profile != null) {
+        val reporterId = viewModel.getReporterId()
+        if (reporterId != null) {
+            ReportSheet(
+                contentType = "user",
+                contentId = profile!!.id,
+                reporterId = reporterId,
+                blockManager = viewModel.getBlockManager(),
+                onDismiss = { showReportSheet = false }
+            )
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
@@ -324,6 +351,10 @@ fun ProfileScreen(
                             Icon(Icons.Default.MoreVert, "More options", tint = Theme.textPrimary)
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Report", style = Theme.dmSans(14f), color = Theme.textPrimary) },
+                                onClick = { showMenu = false; showReportSheet = true }
+                            )
                             DropdownMenuItem(
                                 text = { Text("Block User", style = Theme.dmSans(14f), color = Color(0xFFE74C3C)) },
                                 onClick = { showMenu = false; showBlockDialog = true }

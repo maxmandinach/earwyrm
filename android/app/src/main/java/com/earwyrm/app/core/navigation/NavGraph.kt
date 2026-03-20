@@ -22,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,6 +58,7 @@ import com.earwyrm.app.feature.home.HomeScreen
 import com.earwyrm.app.feature.postlyric.PostLyricScreen
 import com.earwyrm.app.feature.profile.ProfileScreen
 import com.earwyrm.app.feature.profile.SettingsScreen
+import com.earwyrm.app.feature.share.SharedLyricDetailScreen
 import com.earwyrm.app.feature.subscription.PlusPaywallScreen
 
 sealed class Screen(val route: String) {
@@ -75,6 +77,7 @@ sealed class Screen(val route: String) {
         fun createRoute(title: String, artist: String?) = "full_lyrics/${java.net.URLEncoder.encode(title, "UTF-8")}?artist=${java.net.URLEncoder.encode(artist ?: "", "UTF-8")}"
     }
     data object PublicProfile : Screen("user/{username}") { fun createRoute(u: String) = "user/$u" }
+    data object SharedLyricDetail : Screen("shared_lyric/{shareToken}") { fun createRoute(token: String) = "shared_lyric/$token" }
     data object PlusPaywall : Screen("plus_paywall")
 }
 
@@ -99,7 +102,7 @@ val tabItems = listOf(
 )
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(navController: NavHostController, deepLinkDestination: DeepLinkDestination? = null) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in tabItems.map { it.screen.route }
@@ -112,6 +115,11 @@ fun NavGraph(navController: NavHostController) {
         EntryPointAccessors.fromApplication(context, NetworkMonitorEntryPoint::class.java).networkMonitor()
     }
     val unreadCount by notificationManager.unreadCount.collectAsState()
+
+    // Handle deep link navigation once navController is ready
+    LaunchedEffect(deepLinkDestination) {
+        deepLinkDestination?.let { DeepLinkRouter.navigate(navController, it) }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = Screen.Home.route, modifier = Modifier.fillMaxSize()) {
@@ -139,6 +147,9 @@ fun NavGraph(navController: NavHostController) {
                 ProfileScreen(navController = navController, viewingUsername = it.arguments?.getString("username"))
             }
             composable(Screen.PlusPaywall.route) { PlusPaywallScreen(navController = navController) }
+            composable(Screen.SharedLyricDetail.route, arguments = listOf(navArgument("shareToken") { type = NavType.StringType })) {
+                SharedLyricDetailScreen(shareToken = it.arguments?.getString("shareToken") ?: return@composable, navController = navController)
+            }
         }
         AnimatedVisibility(visible = showBottomBar, modifier = Modifier.align(Alignment.BottomCenter), enter = slideInVertically { it }, exit = slideOutVertically { it }) {
             EarwyrmTabBar(navController, currentRoute, unreadCount)

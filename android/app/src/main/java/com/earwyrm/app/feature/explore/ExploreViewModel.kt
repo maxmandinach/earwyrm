@@ -291,6 +291,9 @@ class ExploreViewModel @Inject constructor(
         } catch (_: Exception) { }
     }
 
+    fun getBlockManager(): BlockManager = blockManager
+    fun getReporterId(): String? = authManager.userId
+
     private suspend fun fetchProfilesFor(lyrics: List<Lyric>) {
         val userIds = lyrics.map { it.userId }.distinct()
             .filter { it !in _lyricProfiles.value }
