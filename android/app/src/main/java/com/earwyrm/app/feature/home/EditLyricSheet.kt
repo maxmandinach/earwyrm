@@ -12,6 +12,7 @@ import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.model.Lyric
 import com.earwyrm.app.feature.artgallery.ArtGallerySection
 import com.earwyrm.app.feature.artgallery.ArtGalleryViewModel
+import com.earwyrm.app.feature.artgallery.ArtGeneratingOverlay
 import com.earwyrm.app.feature.artgallery.ArtGenerationSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,5 +148,10 @@ fun EditLyricSheet(
             onShowPaywall = onNavigateToPaywall,
             onDismiss = { showGenSheet = false }
         )
+    }
+
+    // Fullscreen generating overlay
+    if (artState?.isGenerating == true) {
+        ArtGeneratingOverlay()
     }
 }

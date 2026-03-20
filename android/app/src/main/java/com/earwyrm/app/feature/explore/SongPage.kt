@@ -2,6 +2,7 @@ package com.earwyrm.app.feature.explore
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,11 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +55,7 @@ import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.model.Lyric
 import com.earwyrm.app.core.model.Profile
 import com.earwyrm.app.core.navigation.Screen
+import com.earwyrm.app.feature.share.PageShareSheet
 import com.earwyrm.app.feature.share.ReportSheet
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
@@ -70,6 +73,7 @@ fun SongPage(
     var profiles by remember { mutableStateOf<Map<String, Profile>>(emptyMap()) }
     var coverArtUrl by remember { mutableStateOf<String?>(null) }
     var reportLyricId by remember { mutableStateOf<String?>(null) }
+    var showPageShareSheet by remember { mutableStateOf(false) }
 
     // Use hilt to get supabase client
     val viewModel: SongPageViewModel = hiltViewModel()
@@ -82,6 +86,25 @@ fun SongPage(
             profiles = result.second
             coverArtUrl = result.first.firstOrNull()?.coverArtUrl
         }
+    }
+
+    // Page share sheet
+    if (showPageShareSheet) {
+        val statsLine = buildList {
+            add("${formatStatValue(lyrics.size)} saves")
+            val uniqueUsers = lyrics.map { it.userId }.distinct().size
+            if (uniqueUsers > 1) add("$uniqueUsers people")
+            val totalResonates = lyrics.sumOf { it.reactionCount ?: 0 }
+            if (totalResonates > 0) add("$totalResonates resonates")
+        }.joinToString(" · ")
+
+        PageShareSheet(
+            pageType = "song",
+            title = title,
+            subtitle = artist,
+            statsLine = statsLine,
+            onDismiss = { showPageShareSheet = false }
+        )
     }
 
     // Report sheet
@@ -97,6 +120,13 @@ fun SongPage(
             )
         }
     }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Blurred cover art background
+        SongBackgroundView(
+            coverArtUrl = coverArtUrl,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
 
     Column(
         modifier = Modifier
@@ -148,6 +178,14 @@ fun SongPage(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+            IconButton(onClick = { showPageShareSheet = true }) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = Theme.textMuted,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
 
@@ -220,4 +258,5 @@ fun SongPage(
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
+    } // end Box
 }

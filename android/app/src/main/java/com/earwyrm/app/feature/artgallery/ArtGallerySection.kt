@@ -2,9 +2,11 @@ package com.earwyrm.app.feature.artgallery
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -59,6 +61,10 @@ fun ArtGallerySection(
 
     val isLocked = !isPlus && !state.variants.isNotEmpty() && freeGenExhausted
 
+    // Art preview overlay state
+    var previewVariantIndex by remember { mutableIntStateOf(-1) }
+    val showPreview = previewVariantIndex >= 0 && previewVariantIndex < state.variants.size
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -72,6 +78,7 @@ fun ArtGallerySection(
             isLocked = isLocked,
             onSelectNone = onSelectNone,
             onSelectVariant = onSelectVariant,
+            onLongPressVariant = { index -> previewVariantIndex = index },
             onGenerate = {
                 if (isLocked) {
                     onNavigateToPaywall()
@@ -81,7 +88,7 @@ fun ArtGallerySection(
             }
         )
 
-        // Generating indicator
+        // Generating indicator (inline)
         if (state.isGenerating) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -109,6 +116,20 @@ fun ArtGallerySection(
             )
         }
     }
+
+    // Art preview overlay dialog
+    if (showPreview) {
+        val previewVariant = state.variants[previewVariantIndex]
+        val isActive = state.selectedStyle == CardStyle.AI_VARIANT &&
+                state.selectedVariantIndex == previewVariantIndex
+
+        ArtPreviewOverlay(
+            imageUrl = previewVariant.imageUrl,
+            isActive = isActive,
+            onSetActive = { onSelectVariant(previewVariantIndex) },
+            onDismiss = { previewVariantIndex = -1 }
+        )
+    }
 }
 
 /**
@@ -123,6 +144,7 @@ fun ArtGalleryStrip(
     isLocked: Boolean,
     onSelectNone: () -> Unit,
     onSelectVariant: (Int) -> Unit,
+    onLongPressVariant: (Int) -> Unit = {},
     onGenerate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -143,7 +165,8 @@ fun ArtGalleryStrip(
             ArtThumbnail(
                 imageUrl = variant.imageUrl,
                 isSelected = selectedStyle == CardStyle.AI_VARIANT && selectedVariantIndex == index,
-                onClick = { onSelectVariant(index) }
+                onClick = { onSelectVariant(index) },
+                onLongPress = { onLongPressVariant(index) }
             )
         }
 
@@ -187,8 +210,14 @@ private fun NonePill(isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ArtThumbnail(imageUrl: String, isSelected: Boolean, onClick: () -> Unit) {
+private fun ArtThumbnail(
+    imageUrl: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onLongPress: () -> Unit = {}
+) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.05f else 1.0f,
         animationSpec = tween(150),
@@ -205,7 +234,10 @@ private fun ArtThumbnail(imageUrl: String, isSelected: Boolean, onClick: () -> U
                 color = if (isSelected) Theme.accent else Theme.divider.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(10.dp)
             )
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            )
     ) {
         AsyncImage(
             model = imageUrl,

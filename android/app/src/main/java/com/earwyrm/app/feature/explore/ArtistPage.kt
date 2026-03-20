@@ -66,6 +66,7 @@ import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.navigation.Screen
+import com.earwyrm.app.feature.share.PageShareSheet
 import com.earwyrm.app.feature.share.ReportSheet
 
 private fun formatCompact(value: Int): String {
@@ -96,11 +97,28 @@ fun ArtistPage(
     val haptics = rememberHaptics()
     val context = LocalContext.current
     var reportLyricId by remember { mutableStateOf<String?>(null) }
+    var showPageShareSheet by remember { mutableStateOf(false) }
 
     val isFollowing = follows.any { it.filterType == "artist" && it.filterValue.equals(artistName, ignoreCase = true) }
 
     LaunchedEffect(artistName) {
         viewModel.loadArtist(artistName)
+    }
+
+    // Page share sheet
+    if (showPageShareSheet) {
+        val statsLine = buildList {
+            add("${formatCompact(stats.totalSaves)} saves")
+            add("${formatCompact(stats.uniqueSavers)} savers")
+            add("${formatCompact(stats.songCount)} songs")
+        }.joinToString(" · ")
+
+        PageShareSheet(
+            pageType = "artist",
+            title = artistName,
+            statsLine = statsLine,
+            onDismiss = { showPageShareSheet = false }
+        )
     }
 
     // Report sheet
@@ -151,14 +169,7 @@ fun ArtistPage(
                         coverArtUrl = lyrics.firstOrNull()?.coverArtUrl,
                         isFollowing = isFollowing,
                         onFollowToggle = { viewModel.toggleFollow(artistName) },
-                        onShareClick = {
-                            // Share artist via Android share sheet
-                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_TEXT, "Check out $artistName on Earwyrm!")
-                            }
-                            context.startActivity(android.content.Intent.createChooser(intent, "Share artist"))
-                        }
+                        onShareClick = { showPageShareSheet = true }
                     )
                 }
 

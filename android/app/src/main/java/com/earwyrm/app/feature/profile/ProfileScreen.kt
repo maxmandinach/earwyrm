@@ -85,7 +85,7 @@ import com.earwyrm.app.core.navigation.Screen
 import com.earwyrm.app.core.supabase.BlockManager
 import com.earwyrm.app.core.supabase.CollectionManager
 import com.earwyrm.app.core.supabase.FollowManager
-import com.earwyrm.app.feature.explore.ExploreLyricCard
+import com.earwyrm.app.feature.home.ProfileLyricRow
 import com.earwyrm.app.feature.share.ReportSheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -500,10 +500,19 @@ private fun ProfileLyricsTab(lyrics: List<Lyric>, profile: Profile?, navControll
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(lyrics, key = { it.id }) { lyric ->
-                ExploreLyricCard(lyric = lyric, profile = profile, navController = navController)
+                ProfileLyricRow(
+                    lyric = lyric,
+                    onClick = {
+                        if (lyric.songTitle != null) {
+                            navController.navigate(
+                                Screen.SongPage.createRoute(lyric.songTitle, lyric.artistName)
+                            )
+                        }
+                    }
+                )
             }
             item { Spacer(Modifier.height(80.dp)) }
         }
@@ -518,10 +527,19 @@ private fun ProfileResonatedTab(lyrics: List<Lyric>, navController: NavHostContr
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(lyrics, key = { it.id }) { lyric ->
-                ExploreLyricCard(lyric = lyric, profile = null, navController = navController)
+                ProfileLyricRow(
+                    lyric = lyric,
+                    onClick = {
+                        if (lyric.songTitle != null) {
+                            navController.navigate(
+                                Screen.SongPage.createRoute(lyric.songTitle, lyric.artistName)
+                            )
+                        }
+                    }
+                )
             }
             item { Spacer(Modifier.height(80.dp)) }
         }

@@ -89,6 +89,18 @@ class ExploreViewModel @Inject constructor(
     private val _selectedTag = MutableStateFlow<String?>(null)
     val selectedTag: StateFlow<String?> = _selectedTag.asStateFlow()
 
+    // Follow filter state — set of follow/user_follow IDs to include
+    private val _activeFollowFilterIds = MutableStateFlow<Set<String>>(emptySet())
+    val activeFollowFilterIds: StateFlow<Set<String>> = _activeFollowFilterIds.asStateFlow()
+
+    // Expose FollowManager state for the filter sheet
+    val followManagerFollows: StateFlow<List<com.earwyrm.app.core.model.Follow>> = followManager.follows
+    val followManagerUserFollows: StateFlow<List<com.earwyrm.app.core.model.UserFollow>> = followManager.userFollows
+
+    // Cached profiles for followed users (for display in filter chips)
+    private val _followedUserProfiles = MutableStateFlow<Map<String, Profile>>(emptyMap())
+    val followedUserProfiles: StateFlow<Map<String, Profile>> = _followedUserProfiles.asStateFlow()
+
     // Search results
     private val _searchResults = MutableStateFlow(SearchResults())
     val searchResults: StateFlow<SearchResults> = _searchResults.asStateFlow()
@@ -116,9 +128,28 @@ class ExploreViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val filteredFollowingLyrics: StateFlow<List<Lyric>> = combine(
-        _followingLyrics, _sortOption, _timeRange, _selectedTag
-    ) { lyrics, sort, time, tag ->
-        applyFilters(lyrics, sort, time, tag)
+        _followingLyrics, _sortOption, _timeRange, _selectedTag, _activeFollowFilterIds
+    ) { lyrics, sort, time, tag, activeFilters ->
+        val base = if (activeFilters.isEmpty()) lyrics else {
+            val follows = followManager.follows.value
+            val userFollows = followManager.userFollows.value
+            val activeFollows = follows.filter { it.id in activeFilters }
+            val activeUserFollowIds = userFollows.filter { it.id in activeFilters }.map { it.followingId }.toSet()
+            lyrics.filter { lyric ->
+                // Match if lyric is from a followed user
+                (lyric.userId in activeUserFollowIds) ||
+                // Match if lyric matches an active artist/song/tag follow
+                activeFollows.any { follow ->
+                    when (follow.filterType) {
+                        "artist" -> lyric.artistName.equals(follow.filterValue, ignoreCase = true)
+                        "song" -> lyric.songTitle.equals(follow.filterValue, ignoreCase = true)
+                        "tag" -> lyric.tags?.any { it.equals(follow.filterValue, ignoreCase = true) } == true
+                        else -> false
+                    }
+                }
+            }
+        }
+        applyFilters(base, sort, time, tag)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private var searchJob: Job? = null
@@ -143,6 +174,23 @@ class ExploreViewModel @Inject constructor(
     fun setTimeRange(range: TimeRange) { _timeRange.value = range }
     fun setSelectedTag(tag: String?) {
         _selectedTag.value = if (_selectedTag.value == tag) null else tag
+    }
+
+    // Follow filter methods
+    fun toggleFollowFilter(id: String) {
+        _activeFollowFilterIds.value = if (id in _activeFollowFilterIds.value) {
+            _activeFollowFilterIds.value - id
+        } else {
+            _activeFollowFilterIds.value + id
+        }
+    }
+
+    fun clearFollowFilters() {
+        _activeFollowFilterIds.value = emptySet()
+    }
+
+    fun selectAllFollowFilters(ids: Set<String>) {
+        _activeFollowFilterIds.value = _activeFollowFilterIds.value + ids
     }
 
     private fun applyFilters(
@@ -304,10 +352,24 @@ class ExploreViewModel @Inject constructor(
             try {
                 fetchForYou()
                 fetchFollowing()
+                fetchFollowedUserProfiles()
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    private suspend fun fetchFollowedUserProfiles() {
+        val userFollows = followManager.userFollows.value
+        val userIds = userFollows.map { it.followingId }
+            .filter { it !in _followedUserProfiles.value }
+        if (userIds.isEmpty()) return
+        try {
+            val profiles = supabase.postgrest.from("profiles")
+                .select { filter { isIn("id", userIds) } }
+                .decodeList<Profile>()
+            _followedUserProfiles.value = _followedUserProfiles.value + profiles.associateBy { it.id }
+        } catch (_: Exception) { }
     }
 
     private suspend fun fetchForYou() {
