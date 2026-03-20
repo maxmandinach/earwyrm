@@ -13,17 +13,42 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+
+enum class SortOption(val label: String) {
+    NEWEST("Newest"),
+    MOST_RESONATED("Most Resonated"),
+    MOST_DISCUSSED("Most Discussed")
+}
+
+enum class TimeRange(val label: String) {
+    ALL_TIME("All Time"),
+    THIS_MONTH("This Month"),
+    THIS_WEEK("This Week"),
+    TODAY("Today")
+}
+
+data class SearchResults(
+    val songs: List<Pair<String, String?>> = emptyList(), // title to artist
+    val artists: List<String> = emptyList(),
+    val users: List<Profile> = emptyList(),
+    val lyrics: List<Lyric> = emptyList()
+) {
+    val isEmpty: Boolean get() = songs.isEmpty() && artists.isEmpty() && users.isEmpty() && lyrics.isEmpty()
+}
 
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
@@ -52,17 +77,28 @@ class ExploreViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _sortOption = MutableStateFlow(0) // 0=Newest, 1=Most Resonated, 2=Most Discussed
-    val sortOption: StateFlow<Int> = _sortOption.asStateFlow()
+    private val _sortOption = MutableStateFlow(SortOption.NEWEST)
+    val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
 
-    private val _timeRange = MutableStateFlow(0) // 0=All Time, 1=This Week, 2=Today
-    val timeRange: StateFlow<Int> = _timeRange.asStateFlow()
+    private val _timeRange = MutableStateFlow(TimeRange.ALL_TIME)
+    val timeRange: StateFlow<TimeRange> = _timeRange.asStateFlow()
 
-    private val _trendingTags = MutableStateFlow<List<String>>(emptyList())
-    val trendingTags: StateFlow<List<String>> = _trendingTags.asStateFlow()
+    private val _trendingTags = MutableStateFlow<List<Pair<String, Int>>>(emptyList())
+    val trendingTags: StateFlow<List<Pair<String, Int>>> = _trendingTags.asStateFlow()
 
     private val _selectedTag = MutableStateFlow<String?>(null)
     val selectedTag: StateFlow<String?> = _selectedTag.asStateFlow()
+
+    // Search results
+    private val _searchResults = MutableStateFlow(SearchResults())
+    val searchResults: StateFlow<SearchResults> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    val isSearchActive: StateFlow<Boolean> = _searchQuery.map { query ->
+        query.isNotBlank()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     // Reaction state: set of lyric IDs the current user has reacted to
     private val _reactedLyricIds = MutableStateFlow<Set<String>>(emptySet())
@@ -72,55 +108,58 @@ class ExploreViewModel @Inject constructor(
     private val _reactionCountDeltas = MutableStateFlow<Map<String, Int>>(emptyMap())
     val reactionCountDeltas: StateFlow<Map<String, Int>> = _reactionCountDeltas.asStateFlow()
 
-    // Filtered versions
+    // Filtered versions (only apply sort/time/tag, not search query — search has its own results)
     val filteredForYouLyrics: StateFlow<List<Lyric>> = combine(
-        _forYouLyrics, _searchQuery, _sortOption, _timeRange, _selectedTag
-    ) { lyrics, query, sort, time, tag ->
-        applyFilters(lyrics, query, sort, time, tag)
+        _forYouLyrics, _sortOption, _timeRange, _selectedTag
+    ) { lyrics, sort, time, tag ->
+        applyFilters(lyrics, sort, time, tag)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val filteredFollowingLyrics: StateFlow<List<Lyric>> = combine(
-        _followingLyrics, _searchQuery, _sortOption, _timeRange, _selectedTag
-    ) { lyrics, query, sort, time, tag ->
-        applyFilters(lyrics, query, sort, time, tag)
+        _followingLyrics, _sortOption, _timeRange, _selectedTag
+    ) { lyrics, sort, time, tag ->
+        applyFilters(lyrics, sort, time, tag)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun setSearchQuery(query: String) { _searchQuery.value = query }
-    fun setSortOption(option: Int) { _sortOption.value = option }
-    fun setTimeRange(range: Int) { _timeRange.value = range }
+    private var searchJob: Job? = null
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        if (query.isBlank()) {
+            _searchResults.value = SearchResults()
+            _isSearching.value = false
+            searchJob?.cancel()
+        } else {
+            // Debounce search
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch {
+                delay(300)
+                performSearch(query)
+            }
+        }
+    }
+
+    fun setSortOption(option: SortOption) { _sortOption.value = option }
+    fun setTimeRange(range: TimeRange) { _timeRange.value = range }
     fun setSelectedTag(tag: String?) {
         _selectedTag.value = if (_selectedTag.value == tag) null else tag
     }
 
     private fun applyFilters(
         lyrics: List<Lyric>,
-        query: String,
-        sort: Int,
-        time: Int,
+        sort: SortOption,
+        time: TimeRange,
         tag: String?
     ): List<Lyric> {
         var result = lyrics
 
         // Time range filter
-        if (time > 0) {
-            val now = Clock.System.now()
-            val cutoff = when (time) {
-                1 -> now - 7.days
-                2 -> now - 24.hours
-                else -> now
-            }
-            result = result.filter { it.createdAt >= cutoff }
-        }
-
-        // Search query filter
-        if (query.isNotBlank()) {
-            val q = query.lowercase()
-            result = result.filter { lyric ->
-                lyric.content.lowercase().contains(q) ||
-                    lyric.songTitle?.lowercase()?.contains(q) == true ||
-                    lyric.artistName?.lowercase()?.contains(q) == true ||
-                    lyric.tags?.any { it.lowercase().contains(q) } == true
-            }
+        val now = Clock.System.now()
+        result = when (time) {
+            TimeRange.TODAY -> result.filter { it.createdAt >= now - 24.hours }
+            TimeRange.THIS_WEEK -> result.filter { it.createdAt >= now - 7.days }
+            TimeRange.THIS_MONTH -> result.filter { it.createdAt >= now - 30.days }
+            TimeRange.ALL_TIME -> result
         }
 
         // Tag filter
@@ -132,9 +171,9 @@ class ExploreViewModel @Inject constructor(
 
         // Sort
         result = when (sort) {
-            1 -> result.sortedByDescending { it.reactionCount ?: 0 }
-            2 -> result.sortedByDescending { it.commentCount ?: 0 }
-            else -> result.sortedByDescending { it.createdAt }
+            SortOption.MOST_RESONATED -> result.sortedByDescending { it.reactionCount ?: 0 }
+            SortOption.MOST_DISCUSSED -> result.sortedByDescending { it.commentCount ?: 0 }
+            SortOption.NEWEST -> result.sortedByDescending { it.createdAt }
         }
 
         return result
@@ -150,7 +189,73 @@ class ExploreViewModel @Inject constructor(
         _trendingTags.value = tagCounts.entries
             .sortedByDescending { it.value }
             .take(10)
-            .map { it.key }
+            .map { it.key to it.value }
+    }
+
+    private suspend fun performSearch(query: String) {
+        _isSearching.value = true
+        val blocked = blockManager.blockedUserIds.value
+        try {
+            // Search lyrics by content, song title, artist name
+            val q = query.trim()
+            val matchingLyrics = supabase.postgrest.from("lyrics")
+                .select {
+                    filter {
+                        eq("is_current", true)
+                        eq("is_public", true)
+                        or {
+                            ilike("content", "%$q%")
+                            ilike("song_title", "%$q%")
+                            ilike("artist_name", "%$q%")
+                        }
+                    }
+                    order("created_at", Order.DESCENDING)
+                    limit(30)
+                }
+                .decodeList<Lyric>()
+                .filter { it.userId !in blocked }
+
+            // Extract distinct songs (title + artist pairs)
+            val songs = matchingLyrics
+                .filter { it.songTitle != null }
+                .map { it.songTitle!! to it.artistName }
+                .distinctBy { "${it.first.lowercase()}|${it.second?.lowercase()}" }
+                .take(10)
+
+            // Extract distinct artists
+            val artists = matchingLyrics
+                .mapNotNull { it.artistName }
+                .distinct()
+                .filter { it.lowercase().contains(q.lowercase()) }
+                .take(10)
+
+            // Search users by username
+            val matchingUsers = try {
+                supabase.postgrest.from("profiles")
+                    .select {
+                        filter {
+                            ilike("username", "%$q%")
+                        }
+                        limit(10)
+                    }
+                    .decodeList<Profile>()
+                    .filter { it.id !in blocked }
+            } catch (_: Exception) { emptyList() }
+
+            // Fetch profiles for lyric authors
+            fetchProfilesFor(matchingLyrics)
+
+            _searchResults.value = SearchResults(
+                songs = songs,
+                artists = artists,
+                users = matchingUsers,
+                lyrics = matchingLyrics
+            )
+        } catch (_: Exception) {
+            _searchResults.value = SearchResults()
+        } finally {
+            _isSearching.value = false
+        }
     }
 
     fun toggleReaction(lyricId: String) {

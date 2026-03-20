@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.earwyrm.app.core.design.CardArtBackground
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.PlusBadge
 import com.earwyrm.app.core.design.Theme
@@ -77,18 +77,7 @@ fun CompactLyricCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box {
-            // Optional card art background at low opacity
-            if (lyric.cardArtUrl != null) {
-                AsyncImage(
-                    model = lyric.cardArtUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clip(RoundedCornerShape(12.dp))
-                        .alpha(0.08f),
-                    contentScale = ContentScale.Crop
-                )
-            }
+            CardArtBackground(imageUrl = lyric.cardArtUrl ?: lyric.coverArtUrl)
 
             Column(modifier = Modifier.padding(14.dp)) {
                 // User row + more menu

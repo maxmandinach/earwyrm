@@ -148,6 +148,9 @@ class ProfileViewModel @Inject constructor(
                 _viewingProfile.value = profile
                 if (profile != null) {
                     fetchLyrics(profile.id, isOwn = false)
+                    fetchResonatedLyrics(profile.id)
+                    fetchPublicNotes(profile.id)
+                    collectionManager.fetchCollections(profile.id)
                     fetchFollowCounts(profile.id)
                 }
             } catch (_: Exception) { }
@@ -285,7 +288,7 @@ fun ProfileScreen(
     val scope = rememberCoroutineScope()
 
     val tabs = if (isOwnProfile) listOf("Lyrics", "Resonated", "Notes", "Collections", "Following")
-    else listOf("Lyrics")
+    else listOf("Lyrics", "Resonated", "Notes", "Collections")
 
     LaunchedEffect(viewingUsername) {
         viewModel.loadProfile(viewingUsername)
@@ -468,12 +471,21 @@ fun ProfileScreen(
         }
 
         // Tab content
-        when (if (isOwnProfile) selectedTab else 0) {
-            0 -> ProfileLyricsTab(lyrics = lyrics, profile = profile, navController = navController)
-            1 -> ProfileResonatedTab(lyrics = resonated, navController = navController)
-            2 -> ProfileNotesTab(notes = notes)
-            3 -> ProfileCollectionsTab(collections = collections, navController = navController)
-            4 -> ProfileFollowingTab(follows = follows, onUnfollow = { viewModel.unfollowItem(it) })
+        if (isOwnProfile) {
+            when (selectedTab) {
+                0 -> ProfileLyricsTab(lyrics = lyrics, profile = profile, navController = navController)
+                1 -> ProfileResonatedTab(lyrics = resonated, navController = navController)
+                2 -> ProfileNotesTab(notes = notes)
+                3 -> ProfileCollectionsTab(collections = collections, navController = navController)
+                4 -> ProfileFollowingTab(follows = follows, onUnfollow = { viewModel.unfollowItem(it) })
+            }
+        } else {
+            when (selectedTab) {
+                0 -> ProfileLyricsTab(lyrics = lyrics, profile = profile, navController = navController)
+                1 -> ProfileResonatedTab(lyrics = resonated, navController = navController)
+                2 -> ProfileNotesTab(notes = notes)
+                3 -> ProfileCollectionsTab(collections = collections, navController = navController)
+            }
         }
     }
     SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp))

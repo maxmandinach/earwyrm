@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.earwyrm.app.core.design.CardArtBackground
 import com.earwyrm.app.core.design.CaveatFamily
+import com.earwyrm.app.core.design.ResonateIcon
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.model.Lyric
 import com.earwyrm.app.core.model.LyricNote
@@ -33,6 +35,8 @@ import com.earwyrm.app.core.util.formatRelativeTime
 fun LyricCardView(lyric: Lyric, note: LyricNote?, isCurrent: Boolean, hasReacted: Boolean, reactionCount: Int, onReactionToggle: () -> Unit, onVisibilityToggle: () -> Unit, onCommentClick: () -> Unit, onShareClick: () -> Unit, onEditClick: () -> Unit = {}, onSaveClick: () -> Unit = {}, navController: NavHostController) {
     val reactionScale by animateFloatAsState(1.0f, spring(0.4f, 300f), label = "reaction")
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Theme.card), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+        Box {
+            CardArtBackground(imageUrl = lyric.cardArtUrl ?: lyric.coverArtUrl)
         Column(Modifier.padding(16.dp)) {
             if (lyric.songTitle != null || lyric.coverArtUrl != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().then(if (lyric.songTitle != null) Modifier.clickable { navController.navigate(Screen.SongPage.createRoute(lyric.songTitle, lyric.artistName)) } else Modifier)) {
@@ -46,7 +50,7 @@ fun LyricCardView(lyric: Lyric, note: LyricNote?, isCurrent: Boolean, hasReacted
             Spacer(Modifier.height(8.dp)); Text(formatRelativeTime(lyric.createdAt), style = Theme.dmSans(11f), color = Theme.textMuted)
             if (isCurrent) {
                 Spacer(Modifier.height(8.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = onReactionToggle, Modifier.scale(reactionScale)) { Icon(if (hasReacted) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Resonate", tint = if (hasReacted) Color(0xFFE74C3C) else Theme.textMuted, modifier = Modifier.size(20.dp)) }; if (reactionCount > 0) Text("$reactionCount", style = Theme.dmSans(13f), color = Theme.textSecondary) }
+                    Row(verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = onReactionToggle, Modifier.scale(reactionScale)) { ResonateIcon(isActive = hasReacted, modifier = Modifier.size(20.dp)) }; if (reactionCount > 0) Text("$reactionCount", style = Theme.dmSans(13f), color = Theme.textSecondary) }
                     Row(verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = onCommentClick) { Icon(Icons.Filled.ChatBubbleOutline, "Comments", tint = Theme.textMuted, modifier = Modifier.size(20.dp)) }; (lyric.commentCount ?: 0).let { if (it > 0) Text("$it", style = Theme.dmSans(13f), color = Theme.textSecondary) } }
                     IconButton(onClick = onSaveClick) { Icon(Icons.Filled.BookmarkBorder, "Save", tint = Theme.textMuted, modifier = Modifier.size(20.dp)) }
                     IconButton(onClick = onVisibilityToggle) { Icon(if (lyric.isPublic == true) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, "Toggle visibility", tint = Theme.textMuted, modifier = Modifier.size(20.dp)) }
@@ -54,6 +58,7 @@ fun LyricCardView(lyric: Lyric, note: LyricNote?, isCurrent: Boolean, hasReacted
                     IconButton(onClick = onShareClick) { Icon(Icons.Filled.Share, "Share", tint = Theme.textMuted, modifier = Modifier.size(20.dp)) }
                 }
             }
+        }
         }
     }
 }

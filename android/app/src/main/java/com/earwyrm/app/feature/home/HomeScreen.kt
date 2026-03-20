@@ -161,20 +161,35 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = hilt
                         }
                     }
 
-                    // Past earwyrms section
-                    if (pastLyrics.isNotEmpty()) {
+                    // Memory Lane carousel of past lyrics (also show for free users to upsell)
+                    if (pastLyrics.isNotEmpty() || !isPlus) {
                         item {
-                            Column {
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "past earwyrms",
-                                    fontFamily = CaveatFamily,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Theme.textSecondary,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                )
-                            }
+                            Spacer(Modifier.height(8.dp))
+                            MemoryLaneSection(
+                                pastLyrics = pastLyrics,
+                                isPlus = isPlus,
+                                onLyricClick = { lyric ->
+                                    // Could navigate to lyric detail in the future
+                                },
+                                onUpgrade = {
+                                    navController.navigate(Screen.PlusPaywall.route)
+                                }
+                            )
+                        }
+                    }
+
+                    if (pastLyrics.isNotEmpty()) {
+                        // Past earwyrms detail list
+                        item {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "past earwyrms",
+                                fontFamily = CaveatFamily,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Theme.textSecondary,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
                         }
                         items(pastLyrics, key = { it.id }) { lyric ->
                             Box(Modifier.padding(horizontal = 16.dp)) {

@@ -92,7 +92,8 @@ class ActivityViewModel @Inject constructor(
 @Composable
 fun ActivityScreen(
     navController: NavHostController,
-    viewModel: ActivityViewModel = hiltViewModel()
+    viewModel: ActivityViewModel = hiltViewModel(),
+    insightsViewModel: ActivityInsightsViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -167,30 +168,45 @@ fun ActivityScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             if (filteredNotifications.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    verticalArrangement = Arrangement.Center
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = if (selectedFilter == "All") "No activity yet" else "No $selectedFilter yet",
-                        style = Theme.dmSans(16f),
-                        color = Theme.textSecondary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    item {
+                        ActivityInsightsCard(viewModel = insightsViewModel)
+                    }
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = if (selectedFilter == "All") "No activity yet" else "No $selectedFilter yet",
+                                style = Theme.dmSans(16f),
+                                color = Theme.textSecondary,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item {
+                        ActivityInsightsCard(viewModel = insightsViewModel)
+                    }
                     items(filteredNotifications, key = { it.id }) { notification ->
                         NotificationCard(
                             notification = notification,
-                            navController = navController
+                            navController = navController,
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
                     item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -203,12 +219,13 @@ fun ActivityScreen(
 @Composable
 private fun NotificationCard(
     notification: AppNotification,
-    navController: NavHostController
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
     val description = buildNotificationText(notification)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable {
                 when (notification.type) {

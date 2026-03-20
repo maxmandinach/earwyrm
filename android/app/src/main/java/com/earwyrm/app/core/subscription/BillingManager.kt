@@ -41,6 +41,15 @@ data class ProductInfo(
     internal val offerToken: String
 )
 
+data class TipProductInfo(
+    val productId: String,
+    val title: String,
+    val description: String,
+    val formattedPrice: String,
+    val priceMicros: Long,
+    internal val productDetails: ProductDetails
+)
+
 @Singleton
 class BillingManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -54,6 +63,12 @@ class BillingManager @Inject constructor(
         const val MONTHLY_PRODUCT_ID = "earwyrmplus_monthly"
         const val YEARLY_PRODUCT_ID = "earwyrmplus_yearly"
         private val SUBSCRIPTION_PRODUCT_IDS = listOf(MONTHLY_PRODUCT_ID, YEARLY_PRODUCT_ID)
+
+        // Tip jar (consumable in-app products)
+        const val TIP_SMALL_ID = "earwyrm_tip_small"
+        const val TIP_MEDIUM_ID = "earwyrm_tip_medium"
+        const val TIP_LARGE_ID = "earwyrm_tip_large"
+        private val TIP_PRODUCT_IDS = listOf(TIP_SMALL_ID, TIP_MEDIUM_ID, TIP_LARGE_ID)
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -69,6 +84,14 @@ class BillingManager @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _tipProducts = MutableStateFlow<List<TipProductInfo>>(emptyList())
+    val tipProducts: StateFlow<List<TipProductInfo>> = _tipProducts.asStateFlow()
+
+    private val _tipPurchaseSuccess = MutableStateFlow(false)
+    val tipPurchaseSuccess: StateFlow<Boolean> = _tipPurchaseSuccess.asStateFlow()
+
+    fun clearTipPurchaseSuccess() { _tipPurchaseSuccess.value = false }
 
     val monthlyProduct: ProductInfo? get() = _availableProducts.value.find { it.productId == MONTHLY_PRODUCT_ID }
     val yearlyProduct: ProductInfo? get() = _availableProducts.value.find { it.productId == YEARLY_PRODUCT_ID }
@@ -94,6 +117,7 @@ class BillingManager @Inject constructor(
                     isServiceConnected = true
                     scope.launch {
                         queryProducts()
+                        queryTipProducts()
                         restorePurchases()
                     }
                 } else {
@@ -162,6 +186,69 @@ class BillingManager @Inject constructor(
         }
     }
 
+    // ── Query Tip Products (Consumables) ───────────────────────────────
+
+    private suspend fun queryTipProducts() {
+        val productList = TIP_PRODUCT_IDS.map { id ->
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(id)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        }
+
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(productList)
+            .build()
+
+        val client = billingClient ?: return
+
+        suspendCancellableCoroutine { continuation ->
+            client.queryProductDetailsAsync(params) { billingResult, detailsList ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val tips = detailsList.mapNotNull { details ->
+                        val pricing = details.oneTimePurchaseOfferDetails ?: return@mapNotNull null
+                        TipProductInfo(
+                            productId = details.productId,
+                            title = details.title,
+                            description = details.description,
+                            formattedPrice = pricing.formattedPrice,
+                            priceMicros = pricing.priceAmountMicros,
+                            productDetails = details
+                        )
+                    }.sortedBy { it.priceMicros }
+
+                    Log.d(TAG, "Loaded ${tips.size} tip products")
+                    _tipProducts.value = tips
+                } else {
+                    Log.e(TAG, "Failed to query tip products: ${billingResult.debugMessage}")
+                }
+                continuation.resumeWith(Result.success(Unit))
+            }
+        }
+    }
+
+    // ── Launch Tip Purchase Flow ────────────────────────────────────────
+
+    fun launchTipPurchaseFlow(activity: Activity, tip: TipProductInfo) {
+        _isLoading.value = true
+        _error.value = null
+
+        val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(tip.productDetails)
+            .build()
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(listOf(productDetailsParams))
+            .build()
+
+        val result = billingClient?.launchBillingFlow(activity, billingFlowParams)
+        if (result?.responseCode != BillingClient.BillingResponseCode.OK) {
+            Log.e(TAG, "Failed to launch tip billing flow: ${result?.debugMessage}")
+            _error.value = "Could not start purchase"
+            _isLoading.value = false
+        }
+    }
+
     // ── Launch Purchase Flow ────────────────────────────────────────────
 
     fun launchPurchaseFlow(activity: Activity, product: ProductInfo) {
@@ -208,8 +295,12 @@ class BillingManager @Inject constructor(
 
     private suspend fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            // Acknowledge the purchase if not already acknowledged
-            if (!purchase.isAcknowledged) {
+            // Update local state
+            val isSubscription = purchase.products.any { it in SUBSCRIPTION_PRODUCT_IDS }
+            val isTip = purchase.products.any { it in TIP_PRODUCT_IDS }
+
+            // Acknowledge subscriptions (consumables are acknowledged via consume)
+            if (!isTip && !purchase.isAcknowledged) {
                 val ackParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
@@ -226,12 +317,21 @@ class BillingManager @Inject constructor(
                 }
             }
 
-            // Update local state
-            val isSubscription = purchase.products.any { it in SUBSCRIPTION_PRODUCT_IDS }
             if (isSubscription) {
                 _isPlusSubscriber.value = true
                 val productId = purchase.products.firstOrNull { it in SUBSCRIPTION_PRODUCT_IDS }
                 syncToSupabase(productId = productId, isPlus = true)
+            } else if (isTip) {
+                // Consume the tip so it can be purchased again
+                val consumeParams = ConsumeParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+                billingClient?.consumeAsync(consumeParams) { result, _ ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Log.d(TAG, "Tip consumed successfully")
+                    }
+                }
+                _tipPurchaseSuccess.value = true
             }
         } else if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
             Log.d(TAG, "Purchase pending")

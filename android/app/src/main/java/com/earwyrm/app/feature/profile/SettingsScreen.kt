@@ -66,7 +66,9 @@ import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
 import com.earwyrm.app.core.model.Profile
 import com.earwyrm.app.core.navigation.Screen
+import com.earwyrm.app.core.subscription.BillingManager
 import com.earwyrm.app.core.supabase.BlockManager
+import com.earwyrm.app.feature.subscription.TipJarSheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
@@ -90,6 +92,7 @@ class SettingsViewModel @Inject constructor(
     val authManager: AuthManager,
     val appearanceManager: AppearanceManager,
     val blockManager: BlockManager,
+    val billingManager: BillingManager,
     private val supabase: SupabaseClient
 ) : ViewModel() {
 
@@ -204,6 +207,7 @@ fun SettingsScreen(
     val saveMessage by viewModel.saveMessage.collectAsState()
     val blockedProfiles by viewModel.blockedProfiles.collectAsState()
     val isLoadingBlocked by viewModel.isLoadingBlocked.collectAsState()
+    var showTipJar by remember { mutableStateOf(false) }
     val haptics = rememberHaptics()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -499,6 +503,27 @@ fun SettingsScreen(
                 }
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { showTipJar = true }
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Tip Jar",
+                    style = Theme.dmSans(15f),
+                    color = Theme.textPrimary
+                )
+                Text(
+                    "\u203A",
+                    style = Theme.dmSans(16f),
+                    color = Theme.textMuted
+                )
+            }
+
             Spacer(Modifier.height(24.dp))
 
             // ── Sign Out ──
@@ -523,6 +548,13 @@ fun SettingsScreen(
         }
     }
     SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
+    }
+
+    if (showTipJar) {
+        TipJarSheet(
+            billingManager = viewModel.billingManager,
+            onDismiss = { showTipJar = false }
+        )
     }
 }
 

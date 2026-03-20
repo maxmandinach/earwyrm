@@ -66,6 +66,10 @@ fun ForYouTab(
     val profiles by viewModel.lyricProfiles.collectAsState()
     val reactedIds by viewModel.reactedLyricIds.collectAsState()
     val reactionDeltas by viewModel.reactionCountDeltas.collectAsState()
+    val trendingTags by viewModel.trendingTags.collectAsState()
+    val selectedTag by viewModel.selectedTag.collectAsState()
+    val sortOption by viewModel.sortOption.collectAsState()
+    val timeRange by viewModel.timeRange.collectAsState()
     val haptics = rememberHaptics()
     var reportLyricId by remember { mutableStateOf<String?>(null) }
 
@@ -83,49 +87,79 @@ fun ForYouTab(
         }
     }
 
-    if (lyrics.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "No public earwyrms yet",
-                style = Theme.dmSans(16f),
-                color = Theme.textSecondary,
-                textAlign = TextAlign.Center
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Filter bar
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            FeedFilterBar(
+                selectedSort = sortOption,
+                onSortSelected = { viewModel.setSortOption(it) },
+                selectedTimeRange = timeRange,
+                onTimeRangeSelected = { viewModel.setTimeRange(it) }
             )
         }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(lyrics, key = { it.id }) { lyric ->
-                val profile = profiles[lyric.userId]
-                CompactLyricCard(
-                    lyric = lyric,
-                    username = profile?.username ?: "...",
-                    isPlus = profile?.isPlus == true,
-                    hasReacted = lyric.id in reactedIds,
-                    reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
-                    commentCount = lyric.commentCount ?: 0,
-                    onResonate = { haptics.light(); viewModel.toggleReaction(lyric.id) },
-                    onShare = { /* TODO */ },
-                    onSongClick = {
-                        lyric.songTitle?.let { title ->
-                            navController.navigate(Screen.SongPage.createRoute(title, lyric.artistName))
-                        }
-                    },
-                    onUserClick = {
-                        profile?.username?.let { navController.navigate(Screen.PublicProfile.createRoute(it)) }
-                    },
-                    onReportClick = { reportLyricId = lyric.id }
+
+        // Trending tags
+        if (trendingTags.isNotEmpty()) {
+            item {
+                TrendingTagsRow(
+                    tags = trendingTags,
+                    selectedTag = selectedTag,
+                    onTagSelected = { viewModel.setSelectedTag(it) }
                 )
             }
-            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
+
+        // Feed content
+        if (lyrics.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 48.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No public earwyrms yet",
+                        style = Theme.dmSans(16f),
+                        color = Theme.textSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            items(lyrics, key = { it.id }) { lyric ->
+                val profile = profiles[lyric.userId]
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    CompactLyricCard(
+                        lyric = lyric,
+                        username = profile?.username ?: "...",
+                        isPlus = profile?.isPlus == true,
+                        hasReacted = lyric.id in reactedIds,
+                        reactionCount = (lyric.reactionCount ?: 0) + (reactionDeltas[lyric.id] ?: 0),
+                        commentCount = lyric.commentCount ?: 0,
+                        onResonate = { haptics.light(); viewModel.toggleReaction(lyric.id) },
+                        onShare = { /* TODO */ },
+                        onSongClick = {
+                            lyric.songTitle?.let { title ->
+                                navController.navigate(Screen.SongPage.createRoute(title, lyric.artistName))
+                            }
+                        },
+                        onUserClick = {
+                            profile?.username?.let { navController.navigate(Screen.PublicProfile.createRoute(it)) }
+                        },
+                        onReportClick = { reportLyricId = lyric.id }
+                    )
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
 
