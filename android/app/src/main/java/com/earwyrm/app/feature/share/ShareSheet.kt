@@ -3,31 +3,33 @@ package com.earwyrm.app.feature.share
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Typeface
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.earwyrm.app.core.design.EarwyrmColors
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.model.Lyric
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +47,7 @@ fun ShareSheet(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
+    var isRendering by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -67,10 +70,14 @@ fun ShareSheet(
             // Share as image
             Button(
                 onClick = {
-                    scope.launch {
-                        shareAsImage(context, lyric)
-                        onShared()
-                        onDismiss()
+                    if (!isRendering) {
+                        isRendering = true
+                        scope.launch {
+                            shareAsImage(context, lyric)
+                            isRendering = false
+                            onShared()
+                            onDismiss()
+                        }
                     }
                 },
                 modifier = Modifier
@@ -80,9 +87,18 @@ fun ShareSheet(
                     containerColor = Theme.accent,
                     contentColor = Color.White
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isRendering
             ) {
-                Text("Share as Image", style = Theme.dmSans(15f, FontWeight.SemiBold))
+                if (isRendering) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Share as Image", style = Theme.dmSans(15f, FontWeight.SemiBold))
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -114,61 +130,16 @@ fun ShareSheet(
 }
 
 private suspend fun shareAsImage(context: Context, lyric: Lyric) {
-    withContext(Dispatchers.Default) {
-        val width = 1080
-        val height = 1350
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
+    // Render card using the new renderer
+    val bitmap = ShareImageRenderer.renderShareCard(
+        context = context,
+        lyric = lyric,
+        username = null,
+        cardArtBitmap = null
+    )
 
-        // Background
-        val bgPaint = Paint().apply {
-            color = android.graphics.Color.parseColor("#FAF8F5")
-            style = Paint.Style.FILL
-        }
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
-
-        // Lyric text
-        val lyricPaint = Paint().apply {
-            color = android.graphics.Color.parseColor("#1A1A1A")
-            textSize = 64f
-            isAntiAlias = true
-            try {
-                typeface = Typeface.createFromAsset(context.assets, "caveat_medium.ttf")
-            } catch (_: Exception) {
-                typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
-            }
-        }
-
-        // Draw lyric content with word wrapping
-        val lines = wrapText(lyric.content, lyricPaint, (width - 160).toFloat())
-        var y = height / 3f
-        lines.forEach { line ->
-            canvas.drawText(line, 80f, y, lyricPaint)
-            y += 80f
-        }
-
-        // Song info
-        if (lyric.songTitle != null) {
-            val songPaint = Paint().apply {
-                color = android.graphics.Color.parseColor("#6B6B6B")
-                textSize = 36f
-                isAntiAlias = true
-            }
-            canvas.drawText(
-                "${lyric.songTitle}${if (lyric.artistName != null) " — ${lyric.artistName}" else ""}",
-                80f, y + 60f, songPaint
-            )
-        }
-
-        // Watermark
-        val watermarkPaint = Paint().apply {
-            color = android.graphics.Color.parseColor("#B8A99A")
-            textSize = 28f
-            isAntiAlias = true
-        }
-        canvas.drawText("earwyrm.app", 80f, height - 60f, watermarkPaint)
-
-        // Save and share
+    // Save to temp file
+    withContext(Dispatchers.IO) {
         val file = File(context.cacheDir, "earwyrm_share.png")
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
 
@@ -188,23 +159,4 @@ private suspend fun shareAsImage(context: Context, lyric: Lyric) {
             context.startActivity(Intent.createChooser(intent, "Share earwyrm"))
         }
     }
-}
-
-private fun wrapText(text: String, paint: Paint, maxWidth: Float): List<String> {
-    val words = text.split(" ")
-    val lines = mutableListOf<String>()
-    var currentLine = ""
-
-    words.forEach { word ->
-        val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
-        if (paint.measureText(testLine) <= maxWidth) {
-            currentLine = testLine
-        } else {
-            if (currentLine.isNotEmpty()) lines.add(currentLine)
-            currentLine = word
-        }
-    }
-    if (currentLine.isNotEmpty()) lines.add(currentLine)
-
-    return lines
 }

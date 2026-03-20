@@ -151,13 +151,32 @@ fun SongPage(
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Stats Row
+        PageStatsRow(
+            stats = buildList {
+                add("saves" to formatStatValue(lyrics.size))
+                val uniqueUsers = lyrics.map { it.userId }.distinct().size
+                if (uniqueUsers > 1) add("people" to formatStatValue(uniqueUsers))
+                val totalResonates = lyrics.sumOf { it.reactionCount ?: 0 }
+                add("resonates" to formatStatValue(totalResonates))
+                val totalComments = lyrics.sumOf { it.commentCount ?: 0 }
+                if (totalComments > 0) add("comments" to formatStatValue(totalComments))
+            }
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "${lyrics.size} earwyrm${if (lyrics.size != 1) "s" else ""}",
-            style = Theme.dmSans(14f),
-            color = Theme.textMuted,
-            modifier = Modifier.padding(horizontal = 16.dp)
+        // Most Saved
+        MostSavedSection(
+            lyrics = lyrics,
+            onArtistClick = { artistName ->
+                navController.navigate(Screen.ArtistPage.createRoute(artistName))
+            },
+            onSongClick = { songTitle, songArtist ->
+                navController.navigate(Screen.SongPage.createRoute(songTitle, songArtist))
+            }
         )
 
         Spacer(modifier = Modifier.height(12.dp))

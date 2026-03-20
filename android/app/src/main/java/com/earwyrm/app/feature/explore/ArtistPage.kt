@@ -2,7 +2,6 @@ package com.earwyrm.app.feature.explore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -166,7 +164,15 @@ fun ArtistPage(
 
                 // Stats Row
                 item {
-                    StatsRow(stats = stats)
+                    PageStatsRow(
+                        stats = listOf(
+                            "saves" to formatCompact(stats.totalSaves),
+                            "savers" to formatCompact(stats.uniqueSavers),
+                            "songs" to formatCompact(stats.songCount),
+                            "resonates" to formatCompact(stats.reactionsCount),
+                            "comments" to formatCompact(stats.commentsCount)
+                        )
+                    )
                 }
 
                 // Songs Section
@@ -197,6 +203,19 @@ fun ArtistPage(
                             }
                         }
                     }
+                }
+
+                // Most Saved
+                item {
+                    MostSavedSection(
+                        lyrics = lyrics,
+                        onArtistClick = { artist ->
+                            navController.navigate(Screen.ArtistPage.createRoute(artist))
+                        },
+                        onSongClick = { title, artist ->
+                            navController.navigate(Screen.SongPage.createRoute(title, artist ?: artistName))
+                        }
+                    )
                 }
 
                 // Search & Sort
@@ -331,48 +350,6 @@ private fun ArtistHeader(
                     modifier = Modifier.size(22.dp)
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun StatsRow(stats: ArtistStats) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        StatItem(label = "Saves", value = stats.totalSaves)
-        StatItem(label = "Savers", value = stats.uniqueSavers)
-        StatItem(label = "Songs", value = stats.songCount)
-        StatItem(label = "Resonates", value = stats.reactionsCount)
-        StatItem(label = "Comments", value = stats.commentsCount)
-    }
-}
-
-@Composable
-private fun StatItem(label: String, value: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Theme.card),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = formatCompact(value),
-                style = Theme.dmSans(18f, FontWeight.Bold),
-                color = Theme.accent
-            )
-            Text(
-                text = label,
-                style = Theme.dmSans(11f),
-                color = Theme.textMuted
-            )
         }
     }
 }

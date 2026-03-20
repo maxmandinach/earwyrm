@@ -26,9 +26,10 @@ fun ClusteredLyricCard(
     onSongClick: () -> Unit = {},
     onUserClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
-    onReportClick: () -> Unit = {}
+    onReportClick: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         CompactLyricCard(
             lyric = lyric,
             username = username,

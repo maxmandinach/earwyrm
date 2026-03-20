@@ -53,6 +53,7 @@ import com.earwyrm.app.feature.collections.CollectionDetailScreen
 import com.earwyrm.app.feature.collections.CollectionsScreen
 import com.earwyrm.app.feature.explore.ArtistPage
 import com.earwyrm.app.feature.explore.ExploreScreen
+import com.earwyrm.app.feature.explore.FollowDiscoveryScreen
 import com.earwyrm.app.feature.explore.FullLyricsView
 import com.earwyrm.app.feature.explore.SongPage
 import com.earwyrm.app.feature.home.HomeScreen
@@ -83,6 +84,7 @@ sealed class Screen(val route: String) {
         fun createRoute(artistName: String) = "artist/${java.net.URLEncoder.encode(artistName, "UTF-8")}"
     }
     data object PlusPaywall : Screen("plus_paywall")
+    data object FollowDiscovery : Screen("follow_discovery")
 }
 
 @EntryPoint
@@ -155,6 +157,7 @@ fun NavGraph(navController: NavHostController, deepLinkDestination: DeepLinkDest
                 ProfileScreen(navController = navController, viewingUsername = it.arguments?.getString("username"))
             }
             composable(Screen.PlusPaywall.route) { PlusPaywallScreen(navController = navController) }
+            composable(Screen.FollowDiscovery.route) { FollowDiscoveryScreen(navController = navController) }
             composable(Screen.SharedLyricDetail.route, arguments = listOf(navArgument("shareToken") { type = NavType.StringType })) {
                 SharedLyricDetailScreen(shareToken = it.arguments?.getString("shareToken") ?: return@composable, navController = navController)
             }
