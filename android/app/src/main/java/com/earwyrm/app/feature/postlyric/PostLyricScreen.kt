@@ -25,6 +25,10 @@ import androidx.navigation.NavHostController
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
+import com.earwyrm.app.core.navigation.Screen
+import com.earwyrm.app.feature.artgallery.ArtGallerySection
+import com.earwyrm.app.feature.artgallery.ArtGalleryViewModel
+import com.earwyrm.app.feature.artgallery.ArtGenerationSheet
 import kotlinx.coroutines.launch
 
 private val ghostTextPrompts = listOf(
@@ -42,17 +46,26 @@ private val ghostTextPrompts = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewModel = hiltViewModel()) {
+fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewModel = hiltViewModel(), artGalleryViewModel: ArtGalleryViewModel = hiltViewModel()) {
     val content by viewModel.content.collectAsState(); val artistName by viewModel.artistName.collectAsState(); val songTitle by viewModel.songTitle.collectAsState()
     val tags by viewModel.tags.collectAsState(); val noteContent by viewModel.noteContent.collectAsState(); val isPublic by viewModel.isPublic.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState(); val saveSuccess by viewModel.saveSuccess.collectAsState()
     val artistSuggestions by viewModel.artistSuggestions.collectAsState(); val songSuggestions by viewModel.songSuggestions.collectAsState()
     val geniusSuggestions by viewModel.geniusSuggestions.collectAsState()
     val isSearchingGenius by viewModel.isSearchingGenius.collectAsState()
+    val savedLyric by viewModel.savedLyric.collectAsState()
+    val artState by artGalleryViewModel.state.collectAsState()
+    var showArtGenSheet by remember { mutableStateOf(false) }
     val haptics = rememberHaptics()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(saveSuccess) { if (saveSuccess) { haptics.success(); scope.launch { snackbarHostState.showSnackbar("Earwyrm posted!") }; navController.popBackStack() } }
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            // Persist art selection before leaving
+            savedLyric?.let { artGalleryViewModel.persistSelection(it.id) }
+            haptics.success(); scope.launch { snackbarHostState.showSnackbar("Earwyrm posted!") }; navController.popBackStack()
+        }
+    }
 
     Box(Modifier.fillMaxSize().padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())) {
     Column(Modifier.fillMaxSize()) {
@@ -126,6 +139,28 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
             Spacer(Modifier.height(12.dp)); TagInput(tags, { viewModel.addTag(it) }, { viewModel.removeTag(it) })
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(value = noteContent, onValueChange = { if (it.length <= 500) viewModel.noteContent.value = it }, placeholder = { Text("Why is this stuck in your head?", style = Theme.dmSansItalic(14f)) }, modifier = Modifier.fillMaxWidth(), textStyle = Theme.dmSansItalic(14f), minLines = 2, maxLines = 4, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Theme.accent, cursorColor = Theme.accent), shape = RoundedCornerShape(12.dp))
+            // Art Gallery Strip
+            Spacer(Modifier.height(16.dp))
+            Text("card art", style = Theme.dmSans(13f, FontWeight.Medium), color = Theme.textSecondary)
+            Spacer(Modifier.height(4.dp))
+            ArtGallerySection(
+                state = artState,
+                isPlus = false, // Will be updated when billing is wired
+                onSelectNone = { artGalleryViewModel.selectNone() },
+                onSelectVariant = { artGalleryViewModel.selectVariant(it) },
+                onGenerateClick = {
+                    // Silent save if needed, then show generation sheet
+                    scope.launch {
+                        val lyric = viewModel.silentSave()
+                        if (lyric != null) {
+                            artGalleryViewModel.loadVariants(lyric)
+                            showArtGenSheet = true
+                        }
+                    }
+                },
+                onNavigateToPaywall = { navController.navigate(Screen.PlusPaywall.route) }
+            )
+
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) { Text("Public", style = Theme.dmSans(14f), color = Theme.textSecondary); Switch(checked = isPublic, onCheckedChange = { viewModel.isPublic.value = it }, colors = SwitchDefaults.colors(checkedTrackColor = Theme.accent), modifier = Modifier.padding(start = 8.dp)) }
             Spacer(Modifier.height(24.dp))
@@ -134,5 +169,20 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
         }
     }
     SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
+    }
+
+    // Art Generation Sheet
+    if (showArtGenSheet && savedLyric != null) {
+        ArtGenerationSheet(
+            isPlus = false,
+            hasExistingArt = artState.variants.isNotEmpty(),
+            existingNote = noteContent.ifBlank { null },
+            artRemaining = artState.artRemaining,
+            onGenerate = { note, refinement ->
+                artGalleryViewModel.generate(savedLyric!!, note, refinement)
+            },
+            onShowPaywall = { navController.navigate(Screen.PlusPaywall.route) },
+            onDismiss = { showArtGenSheet = false }
+        )
     }
 }

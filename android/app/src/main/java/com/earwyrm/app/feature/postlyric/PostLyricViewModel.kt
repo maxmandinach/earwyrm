@@ -77,15 +77,38 @@ class PostLyricViewModel @Inject constructor(private val supabase: SupabaseClien
     fun addTag(tag: String) { val t = tag.trim().lowercase(); if (t.isNotBlank() && t !in tags.value) tags.value = tags.value + t }
     fun removeTag(tag: String) { tags.value = tags.value - tag }
 
+    // Silent save for art generation — saves lyric first, returns it
+    private val _savedLyric = MutableStateFlow<Lyric?>(null)
+    val savedLyric: StateFlow<Lyric?> = _savedLyric.asStateFlow()
+
+    suspend fun silentSave(): Lyric? {
+        if (_savedLyric.value != null) return _savedLyric.value
+        val userId = authManager.userId ?: return null
+        if (content.value.isBlank()) return null
+        return try {
+            supabase.postgrest.from("lyrics").update(LyricUpdate(isCurrent = false, replacedAt = Clock.System.now())) { filter { eq("user_id", userId); eq("is_current", true) } }
+            val newLyric = supabase.postgrest.from("lyrics").insert(LyricInsert(userId, content.value, songTitle.value.ifBlank { null }, artistName.value.ifBlank { null }, coverArtUrl.value, null, albumName.value, tags.value.ifEmpty { null }, isPublic.value, true, canonicalLyricId.value, musicbrainzRecordingId.value, musicbrainzReleaseId.value)) { select() }.decodeSingle<Lyric>()
+            if (noteContent.value.isNotBlank()) supabase.postgrest.from("lyric_notes").upsert(LyricNoteUpsert(newLyric.id, userId, noteContent.value.take(500), noteIsPublic.value))
+            _savedLyric.value = newLyric
+            newLyric
+        } catch (_: Exception) { null }
+    }
+
     fun save() {
         val userId = authManager.userId ?: return; if (content.value.isBlank()) return
         viewModelScope.launch {
             _isSaving.value = true
             try {
-                supabase.postgrest.from("lyrics").update(LyricUpdate(isCurrent = false, replacedAt = Clock.System.now())) { filter { eq("user_id", userId); eq("is_current", true) } }
-                val newLyric = supabase.postgrest.from("lyrics").insert(LyricInsert(userId, content.value, songTitle.value.ifBlank { null }, artistName.value.ifBlank { null }, coverArtUrl.value, null, albumName.value, tags.value.ifEmpty { null }, isPublic.value, true, canonicalLyricId.value, musicbrainzRecordingId.value, musicbrainzReleaseId.value)) { select() }.decodeSingle<Lyric>()
-                if (noteContent.value.isNotBlank()) supabase.postgrest.from("lyric_notes").upsert(LyricNoteUpsert(newLyric.id, userId, noteContent.value.take(500), noteIsPublic.value))
-                _saveSuccess.value = true
+                if (_savedLyric.value != null) {
+                    // Already saved via silent save (art generation) — just mark success
+                    _saveSuccess.value = true
+                } else {
+                    supabase.postgrest.from("lyrics").update(LyricUpdate(isCurrent = false, replacedAt = Clock.System.now())) { filter { eq("user_id", userId); eq("is_current", true) } }
+                    val newLyric = supabase.postgrest.from("lyrics").insert(LyricInsert(userId, content.value, songTitle.value.ifBlank { null }, artistName.value.ifBlank { null }, coverArtUrl.value, null, albumName.value, tags.value.ifEmpty { null }, isPublic.value, true, canonicalLyricId.value, musicbrainzRecordingId.value, musicbrainzReleaseId.value)) { select() }.decodeSingle<Lyric>()
+                    if (noteContent.value.isNotBlank()) supabase.postgrest.from("lyric_notes").upsert(LyricNoteUpsert(newLyric.id, userId, noteContent.value.take(500), noteIsPublic.value))
+                    _savedLyric.value = newLyric
+                    _saveSuccess.value = true
+                }
             } catch (_: Exception) { } finally { _isSaving.value = false }
         }
     }
