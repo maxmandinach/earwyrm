@@ -79,16 +79,37 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = hilt
         EditLyricSheet(
             lyric = currentLyric!!,
             onDismiss = { showEditSheet = false },
-            onSave = { newContent -> viewModel.updateLyric(newContent); showEditSheet = false },
+            onSave = { newContent, newSongTitle, newArtistName ->
+                viewModel.updateLyric(newContent, newSongTitle, newArtistName)
+                showEditSheet = false
+            },
+            onDelete = { lyricId ->
+                viewModel.deleteLyric(lyricId)
+                showEditSheet = false
+            },
+            onToggleVisibility = { viewModel.toggleVisibility() },
+            onSaveNote = { content, isPublic -> viewModel.saveNote(content, isPublic) },
             artGalleryViewModel = artGalleryViewModel,
             isPlus = isPlus,
             noteContent = currentNote?.content ?: "",
+            noteIsPublic = currentNote?.isPublic ?: false,
+            currentNote = currentNote,
             onNavigateToPaywall = { navController.navigate(Screen.PlusPaywall.route) }
         )
     }
 
     if (showShareSheet && currentLyric != null) {
-        ShareSheet(lyric = currentLyric!!, onDismiss = { showShareSheet = false }, onShared = { viewModel.sendShareNotification(currentLyric!!); haptics.success(); scope.launch { snackbarHostState.showSnackbar("Copied link") } })
+        ShareSheet(
+            lyric = currentLyric!!,
+            noteContent = currentNote?.content,
+            username = profile?.username,
+            onDismiss = { showShareSheet = false },
+            onShared = {
+                viewModel.sendShareNotification(currentLyric!!)
+                haptics.success()
+                scope.launch { snackbarHostState.showSnackbar("Shared!") }
+            }
+        )
     }
 
     if (showSaveSheet && currentLyric != null && profile != null) {
@@ -148,7 +169,10 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = hilt
                                 profiles = commentProfiles,
                                 currentUserId = profile?.id,
                                 onSubmitComment = { c, p -> viewModel.submitComment(c, p) },
-                                onDeleteComment = { viewModel.deleteComment(it) }
+                                onDeleteComment = { viewModel.deleteComment(it) },
+                                onUsernameClick = { username ->
+                                    navController.navigate(Screen.PublicProfile.createRoute(username))
+                                }
                             )
                         }
                     }

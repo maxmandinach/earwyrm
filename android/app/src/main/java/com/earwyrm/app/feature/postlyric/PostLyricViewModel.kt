@@ -77,6 +77,20 @@ class PostLyricViewModel @Inject constructor(private val supabase: SupabaseClien
     fun addTag(tag: String) { val t = tag.trim().lowercase(); if (t.isNotBlank() && t !in tags.value) tags.value = tags.value + t }
     fun removeTag(tag: String) { tags.value = tags.value - tag }
 
+    // Full lyrics browsing
+    private val _fullLyrics = MutableStateFlow<String?>(null); val fullLyrics: StateFlow<String?> = _fullLyrics.asStateFlow()
+    private val _isFetchingLyrics = MutableStateFlow(false); val isFetchingLyrics: StateFlow<Boolean> = _isFetchingLyrics.asStateFlow()
+    fun fetchFullLyrics() {
+        val title = songTitle.value; val artist = artistName.value
+        if (title.isBlank() || artist.isBlank()) return
+        viewModelScope.launch {
+            _isFetchingLyrics.value = true
+            try { _fullLyrics.value = lrclibService.getLyrics(title, artist) } catch (_: Exception) { _fullLyrics.value = null }
+            finally { _isFetchingLyrics.value = false }
+        }
+    }
+    fun clearFullLyrics() { _fullLyrics.value = null }
+
     // Silent save for art generation — saves lyric first, returns it
     private val _savedLyric = MutableStateFlow<Lyric?>(null)
     val savedLyric: StateFlow<Lyric?> = _savedLyric.asStateFlow()

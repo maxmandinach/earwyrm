@@ -62,6 +62,18 @@ fun SongAutocomplete(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Cover art thumbnail from MusicBrainz release group
+                        if (recording.releaseGroupId != null) {
+                            AsyncImage(
+                                model = "https://coverartarchive.org/release-group/${recording.releaseGroupId}/front-250",
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(6.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = recording.title,

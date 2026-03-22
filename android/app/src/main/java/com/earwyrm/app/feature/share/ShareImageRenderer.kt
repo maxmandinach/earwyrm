@@ -3,9 +3,11 @@ package com.earwyrm.app.feature.share
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
@@ -41,7 +43,8 @@ object ShareImageRenderer {
         context: Context,
         lyric: Lyric,
         username: String? = null,
-        cardArtBitmap: Bitmap? = null
+        cardArtBitmap: Bitmap? = null,
+        noteContent: String? = null
     ): Bitmap = withContext(Dispatchers.Default) {
         val bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -60,15 +63,22 @@ object ShareImageRenderer {
         // 3. Draw lyric text — returns the Y position after the last line
         val lyricBottomY = drawLyricText(canvas, lyric.content, caveatTypeface)
 
-        // 4. Draw rule (accent divider line)
-        val ruleY = lyricBottomY + 32f
+        // 4. Draw note (if present) — returns Y after note block, or lyricBottomY if no note
+        val afterNoteY = if (!noteContent.isNullOrBlank()) {
+            drawNote(canvas, noteContent, dmSansItalic, dmSansMedium, lyricBottomY + 24f)
+        } else {
+            lyricBottomY
+        }
+
+        // 5. Draw rule (accent divider line)
+        val ruleY = afterNoteY + 32f
         drawRule(canvas, ruleY)
 
-        // 5. Draw song attribution (title — artist)
+        // 6. Draw song attribution (title — artist)
         val attrY = ruleY + 40f
         drawAttribution(canvas, lyric.songTitle, lyric.artistName, dmSansItalic, attrY)
 
-        // 6. Draw footer (username + earwyrm brand)
+        // 7. Draw footer (username + earwyrm brand)
         drawFooter(canvas, username, caveatSemiBold, dmSansMedium)
 
         bitmap
@@ -83,12 +93,9 @@ object ShareImageRenderer {
         val rect = RectF(0f, 0f, WIDTH.toFloat(), HEIGHT.toFloat())
         canvas.drawRoundRect(rect, CORNER_RADIUS, CORNER_RADIUS, bgPaint)
 
-        // If card art provided, draw it at low opacity as background texture
+        // If card art provided, draw it at low opacity with gradient overlay
         if (cardArtBitmap != null) {
             val scaled = Bitmap.createScaledBitmap(cardArtBitmap, WIDTH, HEIGHT, true)
-            val artPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                alpha = 20 // ~8% opacity, matches iOS coverArt style
-            }
 
             // Clip to rounded rect
             canvas.save()
@@ -96,7 +103,29 @@ object ShareImageRenderer {
                 addRoundRect(rect, CORNER_RADIUS, CORNER_RADIUS, Path.Direction.CW)
             }
             canvas.clipPath(clipPath)
+
+            // Draw art at low opacity
+            val artPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                alpha = 20 // ~8% opacity, matches iOS coverArt style
+            }
             canvas.drawBitmap(scaled, 0f, 0f, artPaint)
+
+            // Gradient overlay for text legibility: solid bg color at top/bottom, transparent in middle
+            val gradientPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = LinearGradient(
+                    0f, 0f, 0f, HEIGHT.toFloat(),
+                    intArrayOf(
+                        COLOR_BG and 0x00FFFFFF or (0xCC shl 24),  // ~80% opacity at top
+                        COLOR_BG and 0x00FFFFFF or (0x33 shl 24),  // ~20% opacity at 1/3
+                        COLOR_BG and 0x00FFFFFF or (0x33 shl 24),  // ~20% opacity at 2/3
+                        COLOR_BG and 0x00FFFFFF or (0xCC shl 24)   // ~80% opacity at bottom
+                    ),
+                    floatArrayOf(0f, 0.3f, 0.7f, 1f),
+                    Shader.TileMode.CLAMP
+                )
+            }
+            canvas.drawRect(rect, gradientPaint)
+
             canvas.restore()
 
             if (scaled !== cardArtBitmap) scaled.recycle()
@@ -152,6 +181,61 @@ object ShareImageRenderer {
         canvas.restore()
 
         return topY + textHeight
+    }
+
+    /**
+     * Draws the note section: "my note" label, accent bar, and note text.
+     * Returns the Y position after the note block.
+     */
+    private fun drawNote(
+        canvas: Canvas,
+        noteContent: String,
+        dmSansItalic: Typeface,
+        dmSansMedium: Typeface,
+        startY: Float
+    ): Float {
+        var currentY = startY
+        val maxWidth = (WIDTH - MARGIN_X * 2 - 20f).toInt() // Extra indent for accent bar
+
+        // "my note" label
+        val labelPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = COLOR_ACCENT
+            textSize = 24f
+            typeface = dmSansItalic
+        }
+        val labelMetrics = labelPaint.fontMetrics
+        currentY -= labelMetrics.ascent // baseline offset
+        canvas.drawText("my note", MARGIN_X + 16f, currentY, labelPaint)
+        currentY += labelMetrics.descent + 12f
+
+        // Note text
+        val notePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = COLOR_SECONDARY
+            textSize = 28f
+            typeface = dmSansItalic
+        }
+        val noteLayout = StaticLayout.Builder.obtain(noteContent, 0, noteContent.length, notePaint, maxWidth)
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setLineSpacing(4f, 1f)
+            .setIncludePad(false)
+            .build()
+
+        // Accent bar on the left
+        val barTop = currentY
+        val barBottom = currentY + noteLayout.height.toFloat()
+        val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = COLOR_ACCENT
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(MARGIN_X, barTop, MARGIN_X + 3f, barBottom, barPaint)
+
+        // Draw note text (indented past the bar)
+        canvas.save()
+        canvas.translate(MARGIN_X + 16f, currentY)
+        noteLayout.draw(canvas)
+        canvas.restore()
+
+        return currentY + noteLayout.height.toFloat()
     }
 
     private fun drawRule(canvas: Canvas, y: Float) {

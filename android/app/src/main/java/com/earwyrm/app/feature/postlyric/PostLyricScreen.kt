@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,16 +13,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.earwyrm.app.core.design.CaveatFamily
 import com.earwyrm.app.core.design.Theme
 import com.earwyrm.app.core.design.rememberHaptics
@@ -49,13 +55,18 @@ private val ghostTextPrompts = listOf(
 fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewModel = hiltViewModel(), artGalleryViewModel: ArtGalleryViewModel = hiltViewModel()) {
     val content by viewModel.content.collectAsState(); val artistName by viewModel.artistName.collectAsState(); val songTitle by viewModel.songTitle.collectAsState()
     val tags by viewModel.tags.collectAsState(); val noteContent by viewModel.noteContent.collectAsState(); val isPublic by viewModel.isPublic.collectAsState()
+    val noteIsPublic by viewModel.noteIsPublic.collectAsState()
+    val coverArtUrl by viewModel.coverArtUrl.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState(); val saveSuccess by viewModel.saveSuccess.collectAsState()
     val artistSuggestions by viewModel.artistSuggestions.collectAsState(); val songSuggestions by viewModel.songSuggestions.collectAsState()
     val geniusSuggestions by viewModel.geniusSuggestions.collectAsState()
     val isSearchingGenius by viewModel.isSearchingGenius.collectAsState()
+    val fullLyrics by viewModel.fullLyrics.collectAsState()
+    val isFetchingLyrics by viewModel.isFetchingLyrics.collectAsState()
     val savedLyric by viewModel.savedLyric.collectAsState()
     val artState by artGalleryViewModel.state.collectAsState()
     var showArtGenSheet by remember { mutableStateOf(false) }
+    var showLyricBrowser by remember { mutableStateOf(false) }
     val haptics = rememberHaptics()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -85,7 +96,15 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
                     )
                 }
             }
-            Text("${content.length}/500", style = Theme.dmSans(11f), color = Theme.textMuted, modifier = Modifier.align(Alignment.End).padding(top = 4.dp))
+            // Smart character counter: only show at 400+, warn at 480+, red at 500
+            if (content.length >= 400) {
+                val counterColor = when {
+                    content.length >= 500 -> Theme.error
+                    content.length >= 480 -> Color(0xFFE6A817)
+                    else -> Theme.textMuted
+                }
+                Text("${content.length}/500", style = Theme.dmSans(11f), color = counterColor, modifier = Modifier.align(Alignment.End).padding(top = 4.dp))
+            }
             // Genius suggest matches section
             AnimatedVisibility(
                 visible = isSearchingGenius && geniusSuggestions.isEmpty(),
@@ -134,11 +153,93 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
                     }
                 }
             }
-            Spacer(Modifier.height(16.dp)); ArtistAutocomplete(artistName, { viewModel.onArtistChanged(it) }, artistSuggestions, { viewModel.selectArtist(it) })
-            Spacer(Modifier.height(12.dp)); SongAutocomplete(songTitle, { viewModel.onSongTitleChanged(it) }, songSuggestions, { viewModel.selectSong(it) })
+            Spacer(Modifier.height(16.dp))
+            // Cover art + song/artist fields
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                // Cover art thumbnail (animated in when available)
+                AnimatedVisibility(
+                    visible = coverArtUrl != null,
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp, top = 8.dp)
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Theme.accent.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (coverArtUrl != null) {
+                            AsyncImage(
+                                model = coverArtUrl,
+                                contentDescription = "Cover art",
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        // Fallback letter shown underneath while loading
+                        if (songTitle.isNotBlank()) {
+                            Text(
+                                text = songTitle.first().uppercase(),
+                                style = Theme.dmSans(20f, FontWeight.Bold),
+                                color = Theme.accent.copy(alpha = 0.4f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    ArtistAutocomplete(artistName, { viewModel.onArtistChanged(it) }, artistSuggestions, { viewModel.selectArtist(it) })
+                    Spacer(Modifier.height(12.dp))
+                    SongAutocomplete(songTitle, { viewModel.onSongTitleChanged(it) }, songSuggestions, { viewModel.selectSong(it) })
+                }
+            }
+            // Browse full lyrics button
+            AnimatedVisibility(
+                visible = songTitle.isNotBlank() && artistName.isNotBlank(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                TextButton(
+                    onClick = {
+                        haptics.light()
+                        viewModel.fetchFullLyrics()
+                        showLyricBrowser = true
+                    },
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Text("browse full lyrics", style = Theme.dmSans(13f, FontWeight.Medium), color = Theme.accent)
+                }
+            }
             Spacer(Modifier.height(12.dp)); TagInput(tags, { viewModel.addTag(it) }, { viewModel.removeTag(it) })
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = noteContent, onValueChange = { if (it.length <= 500) viewModel.noteContent.value = it }, placeholder = { Text("Why is this stuck in your head?", style = Theme.dmSansItalic(14f)) }, modifier = Modifier.fillMaxWidth(), textStyle = Theme.dmSansItalic(14f), minLines = 2, maxLines = 4, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Theme.accent, cursorColor = Theme.accent), shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(
+                value = noteContent,
+                onValueChange = { if (it.length <= 500) viewModel.noteContent.value = it },
+                placeholder = { Text("Why is this stuck in your head?", style = Theme.dmSansItalic(14f)) },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = Theme.dmSansItalic(14f),
+                minLines = 2,
+                maxLines = 4,
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Theme.accent, cursorColor = Theme.accent),
+                shape = RoundedCornerShape(12.dp),
+                trailingIcon = {
+                    IconButton(onClick = {
+                        haptics.light()
+                        viewModel.noteIsPublic.value = !noteIsPublic
+                    }) {
+                        Icon(
+                            imageVector = if (noteIsPublic) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                            contentDescription = if (noteIsPublic) "Note is public" else "Note is private",
+                            tint = if (noteIsPublic) Theme.accent else Theme.textMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            )
             // Art Gallery Strip
             Spacer(Modifier.height(16.dp))
             Text("card art", style = Theme.dmSans(13f, FontWeight.Medium), color = Theme.textSecondary)
@@ -169,6 +270,23 @@ fun PostLyricScreen(navController: NavHostController, viewModel: PostLyricViewMo
         }
     }
     SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp))
+    }
+
+    // Lyric Browser Sheet
+    if (showLyricBrowser) {
+        LyricBrowserSheet(
+            lyrics = fullLyrics ?: "",
+            isLoading = isFetchingLyrics,
+            onSelectLines = { selectedText ->
+                viewModel.onContentChanged(selectedText)
+                showLyricBrowser = false
+                viewModel.clearFullLyrics()
+            },
+            onDismiss = {
+                showLyricBrowser = false
+                viewModel.clearFullLyrics()
+            }
+        )
     }
 
     // Art Generation Sheet

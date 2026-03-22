@@ -77,9 +77,28 @@ class HomeViewModel @Inject constructor(private val supabase: SupabaseClient, pr
 
     fun deleteComment(commentId: String) { viewModelScope.launch { try { supabase.postgrest.from("comments").delete { filter { eq("id", commentId) } }; _comments.value = _comments.value.filter { it.id != commentId } } catch (_: Exception) { toastManager.show("couldn't delete comment, try again") } } }
 
-    fun updateLyric(newContent: String) {
+    fun updateLyric(newContent: String, newSongTitle: String? = null, newArtistName: String? = null) {
         val lyric = _currentLyric.value ?: return
-        viewModelScope.launch { try { supabase.postgrest.from("lyrics").update(LyricUpdate(content = newContent)) { filter { eq("id", lyric.id) } }; _currentLyric.value = lyric.copy(content = newContent) } catch (_: Exception) { toastManager.show("couldn't update lyric, try again") } }
+        viewModelScope.launch {
+            try {
+                supabase.postgrest.from("lyrics").update(
+                    LyricUpdate(content = newContent, songTitle = newSongTitle, artistName = newArtistName)
+                ) { filter { eq("id", lyric.id) } }
+                _currentLyric.value = lyric.copy(content = newContent, songTitle = newSongTitle, artistName = newArtistName)
+            } catch (_: Exception) { toastManager.show("couldn't update lyric, try again") }
+        }
+    }
+
+    fun deleteLyric(lyricId: String) {
+        viewModelScope.launch {
+            try {
+                supabase.postgrest.from("lyrics").delete { filter { eq("id", lyricId) } }
+                _currentLyric.value = null
+                _currentNote.value = null
+                _comments.value = emptyList()
+                loadData()
+            } catch (_: Exception) { toastManager.show("couldn't delete lyric, try again") }
+        }
     }
 
     fun saveNote(content: String, isPublic: Boolean) {
